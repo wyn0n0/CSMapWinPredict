@@ -20,6 +20,7 @@ public sealed class DemoParserService
         var demo = new CsDemoParser();
         var frames = new List<DemoFrame>();
         var events = new List<TimelineEvent>();
+        var roundResults = new List<RoundResult>();
         var utilityTrackBuilders = new List<UtilityTrackBuilder>();
         var utilityEffectBuilders = new List<UtilityEffectBuilder>();
         var activeProjectiles = new Dictionary<uint, UtilityTrackBuilder>();
@@ -36,9 +37,11 @@ public sealed class DemoParserService
         var lastSampledTick = int.MinValue;
         var lastUtilitySampledTick = int.MinValue;
         var roundCounter = 0;
+        var currentRoundNumber = 0;
         var currentRoundStartTick = 0;
         var currentLiveStartTick = 0;
         var roundEnded = false;
+        var roundResultRecorded = false;
         var bombTerminalState = "unavailable";
         BombSnapshot? lastBombSnapshot = null;
 
@@ -54,7 +57,9 @@ public sealed class DemoParserService
             currentRoundStartTick = Math.Max(0, demo.CurrentDemoTick.Value);
             currentLiveStartTick = 0;
             roundCounter = Math.Max(roundCounter + 1, demo.GameRules.TotalRoundsPlayed + 1);
+            currentRoundNumber = roundCounter;
             roundEnded = false;
+            roundResultRecorded = false;
             bombTerminalState = "unavailable";
             lastBombSnapshot = null;
             AddEvent("round-start", "回合开始", $"第 {roundCounter} 回合");
@@ -66,8 +71,25 @@ public sealed class DemoParserService
         };
         demo.Source1GameEvents.RoundEnd += e =>
         {
+            var endTick = Math.Max(0, demo.CurrentDemoTick.Value);
+            var winnerSide = RoundWinnerSide(e.Winner);
+            var endReason = RoundEndReasonName(e.Reason);
+            var isCompetitiveRound = !demo.GameRules.WarmupPeriod &&
+                currentLiveStartTick > 0 && endTick > currentLiveStartTick;
+            if (!roundResultRecorded && isCompetitiveRound && winnerSide is not null)
+            {
+                roundResults.Add(new RoundResult(
+                    Math.Max(1, currentRoundNumber),
+                    currentRoundStartTick,
+                    currentLiveStartTick,
+                    endTick,
+                    winnerSide,
+                    endReason));
+                roundResultRecorded = true;
+            }
+
             roundEnded = true;
-            AddEvent("round-end", "回合结束", $"胜方队伍编号 {e.Winner} · 原因 {e.Reason}");
+            AddEvent("round-end", "回合结束", $"胜方 {winnerSide ?? "未知"} · 原因 {endReason}");
         };
         demo.Source1GameEvents.PlayerDeath += e =>
             AddEvent(
@@ -119,7 +141,8 @@ public sealed class DemoParserService
             utilityEffectBuilders.Select(item => item.Build()).ToArray(),
             playerUtilityStates,
             playerEquipmentStates,
-            events.OrderBy(item => item.Tick).ToArray());
+            events.OrderBy(item => item.Tick).ToArray(),
+            roundResults.OrderBy(item => item.EndTick).ToArray());
 
         void AddEvent(string type, string title, string? detail = null)
         {
@@ -612,6 +635,18 @@ public sealed class DemoParserService
         CSTeamNumber.CounterTerrorist => "CT",
         _ => "SPEC"
     };
+
+    internal static string? RoundWinnerSide(int winner) => winner switch
+    {
+        (int)CSTeamNumber.Terrorist => "T",
+        (int)CSTeamNumber.CounterTerrorist => "CT",
+        _ => null
+    };
+
+    internal static string RoundEndReasonName(int reason) =>
+        Enum.IsDefined(typeof(CSRoundEndReason), reason)
+            ? ((CSRoundEndReason)reason).ToString()
+            : $"Unknown({reason})";
 
     private static void FinalizeMissing<TBuilder>(
         Dictionary<uint, TBuilder> active,

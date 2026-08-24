@@ -14,6 +14,7 @@
 - 每个玩家帧附带回合阶段、比分、回合计时、双方连败数，以及地图区域人数分布。
 - 连续记录 C4 携带者、掉落/下包/已安放/拆除/爆炸状态、包点、坐标和倒计时。
 - 提取回合开始/进入 live/结束、击杀、下包、拆包与爆炸事件。
+- 结构化保存每回合开始、live、结束 tick、胜方阵营与结束原因。
 - Vue + SVG 雷达支持播放、暂停、倍速、拖动时间线、玩家名字、移动轨迹和独立道具图层开关。
 - 内置一段合成 Mirage 数据，无需 demo 和后端即可体验 UI。
 - 地图坐标转换与雷达图层解耦；已接入 `cs-hud` 内含的 5 张 Simple Radar WebP。
@@ -39,6 +40,7 @@ docs/
 
 ```bash
 npm install
+dotnet restore apps/api/CsDemoMap.Api.csproj
 npm run dev
 ```
 
@@ -73,6 +75,19 @@ GET /api/demos/{id}/windows/{index}
 ```powershell
 dotnet run --project apps/api/CsDemoMap.Api.csproj --no-restore -- --inspect-demo "D:\path\match.dem"
 ```
+
+## 导出胜率训练数据
+
+可以对单个 `.dem` 或包含 demo 的目录递归导出 JSONL：
+
+```powershell
+dotnet run --project apps/api/CsDemoMap.Api.csproj --no-restore -c Release -- `
+  --export-win-data "D:\demos" "D:\datasets\cs2-win-v1.jsonl"
+```
+
+导出器仅采样正式回合的 live 与 post-plant 阶段，每秒生成一条记录。标签是 T 方是否赢得当前回合；输入只使用当前 tick 可见的玩家、回合、C4、区域和最近装备状态，不输出玩家姓名、Steam ID 或 C4 携带者 ID。每回合所有记录的 `sampleWeight` 之和为 1，避免长回合在训练时获得更高权重。
+
+输出文件已存在时命令会直接报错，不会覆盖。CLI 逐场解析并逐行写出，但为生成稳定 `matchId` 会先读取一次 demo 计算 SHA-256。
 
 ## 地图资源
 

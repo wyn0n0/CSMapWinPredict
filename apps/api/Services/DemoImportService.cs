@@ -9,6 +9,7 @@ namespace CsDemoMap.Api.Services;
 
 public sealed class DemoImportService : BackgroundService
 {
+    public const int SchemaVersion = 2;
     public const int WindowSeconds = 30;
     private const int WindowOverlapSeconds = 2;
 
@@ -218,7 +219,9 @@ public sealed class DemoImportService : BackgroundService
             timeline.PlayerUtilityStates.Count,
             timeline.PlayerEquipmentStates.Count,
             WindowSeconds,
-            windowCount);
+            windowCount,
+            SchemaVersion,
+            timeline.RoundResults);
     }
 
     private static IReadOnlyList<UtilityPoint> SliceUtilityPoints(

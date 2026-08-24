@@ -9,7 +9,9 @@
     "dev:web": "npm run dev --workspace @cs-demo-map/web",
     "dev:api": "dotnet run --project apps/api/CsDemoMap.Api.csproj --no-restore",
     "build": "npm run build --workspace @cs-demo-map/web",
-    "test": "npm run test --workspace @cs-demo-map/web",
+    "test": "npm run test:web && npm run test:api",
+    "test:web": "npm run test --workspace @cs-demo-map/web",
+    "test:api": "dotnet run --project apps/api/CsDemoMap.Api.csproj -c Release --no-launch-profile -- --verify-win-data-pipeline",
     "typecheck": "npm run typecheck --workspace @cs-demo-map/web"
   },
   "devDependencies": {

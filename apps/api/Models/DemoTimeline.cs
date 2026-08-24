@@ -7,7 +7,8 @@ public sealed record DemoTimeline(
     IReadOnlyList<UtilityEffectTrack> UtilityEffects,
     IReadOnlyList<PlayerUtilityState> PlayerUtilityStates,
     IReadOnlyList<PlayerEquipmentState> PlayerEquipmentStates,
-    IReadOnlyList<TimelineEvent> Events);
+    IReadOnlyList<TimelineEvent> Events,
+    IReadOnlyList<RoundResult> RoundResults);
 
 public sealed record DemoMetadata(
     string FileName,
@@ -34,6 +35,14 @@ public sealed record RoundSnapshot(
     double RemainingSeconds,
     int ConsecutiveLossesT,
     int ConsecutiveLossesCT);
+
+public sealed record RoundResult(
+    int RoundNumber,
+    int StartTick,
+    int LiveTick,
+    int EndTick,
+    string WinnerSide,
+    string EndReason);
 
 public sealed record BombSnapshot(
     string State,

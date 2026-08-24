@@ -13,6 +13,18 @@ if (args is ["--inspect-demo", var demoPath])
     return;
 }
 
+if (args is ["--export-win-data", var inputPath, var outputPath])
+{
+    await ExportWinDataAsync(inputPath, outputPath);
+    return;
+}
+
+if (args is ["--verify-win-data-pipeline"])
+{
+    await WinDataPipelineVerifier.VerifyAsync(CancellationToken.None);
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseUrls("http://localhost:5088");
@@ -220,4 +232,14 @@ static async Task InspectDemoAsync(string demoPath)
             MaxZ = points.Max(point => point.Z)
         };
     }
+}
+
+static async Task ExportWinDataAsync(string inputPath, string outputPath)
+{
+    var exporter = new WinDatasetExporter(new DemoParserService());
+    var summary = await exporter.ExportAsync(inputPath, outputPath, CancellationToken.None);
+    Console.WriteLine(JsonSerializer.Serialize(summary, new JsonSerializerOptions
+    {
+        WriteIndented = true
+    }));
 }

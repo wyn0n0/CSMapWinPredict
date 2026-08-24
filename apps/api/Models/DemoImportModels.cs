@@ -10,7 +10,9 @@ public sealed record DemoManifest(
     int PlayerUtilityStateCount,
     int PlayerEquipmentStateCount,
     int WindowSeconds,
-    int WindowCount);
+    int WindowCount,
+    int SchemaVersion,
+    IReadOnlyList<RoundResult> RoundResults);
 
 public sealed record DemoWindow(
     int Index,

@@ -40,6 +40,15 @@ export interface RoundSnapshot {
   consecutiveLossesCT: number
 }
 
+export interface RoundResult {
+  roundNumber: number
+  startTick: number
+  liveTick: number
+  endTick: number
+  winnerSide: 'T' | 'CT'
+  endReason: string
+}
+
 export interface BombSnapshot {
   state: 'unavailable' | 'carried' | 'dropped' | 'planting' | 'planted' | 'defusing' | 'defused' | 'exploded' | string
   carrierId: string | null
@@ -175,6 +184,8 @@ export interface DemoManifest {
   playerEquipmentStateCount: number
   windowSeconds: number
   windowCount: number
+  schemaVersion?: number
+  roundResults?: RoundResult[]
 }
 
 export interface DemoWindow {
