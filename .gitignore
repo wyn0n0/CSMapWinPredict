@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.vite/
+bin/
+obj/
+*.user
+*.suo
+*.dem
+apps/api/data/imports/
+*.tsbuildinfo
+.DS_Store
