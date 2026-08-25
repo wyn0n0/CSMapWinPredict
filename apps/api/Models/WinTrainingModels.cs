@@ -23,7 +23,32 @@ public sealed record WinFeatureSnapshot(
     TeamFeatureSnapshot T,
     TeamFeatureSnapshot CT,
     IReadOnlyList<PlayerFeatureSnapshot> Players,
-    IReadOnlyList<ZoneFeatureSnapshot> Zones);
+    IReadOnlyList<ZoneFeatureSnapshot> Zones,
+    BaselineFeatureSnapshot Baseline);
+
+public sealed record BaselineFeatureSnapshot(
+    string BombState,
+    string? PreviousBombState,
+    int BombStateChangeCount,
+    double SecondsSinceBombStateChange,
+    bool BombWasDropped,
+    bool BombWasPlanting,
+    bool BombWasPlanted,
+    bool BombWasDefusing,
+    double? TPositionDispersion,
+    double? CTPositionDispersion,
+    double? NearestOpponentDistance,
+    double? TMeanDistanceToSiteA,
+    double? TMeanDistanceToSiteB,
+    double? CTMeanDistanceToSiteA,
+    double? CTMeanDistanceToSiteB,
+    double? TMinDistanceToSiteA,
+    double? TMinDistanceToSiteB,
+    double? CTMinDistanceToSiteA,
+    double? CTMinDistanceToSiteB,
+    int EquipmentValueDifference,
+    int HealthDifference,
+    int AliveDifference);
 
 public sealed record BombFeatureSnapshot(
     string State,

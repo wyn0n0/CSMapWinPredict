@@ -16,13 +16,30 @@ internal static class WinDataPipelineVerifier
         Check(DemoParserService.RoundEndReasonName(99) == "Unknown(99)", "unknown reason should be preserved");
 
         var timeline = CreateTimeline(futureMoney: 9_000);
-        var features = new AsOfTickFeatureBuilder(timeline).Build(timeline.Frames[1]);
+        var featureBuilder = new AsOfTickFeatureBuilder(timeline);
+        var firstLiveBaseline = featureBuilder.Build(timeline.Frames[1]).Baseline;
+        Check(firstLiveBaseline.BombStateChangeCount == 0 && !firstLiveBaseline.BombWasDropped,
+            "freeze-time bomb state leaked into the live-round history");
+        var features = featureBuilder.Build(timeline.Frames[2]);
         Check(features.T.TotalMoney == 1_000, "future equipment leaked into team features");
         Check(features.Players.Single(player => player.Team == "T").Money == 1_000,
             "future equipment leaked into player features");
+        var baseline = featureBuilder.Build(timeline.Frames[3]).Baseline;
+        Check(baseline.PreviousBombState == "carried" && baseline.BombStateChangeCount == 1,
+            "bomb transition history should include carried to planted");
+        Check(baseline.BombWasPlanted && !baseline.BombWasDefusing,
+            "bomb state flags should reflect only states seen so far");
+        Check(baseline.TPositionDispersion == 0 && baseline.CTPositionDispersion == 0,
+            "single-player team dispersion should be zero");
+        Check(baseline.NearestOpponentDistance is > 0,
+            "nearest opponent distance should be available for Mirage");
+        Check(baseline.TMeanDistanceToSiteA is not null && baseline.CTMeanDistanceToSiteB is not null,
+            "bombsite distance aggregates should be available for Mirage");
+        Check(baseline.EquipmentValueDifference == 0 && baseline.HealthDifference == 20 && baseline.AliveDifference == 0,
+            "requested team difference features should be calculated");
 
-        var changedFuture = CreateTimeline(futureMoney: 99_999);
-        var changedFeatures = new AsOfTickFeatureBuilder(changedFuture).Build(changedFuture.Frames[1]);
+        var changedFuture = CreateTimeline(futureMoney: 99_999, futureBombState: "defusing");
+        var changedFeatures = new AsOfTickFeatureBuilder(changedFuture).Build(changedFuture.Frames[2]);
         Check(JsonSerializer.Serialize(features) == JsonSerializer.Serialize(changedFeatures),
             "changing future state changed as-of features");
 
@@ -64,7 +81,7 @@ internal static class WinDataPipelineVerifier
         }
     }
 
-    private static DemoTimeline CreateTimeline(int futureMoney)
+    private static DemoTimeline CreateTimeline(int futureMoney, string futureBombState = "planted")
     {
         var players = new[]
         {
@@ -77,11 +94,14 @@ internal static class WinDataPipelineVerifier
         };
         var frames = new[]
         {
+            Frame(0, players, "freeze"),
             Frame(64, players, "live"),
             Frame(128, players, "live"),
             Frame(192, players, "post-plant"),
             Frame(256, players, "ended")
         };
+        frames[0] = frames[0] with { Bomb = frames[0].Bomb with { State = "dropped" } };
+        frames[3] = frames[3] with { Bomb = frames[3].Bomb with { State = futureBombState } };
         var equipment = new[]
         {
             Equipment(32, "t-player", 1_000, "rifle"),

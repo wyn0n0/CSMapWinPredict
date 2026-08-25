@@ -82,12 +82,14 @@ dotnet run --project apps/api/CsDemoMap.Api.csproj --no-restore -- --inspect-dem
 
 ```powershell
 dotnet run --project apps/api/CsDemoMap.Api.csproj --no-restore -c Release -- `
-  --export-win-data "D:\demos" "D:\datasets\cs2-win-v1.jsonl"
+  --export-win-data "D:\demos" "D:\datasets\cs2-win-v2.jsonl"
 ```
 
 导出器仅采样正式回合的 live 与 post-plant 阶段，每秒生成一条记录。标签是 T 方是否赢得当前回合；输入只使用当前 tick 可见的玩家、回合、C4、区域和最近装备状态，不输出玩家姓名、Steam ID 或 C4 携带者 ID。每回合所有记录的 `sampleWeight` 之和为 1，避免长回合在训练时获得更高权重。
 
+Schema v2 额外提供因果 C4 状态变化、归一化队伍站位分散度、双方最近距离、双方到 A/B 包点的平均/最短距离，以及装备价值差、血量差和存活人数差。距离以 1024 像素雷达宽度归一化，三个差值均按 `T - CT` 计算。当前包点几何覆盖 Mirage；其他地图的空间聚合值为 `null`，需要增加对应的版本化地图配置后再用于跨地图训练。
 输出文件已存在时命令会直接报错，不会覆盖。CLI 逐场解析并逐行写出，但为生成稳定 `matchId` 会先读取一次 demo 计算 SHA-256。
+
 
 ## 地图资源
 

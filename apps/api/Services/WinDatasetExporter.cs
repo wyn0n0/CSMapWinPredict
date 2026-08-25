@@ -6,7 +6,7 @@ namespace CsDemoMap.Api.Services;
 
 public sealed class WinDatasetExporter(DemoParserService parser)
 {
-    public const int DatasetSchemaVersion = 1;
+    public const int DatasetSchemaVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
