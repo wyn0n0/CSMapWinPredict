@@ -38,6 +38,25 @@ internal static class WinDataPipelineVerifier
         Check(baseline.EquipmentValueDifference == 0 && baseline.HealthDifference == 20 && baseline.AliveDifference == 0,
             "requested team difference features should be calculated");
 
+        Check(baseline.ScoreDifference == 0 && baseline.LossStreakDifference == 0 && baseline.TotalAlive == 2,
+            "round-context aggregates should be calculated");
+        Check(baseline.HasExplosionTimer && !baseline.HasDefuseTimer,
+            "bomb timer availability flags should follow the current tick");
+        Check(baseline.PositionDispersionDifference == 0 &&
+              !baseline.TPositionDataMissing && !baseline.CTPositionDataMissing &&
+              !baseline.NearestOpponentDistanceMissing,
+            "spatial aggregate and missingness features should be calculated");
+        Check(baseline.TClosestSiteDistance is > 0 && baseline.CTClosestSiteDistance is > 0 &&
+              baseline.SiteAProximityDifference is not null && baseline.SiteBProximityDifference is not null,
+            "site proximity derivative features should be available for Mirage");
+        Check(baseline.MoneyDifference == 7_000 && baseline.ArmorDifference == 0 &&
+              baseline.DefuserCountDifference == -1 && baseline.RifleCountDifference == -1 &&
+              baseline.SniperCountDifference == 1,
+            "resource difference features should be calculated");
+        Check(baseline.TMeanHealth == 80 && baseline.CTMeanHealth == 60 && baseline.IsClutch &&
+              baseline.TEquipmentCoverage == 1 && baseline.CTEquipmentCoverage == 1 &&
+              baseline.EquipmentCoverageDifference == 0,
+            "health, clutch, and equipment-coverage features should be calculated");
         var changedFuture = CreateTimeline(futureMoney: 99_999, futureBombState: "defusing");
         var changedFeatures = new AsOfTickFeatureBuilder(changedFuture).Build(changedFuture.Frames[2]);
         Check(JsonSerializer.Serialize(features) == JsonSerializer.Serialize(changedFeatures),

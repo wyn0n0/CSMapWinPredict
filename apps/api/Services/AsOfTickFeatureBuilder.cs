@@ -116,29 +116,84 @@ public sealed class AsOfTickFeatureBuilder
         var siteB = mapGeometry is null
             ? null
             : mapGeometry.Normalize(mapGeometry.SiteB.X, mapGeometry.SiteB.Y);
+        var tPositionDispersion = PositionDispersion(tPositions);
+        var ctPositionDispersion = PositionDispersion(ctPositions);
+        var nearestOpponentDistance = NearestDistance(tPositions, ctPositions);
+        var tMeanDistanceToSiteA = MeanDistance(tPositions, siteA);
+        var tMeanDistanceToSiteB = MeanDistance(tPositions, siteB);
+        var ctMeanDistanceToSiteA = MeanDistance(ctPositions, siteA);
+        var ctMeanDistanceToSiteB = MeanDistance(ctPositions, siteB);
+        var tMinDistanceToSiteA = MinDistance(tPositions, siteA);
+        var tMinDistanceToSiteB = MinDistance(tPositions, siteB);
+        var ctMinDistanceToSiteA = MinDistance(ctPositions, siteA);
+        var ctMinDistanceToSiteB = MinDistance(ctPositions, siteB);
+        var tEquipmentCoverage = EquipmentCoverage(players, "T");
+        var ctEquipmentCoverage = EquipmentCoverage(players, "CT");
         return new BaselineFeatureSnapshot(
-            frame.Bomb.State,
-            transition.PreviousState,
-            transition.ChangeCount,
-            Math.Max(0, (frame.Tick - transition.Tick) / (double)tickRate),
-            transition.WasDropped,
-            transition.WasPlanting,
-            transition.WasPlanted,
-            transition.WasDefusing,
-            PositionDispersion(tPositions),
-            PositionDispersion(ctPositions),
-            NearestDistance(tPositions, ctPositions),
-            MeanDistance(tPositions, siteA),
-            MeanDistance(tPositions, siteB),
-            MeanDistance(ctPositions, siteA),
-            MeanDistance(ctPositions, siteB),
-            MinDistance(tPositions, siteA),
-            MinDistance(tPositions, siteB),
-            MinDistance(ctPositions, siteA),
-            MinDistance(ctPositions, siteB),
-            tSummary.EquipmentValue - ctSummary.EquipmentValue,
-            tSummary.TotalHealth - ctSummary.TotalHealth,
-            tSummary.Alive - ctSummary.Alive);
+            ScoreDifference: frame.Round.ScoreT - frame.Round.ScoreCT,
+            LossStreakDifference: frame.Round.ConsecutiveLossesT - frame.Round.ConsecutiveLossesCT,
+            BombState: frame.Bomb.State,
+            PreviousBombState: transition.PreviousState,
+            BombStateChangeCount: transition.ChangeCount,
+            SecondsSinceBombStateChange: Math.Max(0, (frame.Tick - transition.Tick) / (double)tickRate),
+            HasExplosionTimer: frame.Bomb.SecondsToExplosion is not null,
+            HasDefuseTimer: frame.Bomb.SecondsToDefuse is not null,
+            BombWasDropped: transition.WasDropped,
+            BombWasPlanting: transition.WasPlanting,
+            BombWasPlanted: transition.WasPlanted,
+            BombWasDefusing: transition.WasDefusing,
+            TPositionDispersion: tPositionDispersion,
+            CTPositionDispersion: ctPositionDispersion,
+            PositionDispersionDifference: Difference(tPositionDispersion, ctPositionDispersion),
+            TPositionDataMissing: tPositions is null || tPositions.Length == 0,
+            CTPositionDataMissing: ctPositions is null || ctPositions.Length == 0,
+            NearestOpponentDistance: nearestOpponentDistance,
+            NearestOpponentDistanceMissing: nearestOpponentDistance is null,
+            TMeanDistanceToSiteA: tMeanDistanceToSiteA,
+            TMeanDistanceToSiteB: tMeanDistanceToSiteB,
+            CTMeanDistanceToSiteA: ctMeanDistanceToSiteA,
+            CTMeanDistanceToSiteB: ctMeanDistanceToSiteB,
+            TMinDistanceToSiteA: tMinDistanceToSiteA,
+            TMinDistanceToSiteB: tMinDistanceToSiteB,
+            CTMinDistanceToSiteA: ctMinDistanceToSiteA,
+            CTMinDistanceToSiteB: ctMinDistanceToSiteB,
+            TClosestSiteDistance: SmallestDistance(tMinDistanceToSiteA, tMinDistanceToSiteB),
+            CTClosestSiteDistance: SmallestDistance(ctMinDistanceToSiteA, ctMinDistanceToSiteB),
+            SiteAProximityDifference: Difference(ctMeanDistanceToSiteA, tMeanDistanceToSiteA),
+            SiteBProximityDifference: Difference(ctMeanDistanceToSiteB, tMeanDistanceToSiteB),
+            EquipmentValueDifference: tSummary.EquipmentValue - ctSummary.EquipmentValue,
+            MoneyDifference: tSummary.TotalMoney - ctSummary.TotalMoney,
+            ArmorDifference: tSummary.TotalArmor - ctSummary.TotalArmor,
+            HelmetCountDifference: tSummary.HelmetCount - ctSummary.HelmetCount,
+            DefuserCountDifference: tSummary.DefuserCount - ctSummary.DefuserCount,
+            GrenadeCountDifference: tSummary.GrenadeCount - ctSummary.GrenadeCount,
+            RifleCountDifference: tSummary.RifleCount - ctSummary.RifleCount,
+            SniperCountDifference: tSummary.SniperCount - ctSummary.SniperCount,
+            HealthDifference: tSummary.TotalHealth - ctSummary.TotalHealth,
+            AliveDifference: tSummary.Alive - ctSummary.Alive,
+            TotalAlive: tSummary.Alive + ctSummary.Alive,
+            TMeanHealth: MeanHealth(tSummary),
+            CTMeanHealth: MeanHealth(ctSummary),
+            IsClutch: tSummary.Alive == 1 || ctSummary.Alive == 1,
+            TEquipmentCoverage: tEquipmentCoverage,
+            CTEquipmentCoverage: ctEquipmentCoverage,
+            EquipmentCoverageDifference: tEquipmentCoverage - ctEquipmentCoverage);
+    }
+    private static double? Difference(double? minuend, double? subtrahend) =>
+        minuend is null || subtrahend is null ? null : minuend.Value - subtrahend.Value;
+
+    private static double? SmallestDistance(double? first, double? second) =>
+        first is null || second is null ? null : Math.Min(first.Value, second.Value);
+
+    private static double MeanHealth(TeamFeatureSnapshot team) =>
+        team.Alive == 0 ? 0 : team.TotalHealth / (double)team.Alive;
+
+    private static double EquipmentCoverage(IReadOnlyList<CurrentPlayer> players, string team)
+    {
+        var members = players.Where(player => player.Snapshot.Team == team).ToArray();
+        return members.Length == 0
+            ? 0
+            : members.Count(player => player.Equipment is not null) / (double)members.Length;
     }
 
     private BombTransition FindBombTransition(DemoFrame frame)
