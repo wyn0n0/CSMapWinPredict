@@ -91,6 +91,31 @@ Schema v3 在因果 C4 状态变化、归一化队伍站位分散度、双方最
 输出文件已存在时命令会直接报错，不会覆盖。CLI 逐场解析并逐行写出，但为生成稳定 `matchId` 会先读取一次 demo 计算 SHA-256。
 
 
+## 训练基线胜率模型
+
+训练工具要求 Python 3.11 或更高版本。安装固定版本依赖后，可以传入一个或多个 schema v3 JSONL：
+
+```powershell
+python -m pip install -r requirements-train.txt
+python tools/train_win_baseline.py `
+  --input "datasets\train-mirage-5-v3.jsonl" `
+  --input "datasets\mirage-v3-final.jsonl" `
+  --output-dir "models\win-baseline-v3"
+```
+
+CLI 会先验证 schema、重复样本、回合内标签一致性，以及每回合样本权重之和。评估采用留一比赛交叉验证，绝不会把同一个 `matchId` 的相邻时刻分到训练和测试两侧。输入特征排除了 `matchId`、tick、Demo 绝对时间、玩家身份、完整玩家数组和最终胜负标签。
+
+输出目录包含：
+
+- `logistic.joblib`：使用全部输入比赛拟合的逻辑回归管线。
+- `lightgbm.joblib`：使用全部输入比赛拟合的 LightGBM 管线。
+- `report.json` 和 `report.md`：留一比赛指标、逐场指标、校准分箱与特征重要性。
+- `oof_predictions.jsonl`：每个样本的严格样本外预测，可用于复核和绘制校准曲线。
+
+`models/` 和 `datasets/` 默认不提交到 Git，避免误传训练数据和二进制模型。少量比赛只能验证训练管线；需要更多独立比赛后，才能将这些指标作为泛化性能依据。
+
+本次 6 场 Mirage Demo 的实验协议和结果见 [初训报告](docs/preliminary-training-report.md)。
+
 ## 地图资源
 
 `apps/web/public/radars/simpleradar` 直接复制了 `cs-hud` 的 Simple Radar 子目录，包含 Cache、Dust II、Mirage、Nuke 上层和 Nuke 下层。对应的 `pos_x`、`pos_y`、`scale` 也来自其 `radars.json`。其他地图仍使用抽象 SVG 回退图。

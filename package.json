@@ -12,6 +12,7 @@
     "test": "npm run test:web && npm run test:api",
     "test:web": "npm run test --workspace @cs-demo-map/web",
     "test:api": "dotnet run --project apps/api/CsDemoMap.Api.csproj -c Release --no-launch-profile -- --verify-win-data-pipeline",
+    "test:train": "python -m unittest tools.test_train_win_baseline",
     "typecheck": "npm run typecheck --workspace @cs-demo-map/web"
   },
   "devDependencies": {

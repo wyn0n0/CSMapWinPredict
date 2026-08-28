@@ -13,3 +13,6 @@ apps/api/data/imports/
 *.jsonl.*.tmp
 *.tsbuildinfo
 .DS_Store
+__pycache__/
+*.py[cod]
+.venv/
