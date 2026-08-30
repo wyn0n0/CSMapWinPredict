@@ -18,6 +18,18 @@ export interface ImportedDemo {
   firstWindow: DemoWindow
 }
 
+export interface OfflineDemoFile {
+  fileName: string
+  fileSizeBytes: number
+  lastWriteTimeUtc: string
+}
+
+export interface OfflineDemoCatalog {
+  rootPath: string
+  count: number
+  files: OfflineDemoFile[]
+}
+
 export type ImportStage = 'uploading' | 'queued' | 'parsing' | 'chunking' | 'loading'
 
 export async function importDemo(
@@ -31,6 +43,32 @@ export async function importDemo(
   const response = await fetch('/api/demos/import', { method: 'POST', body })
   const accepted = await readJson<DemoImportAccepted>(response, '上传失败')
   onStage(normalizeStage(accepted.status))
+  return waitForImportedDemo(accepted, onStage)
+}
+
+export async function listOfflineDemos(): Promise<OfflineDemoCatalog> {
+  const response = await fetch('/api/demos/offline', { cache: 'no-store' })
+  return readJson<OfflineDemoCatalog>(response, '读取离线 Demo 列表失败')
+}
+
+export async function importOfflineDemo(
+  fileName: string,
+  onStage: (stage: ImportStage) => void = () => {},
+): Promise<ImportedDemo> {
+  const response = await fetch('/api/demos/offline/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fileName }),
+  })
+  const accepted = await readJson<DemoImportAccepted>(response, '离线 Demo 导入失败')
+  onStage(normalizeStage(accepted.status))
+  return waitForImportedDemo(accepted, onStage)
+}
+
+async function waitForImportedDemo(
+  accepted: DemoImportAccepted,
+  onStage: (stage: ImportStage) => void,
+): Promise<ImportedDemo> {
   let status: DemoImportStatus
   do {
     await delay(1000)

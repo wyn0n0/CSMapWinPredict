@@ -63,9 +63,43 @@ public sealed class DemoImportService : BackgroundService
             throw;
         }
 
-        var job = new ImportJob(id, Path.GetFileName(fileName), fileSizeBytes, directory, sourcePath);
+        var job = new ImportJob(id, Path.GetFileName(fileName), fileSizeBytes, directory, sourcePath, deleteSource: true);
         jobs[id] = job;
         await queue.Writer.WriteAsync(id, cancellationToken);
+        return new DemoImportAccepted(id, job.Status);
+    }
+
+    public async Task<DemoImportAccepted> CreateFromFileAsync(
+        string sourcePath,
+        string fileName,
+        long fileSizeBytes,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(sourcePath))
+            throw new FileNotFoundException("找不到离线 demo 文件。", sourcePath);
+
+        var id = Guid.NewGuid().ToString("N");
+        var directory = Path.Combine(storageRoot, id);
+        Directory.CreateDirectory(directory);
+        var job = new ImportJob(
+            id,
+            Path.GetFileName(fileName),
+            fileSizeBytes,
+            directory,
+            Path.GetFullPath(sourcePath),
+            deleteSource: false);
+        jobs[id] = job;
+        try
+        {
+            await queue.Writer.WriteAsync(id, cancellationToken);
+        }
+        catch
+        {
+            jobs.TryRemove(id, out _);
+            Directory.Delete(directory);
+            throw;
+        }
+
         return new DemoImportAccepted(id, job.Status);
     }
 
@@ -137,13 +171,16 @@ public sealed class DemoImportService : BackgroundService
         }
         finally
         {
-            try
+            if (job.DeleteSource)
             {
-                File.Delete(job.SourcePath);
-            }
-            catch (Exception exception)
-            {
-                logger.LogWarning(exception, "无法删除 demo {DemoId} 的上传副本", job.Id);
+                try
+                {
+                    File.Delete(job.SourcePath);
+                }
+                catch (Exception exception)
+                {
+                    logger.LogWarning(exception, "无法删除 demo {DemoId} 的上传副本", job.Id);
+                }
             }
         }
     }
@@ -327,13 +364,15 @@ public sealed class DemoImportService : BackgroundService
         string fileName,
         long fileSizeBytes,
         string directory,
-        string sourcePath)
+        string sourcePath,
+        bool deleteSource)
     {
         public string Id { get; } = id;
         public string FileName { get; } = fileName;
         public long FileSizeBytes { get; } = fileSizeBytes;
         public string Directory { get; } = directory;
         public string SourcePath { get; } = sourcePath;
+        public bool DeleteSource { get; } = deleteSource;
         public volatile string Status = "queued";
         public string? Error;
         public DemoManifest? Manifest;

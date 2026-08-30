@@ -37,3 +37,19 @@ public sealed record DemoImportStatus(
     long FileSizeBytes,
     string? Error,
     DemoManifest? Manifest);
+
+public sealed record OfflineDemoImportRequest(string? FileName);
+
+public sealed record OfflineDemoFile(
+    string FileName,
+    long FileSizeBytes,
+    DateTimeOffset LastWriteTimeUtc);
+
+public sealed record OfflineDemoCatalogResponse(
+    string RootPath,
+    int Count,
+    IReadOnlyList<OfflineDemoFile> Files);
+
+public sealed record OfflineDemoSelection(
+    string FullPath,
+    OfflineDemoFile File);

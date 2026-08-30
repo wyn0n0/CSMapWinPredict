@@ -4,6 +4,7 @@ import numpy as np
 
 from tools.train_win_baseline import (
     EXPECTED_SCHEMA_VERSION,
+    SELECTED_BASELINE,
     expected_calibration_error,
     validate_records,
 )
@@ -22,6 +23,9 @@ def row(match_id: str, label: int, weight: float = 1.0, tick: int = 64) -> dict:
 
 
 class ValidationTests(unittest.TestCase):
+    def test_logistic_is_selected_baseline(self) -> None:
+        self.assertEqual(SELECTED_BASELINE, "logistic")
+
     def test_accepts_three_matches_and_equal_round_weights(self) -> None:
         records = [
             row("match-a", 0),

@@ -26,6 +26,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
 EXPECTED_SCHEMA_VERSION = 3
+SELECTED_BASELINE = "logistic"
 
 CATEGORICAL_FEATURES = (
     "mapName",
@@ -138,9 +139,22 @@ def parse_args() -> argparse.Namespace:
         default=Path("models/win-baseline-v3"),
         help="Directory for fitted models, OOF predictions, and reports.",
     )
+    parser.add_argument(
+        "--validation-match-id",
+        action="append",
+        default=[],
+        help="Exact matchId to reserve for validation. Repeat for multiple matches.",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--threads", type=int, default=4)
     return parser.parse_args()
+
+
+def feature_value(record: dict[str, Any], path: str) -> Any:
+    flattened = record.get("__features")
+    if isinstance(flattened, dict):
+        return flattened.get(path)
+    return get_path(record, path)
 
 
 def get_path(record: dict[str, Any], path: str) -> Any:
@@ -160,11 +174,30 @@ def load_records(paths: Iterable[Path]) -> list[dict[str, Any]]:
                 if not line.strip():
                     continue
                 try:
-                    records.append(json.loads(line))
+                    parsed = json.loads(line)
                 except json.JSONDecodeError as error:
                     raise ValueError(
                         f"{path}:{line_number}: invalid JSON: {error}"
                     ) from error
+                feature_values = {
+                    name: get_path(parsed, name)
+                    for name in (*NUMERIC_FEATURES, *CATEGORICAL_FEATURES)
+                }
+                records.append(
+                    {
+                        key: parsed.get(key)
+                        for key in (
+                            "schemaVersion",
+                            "matchId",
+                            "mapName",
+                            "roundNumber",
+                            "tick",
+                            "labelTWin",
+                            "sampleWeight",
+                        )
+                    }
+                    | {"__features": feature_values}
+                )
     if not records:
         raise ValueError("No training rows were loaded")
     return records
@@ -227,7 +260,7 @@ def validate_records(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 def make_frame(records: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.DataFrame]:
     feature_data = {
-        name: [get_path(row, name) for row in records]
+        name: [feature_value(row, name) for row in records]
         for name in (*NUMERIC_FEATURES, *CATEGORICAL_FEATURES)
     }
     features = pd.DataFrame(feature_data)
@@ -241,7 +274,7 @@ def make_frame(records: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.DataFram
             "matchId": [str(row["matchId"]) for row in records],
             "roundNumber": [int(row["roundNumber"]) for row in records],
             "tick": [int(row["tick"]) for row in records],
-            "phase": [str(get_path(row, "features.phase")) for row in records],
+            "phase": [str(feature_value(row, "features.phase")) for row in records],
             "label": [int(row["labelTWin"]) for row in records],
             "weight": [float(row["sampleWeight"]) for row in records],
         }
@@ -456,7 +489,119 @@ def evaluate_grouped(
             name: metrics(labels[mask], values[mask], weights[mask])
             for name, values in predictions.items()
         }
-    return {"overall": overall, "byPhase": phase_metrics, "folds": folds}, predictions
+    return {
+        "strategy": "leave-one-match-out",
+        "overall": overall,
+        "byPhase": phase_metrics,
+        "folds": folds,
+        "trainingMatches": len(match_ids),
+        "validationMatches": match_ids,
+    }, predictions
+
+
+def evaluate_holdout(
+    features: pd.DataFrame,
+    metadata: pd.DataFrame,
+    validation_match_ids: Iterable[str],
+    seed: int,
+    threads: int,
+) -> tuple[dict[str, Any], dict[str, np.ndarray], np.ndarray, np.ndarray]:
+    labels = metadata["label"].to_numpy(dtype=int)
+    weights = metadata["weight"].to_numpy(dtype=float)
+    groups = metadata["matchId"].to_numpy(dtype=str)
+    available = set(np.unique(groups))
+    requested = sorted(set(validation_match_ids))
+    if not requested:
+        raise ValueError("At least one validation matchId is required")
+    unknown = sorted(set(requested) - available)
+    if unknown:
+        raise ValueError(f"Unknown validation matchId(s): {unknown}")
+    if len(requested) >= len(available):
+        raise ValueError("Validation matches must leave at least one training match")
+
+    validation_mask = np.isin(groups, requested)
+    training_indices = np.flatnonzero(~validation_mask)
+    validation_indices = np.flatnonzero(validation_mask)
+    validation_labels = labels[validation_indices]
+    validation_weights = weights[validation_indices]
+    validation_metadata = metadata.iloc[validation_indices].reset_index(drop=True)
+    validation_groups = validation_metadata["matchId"].to_numpy(dtype=str)
+
+    prior = float(
+        np.average(labels[training_indices], weights=weights[training_indices])
+    )
+    predictions = {
+        "constant": np.full(len(validation_indices), prior),
+        "logistic": np.full(len(validation_indices), np.nan),
+        "lightgbm": np.full(len(validation_indices), np.nan),
+    }
+    fitted = make_models(seed, threads)
+    for name, model in fitted.items():
+        model.fit(
+            features.iloc[training_indices],
+            labels[training_indices],
+            model__sample_weight=weights[training_indices],
+        )
+        predictions[name] = model.predict_proba(features.iloc[validation_indices])[:, 1]
+
+    overall = {
+        name: metrics(validation_labels, values, validation_weights)
+        for name, values in predictions.items()
+    }
+    phase_metrics: dict[str, dict[str, dict[str, float]]] = {}
+    for phase in sorted(validation_metadata["phase"].unique()):
+        mask = validation_metadata["phase"].to_numpy() == phase
+        phase_metrics[phase] = {
+            name: metrics(
+                validation_labels[mask], values[mask], validation_weights[mask]
+            )
+            for name, values in predictions.items()
+        }
+
+    folds: list[dict[str, Any]] = []
+    for match_id in requested:
+        mask = validation_groups == match_id
+        match_metadata = validation_metadata.loc[mask]
+        folds.append(
+            {
+                "heldOutMatchId": match_id,
+                "rows": int(mask.sum()),
+                "rounds": int(
+                    match_metadata[["matchId", "roundNumber"]]
+                    .drop_duplicates()
+                    .shape[0]
+                ),
+                "tWinRate": float(
+                    np.average(
+                        validation_labels[mask], weights=validation_weights[mask]
+                    )
+                ),
+                "trainingPriorTWin": prior,
+                "metrics": {
+                    name: metrics(
+                        validation_labels[mask], values[mask], validation_weights[mask]
+                    )
+                    for name, values in predictions.items()
+                },
+            }
+        )
+
+    training_match_count = len(set(groups[training_indices]))
+    return (
+        {
+            "strategy": "fixed-match-holdout",
+            "overall": overall,
+            "byPhase": phase_metrics,
+            "folds": folds,
+            "trainingMatches": training_match_count,
+            "validationMatches": requested,
+            "trainingRows": len(training_indices),
+            "validationRows": len(validation_indices),
+        },
+        predictions,
+        training_indices,
+        validation_indices,
+    )
 
 
 def fitted_feature_importance(model: Pipeline, model_name: str) -> list[dict[str, Any]]:
@@ -475,6 +620,20 @@ def fitted_feature_importance(model: Pipeline, model_name: str) -> list[dict[str
 
 def markdown_report(report: dict[str, Any]) -> str:
     summary = report["data"]
+    evaluation = report["evaluation"]
+    if evaluation["strategy"] == "fixed-match-holdout":
+        validation_description = (
+            f"fixed match holdout ({evaluation['trainingMatches']} training / "
+            f"{len(evaluation['validationMatches'])} validation matches), "
+            "weighted equally per round"
+        )
+        metrics_heading = "## Held-out validation metrics"
+    else:
+        validation_description = (
+            f"leave-one-match-out ({summary['matches']} folds), "
+            "weighted equally per round"
+        )
+        metrics_heading = "## Out-of-fold metrics"
     lines = [
         "# Preliminary Mirage round-win baseline",
         "",
@@ -485,9 +644,9 @@ def markdown_report(report: dict[str, Any]) -> str:
         f"- Matches: {summary['matches']}",
         f"- Rounds: {summary['rounds']} ({summary['tWinRounds']} T wins / {summary['ctWinRounds']} CT wins)",
         f"- Rows: {summary['rows']}",
-        f"- Validation: leave-one-match-out ({summary['matches']} folds), weighted equally per round",
+        f"- Validation: {validation_description}",
         "",
-        "## Out-of-fold metrics",
+        metrics_heading,
         "",
         "| Model | Log loss | Brier | ROC-AUC | Accuracy | ECE-10 |",
         "|---|---:|---:|---:|---:|---:|",
@@ -501,30 +660,43 @@ def markdown_report(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## Held-out matches (LightGBM)",
+            "## Selected baseline",
+            "",
+            f"`{report['selectedBaseline']['model']}` is the default baseline artifact (`baseline.joblib`). "
+            f"It was selected by {report['selectedBaseline']['selectionMetric']} ({report['selectedBaseline']['logLoss']:.4f}).",
+            "",
+            "## Held-out matches (selected logistic baseline)",
             "",
             "| Match | Rounds | T-win rate | Log loss | Brier | ROC-AUC |",
             "|---|---:|---:|---:|---:|---:|",
         ]
     )
     for fold in report["evaluation"]["folds"]:
-        value = fold["metrics"]["lightgbm"]
+        value = fold["metrics"][SELECTED_BASELINE]
         lines.append(
             f"| {fold['heldOutMatchId'][:12]} | {fold['rounds']} | {fold['tWinRate']:.3f} | "
             f"{value['logLoss']:.4f} | {value['brierScore']:.4f} | {value['rocAuc']:.4f} |"
         )
     lines.extend(
-        ["", "## Top LightGBM features", "", "| Feature | Gain |", "|---|---:|"]
+        [
+            "",
+            "## Top selected-baseline features",
+            "",
+            "| Feature | Absolute coefficient |",
+            "|---|---:|",
+        ]
     )
-    for item in report["featureImportance"]["lightgbm"][:15]:
+    for item in report["featureImportance"][SELECTED_BASELINE][:15]:
         lines.append(f"| `{item['feature']}` | {item['importance']:.2f} |")
     lines.extend(
         [
             "",
             "## Limitation",
             "",
-            "Only six matches are available. Scores are useful for pipeline validation, not for claiming generalization. "
-            "The final saved models are fitted on all six matches and are not probability-calibrated.",
+            f"Only {summary['matches']} matches are available. Scores are useful for pipeline validation, "
+            "not for claiming generalization. "
+            f"The saved models are fitted on {evaluation['trainingMatches']} training matches "
+            "and are not probability-calibrated.",
             "",
         ]
     )
@@ -540,24 +712,56 @@ def main() -> int:
     records = load_records(input_paths)
     data_summary = validate_records(records)
     features, metadata = make_frame(records)
-    evaluation, predictions = evaluate_grouped(
-        features, metadata, args.seed, args.threads
-    )
+    labels = metadata["label"].to_numpy(dtype=int)
+    weights = metadata["weight"].to_numpy(dtype=float)
+    if args.validation_match_id:
+        evaluation, predictions, training_indices, prediction_indices = (
+            evaluate_holdout(
+                features,
+                metadata,
+                args.validation_match_id,
+                args.seed,
+                args.threads,
+            )
+        )
+        prediction_filename = "validation_predictions.jsonl"
+        selection_metric = "fixed holdout weighted Log Loss"
+    else:
+        evaluation, predictions = evaluate_grouped(
+            features, metadata, args.seed, args.threads
+        )
+        training_indices = np.arange(len(metadata))
+        prediction_indices = np.arange(len(metadata))
+        prediction_filename = "oof_predictions.jsonl"
+        selection_metric = "leave-one-match-out weighted Log Loss"
+    prediction_metadata = metadata.iloc[prediction_indices].reset_index(drop=True)
+    evaluation_labels = labels[prediction_indices]
+    evaluation_weights = weights[prediction_indices]
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     final_models = make_models(args.seed, args.threads)
-    labels = metadata["label"].to_numpy(dtype=int)
-    weights = metadata["weight"].to_numpy(dtype=float)
     importance: dict[str, list[dict[str, Any]]] = {}
     for name, model in final_models.items():
-        model.fit(features, labels, model__sample_weight=weights)
+        model.fit(
+            features.iloc[training_indices],
+            labels[training_indices],
+            model__sample_weight=weights[training_indices],
+        )
         joblib.dump(model, args.output_dir / f"{name}.joblib")
         importance[name] = fitted_feature_importance(model, name)
+    joblib.dump(final_models[SELECTED_BASELINE], args.output_dir / "baseline.joblib")
 
     report = {
         "generatedAtUtc": datetime.now(timezone.utc).isoformat(),
         "inputs": [str(path) for path in input_paths],
         "data": data_summary,
+        "selectedBaseline": {
+            "model": SELECTED_BASELINE,
+            "artifact": "baseline.joblib",
+            "selectionMetric": selection_metric,
+            "logLoss": evaluation["overall"][SELECTED_BASELINE]["logLoss"],
+            "challenger": "lightgbm",
+        },
         "features": {
             "numeric": list(NUMERIC_FEATURES),
             "categorical": list(CATEGORICAL_FEATURES),
@@ -572,7 +776,7 @@ def main() -> int:
         },
         "evaluation": evaluation,
         "calibration": {
-            name: calibration_bins(labels, values, weights)
+            name: calibration_bins(evaluation_labels, values, evaluation_weights)
             for name, values in predictions.items()
         },
         "featureImportance": importance,
@@ -592,10 +796,8 @@ def main() -> int:
         markdown_report(report), encoding="utf-8"
     )
 
-    with (args.output_dir / "oof_predictions.jsonl").open(
-        "w", encoding="utf-8"
-    ) as target:
-        for index, row in metadata.iterrows():
+    with (args.output_dir / prediction_filename).open("w", encoding="utf-8") as target:
+        for index, row in prediction_metadata.iterrows():
             value = {
                 "matchId": row["matchId"],
                 "roundNumber": int(row["roundNumber"]),
@@ -613,6 +815,10 @@ def main() -> int:
             {
                 "outputDirectory": str(args.output_dir.resolve()),
                 **data_summary,
+                "selectedBaseline": SELECTED_BASELINE,
+                "evaluationStrategy": evaluation["strategy"],
+                "trainingMatches": evaluation["trainingMatches"],
+                "validationMatches": evaluation["validationMatches"],
                 "metrics": evaluation["overall"],
             },
             indent=2,

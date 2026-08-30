@@ -1,3 +1,4 @@
+using CsDemoMap.Api.Models;
 using CsDemoMap.Api.Services;
 using DemoFile;
 using Microsoft.AspNetCore.Http.Features;
@@ -37,6 +38,7 @@ builder.Services.Configure<FormOptions>(options =>
 });
 builder.Services.AddSingleton<DemoParserService>();
 builder.Services.AddSingleton<DemoImportService>();
+builder.Services.AddSingleton<OfflineDemoCatalog>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<DemoImportService>());
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
     policy.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
@@ -50,6 +52,68 @@ app.MapGet("/api/health", () => Results.Ok(new
     parser = "DemoFile.Game.Cs",
     sampleRate = DemoParserService.SampleRate
 }));
+
+app.MapGet("/api/demos/offline", (OfflineDemoCatalog catalog) =>
+{
+    try
+    {
+        return Results.Ok(catalog.List());
+    }
+    catch (UnauthorizedAccessException)
+    {
+        return Results.Problem(
+            statusCode: StatusCodes.Status403Forbidden,
+            title: "无法访问离线 Demo 目录。");
+    }
+    catch (IOException exception)
+    {
+        return Results.Problem(
+            statusCode: StatusCodes.Status500InternalServerError,
+            title: "读取离线 Demo 目录失败。",
+            detail: exception.Message);
+    }
+});
+
+app.MapPost("/api/demos/offline/import", async (
+    OfflineDemoImportRequest request,
+    OfflineDemoCatalog catalog,
+    DemoImportService imports,
+    CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var selection = catalog.Resolve(request.FileName);
+        if (selection.File.FileSizeBytes == 0)
+            return Results.BadRequest(new { error = "文件为空。" });
+        if (selection.File.FileSizeBytes > MaxUploadBytes)
+            return Results.BadRequest(new { error = "单文件上限为 1 GiB。" });
+
+        var job = await imports.CreateFromFileAsync(
+            selection.FullPath,
+            selection.File.FileName,
+            selection.File.FileSizeBytes,
+            cancellationToken);
+        return Results.Accepted($"/api/demos/{job.Id}/status", job);
+    }
+    catch (ArgumentException exception)
+    {
+        return Results.BadRequest(new { error = exception.Message });
+    }
+    catch (FileNotFoundException exception)
+    {
+        return Results.NotFound(new { error = exception.Message });
+    }
+    catch (UnauthorizedAccessException)
+    {
+        return Results.Problem(
+            statusCode: StatusCodes.Status403Forbidden,
+            title: "无法访问指定的离线 Demo。");
+    }
+    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+    {
+        return Results.StatusCode(StatusCodes.Status499ClientClosedRequest);
+    }
+});
 
 app.MapPost("/api/demos/import", async (
     IFormFile file,

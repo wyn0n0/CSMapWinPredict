@@ -68,6 +68,35 @@ GET /api/demos/{id}/windows/{index}
 
 上传完成后 API 返回 `202 Accepted`，页面会显示排队、解析、生成窗口和载入首屏等阶段。解析完成前仍可保留在示例数据界面；完成后只解压当前时间附近的数据，不再一次传输并反序列化整场 JSON。窗口带有前后 2 秒重叠，跨边界时玩家轨迹、投掷物、持续效果、经济和装备状态不会断层。
 
+### 从本地目录离线导入
+
+API 默认扫描仓库根目录的 `data/mirage`（当前为 `E:\Map\data\mirage`），无需把数百 MB 的 Demo 再通过 HTTP 上传：
+
+```http
+GET /api/demos/offline
+
+POST /api/demos/offline/import
+Content-Type: application/json
+
+{"fileName":"furia-vs-pain-m1-mirage.dem"}
+```
+
+导入成功返回 `202 Accepted`，之后继续使用同一组状态和窗口接口：
+
+```http
+GET /api/demos/{id}/status
+GET /api/demos/{id}/windows/{index}
+```
+
+离线接口只接受配置目录顶层的纯文件名和 `.dem` 扩展名，不允许绝对路径、子目录、`..`、符号链接或目录联接。后台解析直接读取原文件，不复制也不删除它。若需要更换目录，可在启动 API 前设置：
+
+```powershell
+$env:OfflineDemos__RootPath = "D:\other\demo-directory"
+dotnet run --project apps/api/CsDemoMap.Api.csproj
+```
+
+前端 API 客户端提供 `listOfflineDemos()` 和 `importOfflineDemo(fileName)`；当前页面仍保留原有上传入口，可在后续加入目录文件选择 UI。
+
 当前任务队列和 manifest 保存在进程内，服务重启后不能继续旧任务；生成的窗口也尚未按 TTL 自动清理。后端解析阶段仍会在内存中构建整场 `DemoTimeline`，这些是下一轮持久化与流式解析需要处理的边界。
 
 当前单个上传文件上限为 1 GiB。也可以跳过浏览器上传，直接在命令行解析并输出摘要：
@@ -103,14 +132,28 @@ python tools/train_win_baseline.py `
   --output-dir "models\win-baseline-v3"
 ```
 
-CLI 会先验证 schema、重复样本、回合内标签一致性，以及每回合样本权重之和。评估采用留一比赛交叉验证，绝不会把同一个 `matchId` 的相邻时刻分到训练和测试两侧。输入特征排除了 `matchId`、tick、Demo 绝对时间、玩家身份、完整玩家数组和最终胜负标签。
+也可以重复传入 `--validation-match-id`，将指定比赛完整保留为固定验证集：
+
+```powershell
+python tools/train_win_baseline.py `
+  --input "datasets\mirage-v3.jsonl" `
+  --output-dir "models\win-baseline-v3-holdout" `
+  --validation-match-id "<match-id-1>" `
+  --validation-match-id "<match-id-2>"
+```
+
+CLI 会先验证 schema、重复样本、回合内标签一致性，以及每回合样本权重之和。未指定固定验证集时评估采用留一比赛交叉验证；指定后，两个模型及最终保存的模型都只拟合非验证比赛，并仅在完整保留的比赛上计算指标。两种模式都不会把同一个 `matchId` 的相邻时刻分到训练和测试两侧。输入特征排除了 `matchId`、tick、Demo 绝对时间、玩家身份、完整玩家数组和最终胜负标签。
 
 输出目录包含：
 
-- `logistic.joblib`：使用全部输入比赛拟合的逻辑回归管线。
-- `lightgbm.joblib`：使用全部输入比赛拟合的 LightGBM 管线。
-- `report.json` 和 `report.md`：留一比赛指标、逐场指标、校准分箱与特征重要性。
+- `baseline.joblib`：当前正式选定的逻辑回归基线模型，供后续推理接口统一加载。
+- `logistic.joblib`：同一逻辑回归模型的具名工件。
+- `lightgbm.joblib`：保留用于比较的 LightGBM 挑战模型，不作为当前默认基线。
+- `report.json` 和 `report.md`：评估协议、总体/逐场指标、校准分箱与特征重要性。
 - `oof_predictions.jsonl`：每个样本的严格样本外预测，可用于复核和绘制校准曲线。
+- `validation_predictions.jsonl`：使用固定验证集时生成，只包含保留比赛的预测。
+
+默认基线依据比赛级验证集上的加权 Log Loss 选择；模型报告会记录实际评估协议和 `selectedBaseline.model`。
 
 `models/` 和 `datasets/` 默认不提交到 Git，避免误传训练数据和二进制模型。少量比赛只能验证训练管线；需要更多独立比赛后，才能将这些指标作为泛化性能依据。
 
