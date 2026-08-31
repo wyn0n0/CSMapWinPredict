@@ -1,6 +1,31 @@
 # CS Demo Map
 
-读取 Counter-Strike 2 `.dem` 文件，并在浏览器小地图中回放玩家位置、朝向、生命状态与关键比赛事件的初始框架。
+读取 Counter-Strike 2 `.dem` 文件，在浏览器雷达中回放比赛状态，并导出数据训练当前回合的 T/CT 胜率基线。
+
+## 当前状态（2026-08-31）
+
+项目已具备 **Demo 回放与离线回合胜率训练管线**，尚未接入真实直播源、在线模型推理或前端胜率曲线。预测目标是当前回合 T 方是否获胜，不是整张地图或系列赛的胜负。
+
+| 能力 | 当前状态 |
+|---|---|
+| Demo 解析与雷达回放 | 已实现；后端完整解析后生成按需加载窗口 |
+| 训练数据与模型 | 本地 schema v3，68 场 Mirage、1,467 回合、128,441 条样本 |
+| 比赛级验证 | 63 场训练、5 场验证；逻辑回归 Log Loss 0.4810、Brier 0.1627、AUC 0.8406 |
+| 概率校准 | 已输出校准分箱评估，尚未拟合校准器 |
+| 回合／时钟修正 | 已完成上游源码核查与三场 Demo 诊断，尚未修改解析器或导出 v4 |
+| 实时预测 | 待实现实时输入、增量状态与特征、推理接口及页面展示 |
+
+最新指标仅描述固定保留比赛上的离线表现，不能当作生产可用性证明。现有数据已发现回合编号、计时及完整性语义需要复核；基础格式检查通过不代表比赛语义已正确。
+
+### 文档导航
+
+- [架构与当前边界](docs/architecture.md)
+- [68 场 Mirage 固定验证摘要](docs/training-report-68-matches.md)
+- [6 场初训历史报告](docs/preliminary-training-report.md)
+- [回合与时钟上游接口核查](docs/round-clock-upstream-review.md)
+- [v4 数据语义修正与迁移方案](docs/data-semantics-v4-plan.md)
+
+**保留现有 v3 数据和模型，不直接覆盖。** v4 将使用独立版本和输出目录；当前 CLI 仍只导出／训练 v3，不能仅修改输出文件名就得到 v4。
 
 ## 当前能力
 
@@ -28,7 +53,14 @@ apps/
   api/                 ASP.NET Core API 与 demofile-net 解析适配层
   web/                 Vue 3 / TypeScript / Vite 雷达播放器
 docs/
-  architecture.md      两个参考仓库的分析、决策与演进路线
+  architecture.md                    架构、边界与演进路线
+  preliminary-training-report.md     6 场初训历史记录
+  training-report-68-matches.md       最新固定验证摘要
+  round-clock-upstream-review.md     上游接口与真实 Demo 核查
+  data-semantics-v4-plan.md           待实施的数据语义迁移方案
+tools/
+  train_win_baseline.py               v3 训练与比赛级验证
+  test_train_win_baseline.py          训练数据校验测试
 ```
 
 ## 环境要求
@@ -70,7 +102,7 @@ GET /api/demos/{id}/windows/{index}
 
 ### 从本地目录离线导入
 
-API 默认扫描仓库根目录的 `data/mirage`（当前为 `E:\Map\data\mirage`），无需把数百 MB 的 Demo 再通过 HTTP 上传：
+API 默认扫描仓库根目录的 `data/mirage`，无需把数百 MB 的 Demo 再通过 HTTP 上传：
 
 ```http
 GET /api/demos/offline
@@ -119,6 +151,8 @@ dotnet run --project apps/api/CsDemoMap.Api.csproj --no-restore -c Release -- `
 Schema v3 在因果 C4 状态变化、归一化队伍站位分散度、双方最近距离和到 A/B 包点的平均/最短距离基础上，新增比分/连败差、C4 计时器可用性、队伍空间缺失标记、最接近包点距离、包点接近度差、金钱/护甲/投掷物/主副狙与拆包器差、总存活人数、平均存活血量、残局标记和装备解析覆盖率。资源与队伍差均按 `T - CT` 计算；包点接近度差按 `CT 距离 - T 距离` 计算，正值表示 T 方更接近该包点。距离以 1024 像素雷达宽度归一化。当前包点几何覆盖 Mirage；其他地图的空间聚合值为 `null`，需要增加对应的版本化地图配置后再用于跨地图训练。
 输出文件已存在时命令会直接报错，不会覆盖。CLI 逐场解析并逐行写出，但为生成稳定 `matchId` 会先读取一次 demo 计算 SHA-256。
 
+这里的“正式回合”是当前导出器的筛选结果；2026-08-31 核查已发现额外回合开始事件可能造成编号漂移，`elapsedSeconds` 也包含冻结等待。v3 保留用于复现，修正范围与验收标准见 [v4 迁移方案](docs/data-semantics-v4-plan.md)。
+
 
 ## 训练基线胜率模型
 
@@ -127,10 +161,11 @@ Schema v3 在因果 C4 状态变化、归一化队伍站位分散度、双方最
 ```powershell
 python -m pip install -r requirements-train.txt
 python tools/train_win_baseline.py `
-  --input "datasets\train-mirage-5-v3.jsonl" `
-  --input "datasets\mirage-v3-final.jsonl" `
-  --output-dir "models\win-baseline-v3"
+  --input "datasets\mirage-68-local-v3.jsonl" `
+  --output-dir "models\win-baseline-v3-new-run"
 ```
+
+数据和模型不随仓库分发；以上输入路径指本地已导出的数据。每次训练请使用新的输出目录：当前训练脚本会写入同名工件，**不要将 `--output-dir` 指向需要保留的历史模型目录**。
 
 也可以重复传入 `--validation-match-id`，将指定比赛完整保留为固定验证集：
 
@@ -153,11 +188,11 @@ CLI 会先验证 schema、重复样本、回合内标签一致性，以及每回
 - `oof_predictions.jsonl`：每个样本的严格样本外预测，可用于复核和绘制校准曲线。
 - `validation_predictions.jsonl`：使用固定验证集时生成，只包含保留比赛的预测。
 
-默认基线依据比赛级验证集上的加权 Log Loss 选择；模型报告会记录实际评估协议和 `selectedBaseline.model`。
+当前代码通过 `SELECTED_BASELINE = "logistic"` 固定默认模型，并未实现每次训练自动择优；报告记录其实际验证 Log Loss。本次 68 场实验中逻辑回归也优于 LightGBM。报告的选择指标说明不应理解为自动发布或切换模型。
 
 `models/` 和 `datasets/` 默认不提交到 Git，避免误传训练数据和二进制模型。少量比赛只能验证训练管线；需要更多独立比赛后，才能将这些指标作为泛化性能依据。
 
-本次 6 场 Mirage Demo 的实验协议和结果见 [初训报告](docs/preliminary-training-report.md)。
+最新的 68 场固定比赛验证见 [验证摘要](docs/training-report-68-matches.md)。[6 场初训报告](docs/preliminary-training-report.md) 作为历史记录保留，两次实验切分协议不同，不能直接用分数差声称性能提升。
 
 ## 地图资源
 
@@ -172,9 +207,13 @@ npm run typecheck
 npm test
 npm run build
 dotnet build apps/api/CsDemoMap.Api.csproj
+# 安装 requirements-train.txt 后执行训练工具测试
+npm run test:train
 ```
+
+现有后端数据管线检查主要使用合成时间线。上游核查中的三场 Demo 诊断是独立研究验证，尚未纳入自动回归测试；硬暂停、技术暂停恢复等场景仍需补充样本。
 
 ## 参考与许可证
 
-- [drweissbrot/cs-hud](https://github.com/drweissbrot/cs-hud) — ISC；参考了服务端状态与 Web 雷达分层思路，没有复制其素材或源码。
+- [drweissbrot/cs-hud](https://github.com/drweissbrot/cs-hud) — 主仓库为 ISC；参考其状态分层、阶段和倒计时设计。项目已复制其目录中的第三方 Simple Radar 图片，来源及授权边界见 [第三方声明](THIRD_PARTY_NOTICES.md)，不能将图片默认视为 ISC 授权。
 - [saul/demofile-net](https://github.com/saul/demofile-net) — MIT；通过 NuGet 包 `DemoFile.Game.Cs` 使用。
