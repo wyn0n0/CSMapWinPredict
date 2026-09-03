@@ -2,6 +2,40 @@
 
 读取 Counter-Strike 2 `.dem` 文件，在浏览器雷达中回放比赛状态，并导出数据训练当前回合的 T/CT 胜率基线。
 
+<<<<<<< HEAD
+=======
+## Demo 演示
+
+下图展示了 Mirage 回放界面：中央雷达呈现玩家位置、移动轨迹与投掷物状态，左右面板同步展示比分、关键事件和回合数据。
+
+![CS Demo Map Mirage 回放界面](docs/assets/demo-replay-dashboard.png)
+
+## 当前状态（2026-08-31）
+
+项目已具备 **Demo 回放与离线回合胜率训练管线**，尚未接入真实直播源、在线模型推理或前端胜率曲线。预测目标是当前回合 T 方是否获胜，不是整张地图或系列赛的胜负。
+
+| 能力 | 当前状态 |
+|---|---|
+| Demo 解析与雷达回放 | 已实现；后端完整解析后生成按需加载窗口 |
+| 训练数据与模型 | 本地 schema v3，68 场 Mirage、1,467 回合、128,441 条样本 |
+| 比赛级验证 | 63 场训练、5 场验证；逻辑回归 Log Loss 0.4810、Brier 0.1627、AUC 0.8406 |
+| 概率校准 | 已输出校准分箱评估，尚未拟合校准器 |
+| 回合／时钟修正 | 已完成上游源码核查与三场 Demo 诊断，尚未修改解析器或导出 v4 |
+| 实时预测 | 待实现实时输入、增量状态与特征、推理接口及页面展示 |
+
+最新指标仅描述固定保留比赛上的离线表现，不能当作生产可用性证明。现有数据已发现回合编号、计时及完整性语义需要复核；基础格式检查通过不代表比赛语义已正确。
+
+### 文档导航
+
+- [架构与当前边界](docs/architecture.md)
+- [68 场 Mirage 固定验证摘要](docs/training-report-68-matches.md)
+- [6 场初训历史报告](docs/preliminary-training-report.md)
+- [回合与时钟上游接口核查](docs/round-clock-upstream-review.md)
+- [v4 数据语义修正与迁移方案](docs/data-semantics-v4-plan.md)
+
+**保留现有 v3 数据和模型，不直接覆盖。** v4 将使用独立版本和输出目录；当前 CLI 仍只导出／训练 v3，不能仅修改输出文件名就得到 v4。
+
+>>>>>>> e60d55d (docs: add replay dashboard demo image)
 ## 当前能力
 
 - 使用 `DemoFile.Game.Cs` 解析 CS2 CSTV/GOTV 与 POV demo。
