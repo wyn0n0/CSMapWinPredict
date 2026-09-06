@@ -8,7 +8,10 @@ public sealed record DemoTimeline(
     IReadOnlyList<PlayerUtilityState> PlayerUtilityStates,
     IReadOnlyList<PlayerEquipmentState> PlayerEquipmentStates,
     IReadOnlyList<TimelineEvent> Events,
-    IReadOnlyList<RoundResult> RoundResults);
+    IReadOnlyList<RoundResult> RoundResults)
+{
+    public SemanticTimeline? Semantics { get; init; }
+}
 
 public sealed record DemoMetadata(
     string FileName,

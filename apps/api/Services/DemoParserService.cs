@@ -15,9 +15,12 @@ public sealed class DemoParserService
     public async Task<DemoTimeline> ParseAsync(
         Stream stream,
         string fileName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool collectSemantics = false,
+        int? stopAfterTick = null)
     {
         var demo = new CsDemoParser();
+        var semantics = collectSemantics ? new DemoSemanticCollector() : null;
         var frames = new List<DemoFrame>();
         var events = new List<TimelineEvent>();
         var roundResults = new List<RoundResult>();
@@ -54,6 +57,7 @@ public sealed class DemoParserService
 
         demo.Source1GameEvents.RoundStart += _ =>
         {
+            semantics?.Start();
             currentRoundStartTick = Math.Max(0, demo.CurrentDemoTick.Value);
             currentLiveStartTick = 0;
             roundCounter = Math.Max(roundCounter + 1, demo.GameRules.TotalRoundsPlayed + 1);
@@ -66,6 +70,7 @@ public sealed class DemoParserService
         };
         demo.Source1GameEvents.RoundFreezeEnd += _ =>
         {
+            semantics?.Live();
             currentLiveStartTick = Math.Max(0, demo.CurrentDemoTick.Value);
             AddEvent("round-live", "冻结时间结束", $"第 {Math.Max(1, roundCounter)} 回合");
         };
@@ -74,6 +79,7 @@ public sealed class DemoParserService
             var endTick = Math.Max(0, demo.CurrentDemoTick.Value);
             var winnerSide = RoundWinnerSide(e.Winner);
             var endReason = RoundEndReasonName(e.Reason);
+            semantics?.End(winnerSide, endReason);
             var isCompetitiveRound = !demo.GameRules.WarmupPeriod &&
                 currentLiveStartTick > 0 && endTick > currentLiveStartTick;
             if (!roundResultRecorded && isCompetitiveRound && winnerSide is not null)
@@ -91,6 +97,7 @@ public sealed class DemoParserService
             roundEnded = true;
             AddEvent("round-end", "回合结束", $"胜方 {winnerSide ?? "未知"} · 原因 {endReason}");
         };
+        demo.Source1GameEvents.PlayerDeath += e => semantics?.Death(e.Player?.SteamID.ToString());
         demo.Source1GameEvents.PlayerDeath += e =>
             AddEvent(
                 "kill",
@@ -119,7 +126,8 @@ public sealed class DemoParserService
         demo.OnCommandFinishPersistent += CaptureState;
 
         var reader = DemoFileReader.Create(demo, stream);
-        await reader.ReadAllAsync(cancellationToken);
+        try { await reader.ReadAllAsync(cancellationToken); }
+        catch (DemoPrefixCompleteException) when (stopAfterTick is not null) { }
 
         var finalTick = totalTicks > 0 ? totalTicks : Math.Max(0, demo.CurrentDemoTick.Value);
         FinalizeMissing(activeProjectiles, new HashSet<uint>(), finalTick + 1);
@@ -142,7 +150,8 @@ public sealed class DemoParserService
             playerUtilityStates,
             playerEquipmentStates,
             events.OrderBy(item => item.Tick).ToArray(),
-            roundResults.OrderBy(item => item.EndTick).ToArray());
+            roundResults.OrderBy(item => item.EndTick).ToArray())
+        { Semantics = semantics?.Finish() };
 
         void AddEvent(string type, string title, string? detail = null)
         {
@@ -153,8 +162,17 @@ public sealed class DemoParserService
         void CaptureState()
         {
             var tick = demo.CurrentDemoTick.Value;
+            if (stopAfterTick is { } limit && tick > limit)
+                throw new DemoPrefixCompleteException();
             if (tick < 0)
                 return;
+
+            if (semantics?.Command(demo) == true)
+            {
+                lastPlayerEquipment.Clear();
+                lastPlayerUtilities.Clear();
+                lastPlayerPositions.Clear();
+            }
 
             if (tick != lastUtilitySampledTick && tick % UtilitySampleStride == 0)
             {
@@ -162,7 +180,7 @@ public sealed class DemoParserService
                 CaptureUtilities(tick);
             }
 
-            if (tick == lastSampledTick || tick % PlayerSampleStride != 0)
+            if ((semantics is null && tick == lastSampledTick) || tick % PlayerSampleStride != 0)
                 return;
 
             lastSampledTick = tick;
@@ -196,16 +214,20 @@ public sealed class DemoParserService
                 })
                 .ToArray();
 
-            if (players.Length > 0)
+            if (players.Length > 0 || semantics is not null)
             {
                 var bomb = CaptureBomb(players);
-                frames.Add(new DemoFrame(
+                var frame = new DemoFrame(
                     tick,
                     tick / (double)TickRate,
                     players,
                     CaptureRound(tick, bomb.State),
                     bomb,
-                    CaptureZones(players)));
+                    CaptureZones(players));
+                if (semantics is not null && frames.Count > 0 && frames[^1].Tick == tick)
+                    frames[^1] = frame;
+                else frames.Add(frame);
+                semantics?.Capture(demo, frame);
             }
         }
 

@@ -30,35 +30,49 @@ apps/
 docs/
   architecture.md                    架构、边界与演进路线
   preliminary-training-report.md     6 场初训历史记录
-  training-report-68-matches.md       最新固定验证摘要
+  training-report-68-matches.md       v3 固定验证摘要
+  training-report-v4.md               v4 固定条件重训报告
   round-clock-upstream-review.md     上游接口与真实 Demo 核查
-  data-semantics-v4-plan.md           待实施的数据语义迁移方案
+  data-semantics-v4-plan.md           原始迁移方案；进展见 v4 实现与验收文档
 tools/
   train_win_baseline.py               v3 训练与比赛级验证
+  train_win_baseline_v4.py            v4 训练、校准选择与固定验证
   test_train_win_baseline.py          训练数据校验测试
+  test_train_win_baseline_v4.py       v4 训练数据与工件辅助测试
 ```
 
-## 当前状态（2026-08-31）
+## v4 语义修正（2026-09-06）
+
+已新增独立的回合身份、游戏时钟、阵容质量管理、v4 导出、真实 DEM 前缀验证和 v4 重训入口。旧回放 API、v3 导出和模型保持兼容；v4 不会输入旧模型。
+
+- [实现、字段定义与运行命令](docs/semantic-v4-implementation.md)
+- [真实 DEM 验收与迁移差异](docs/semantic-v4-validation.md)
+- [固定条件 v4 重训报告](docs/training-report-v4.md)
+
+新导出命令：`dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --export-win-data-v4 data/mirage datasets/mirage-v4-new-run`。输出必须是新目录；验收通过后再开发 v4 训练入口和推理展示。
+
+## v4 训练基准（2026-09-06）
 
 项目已具备 **Demo 回放与离线回合胜率训练管线**，尚未接入真实直播源、在线模型推理或前端胜率曲线。预测目标是当前回合 T 方是否获胜，不是整张地图或系列赛的胜负。
 
 | 能力 | 当前状态 |
 |---|---|
 | Demo 解析与雷达回放 | 已实现；后端完整解析后生成按需加载窗口 |
-| 训练数据与模型 | 本地 schema v3，68 场 Mirage、1,467 回合、128,441 条样本 |
-| 比赛级验证 | 63 场训练、5 场验证；逻辑回归 Log Loss 0.4810、Brier 0.1627、AUC 0.8406 |
-| 概率校准 | 已输出校准分箱评估，尚未拟合校准器 |
+| 训练数据与模型 | 本地 schema v4.2，68 场 Mirage、1,469 回合、128,683 条样本 |
+| 比赛级验证 | 63 场训练、5 场验证；逻辑回归 Log Loss 0.4776、Brier 0.1619、AUC 0.8420 |
+| 概率校准 | 训练集 OOF 比较 identity、sigmoid、isotonic；选择 identity |
 | 实时预测 | 待实现实时输入、增量状态与特征、推理接口及页面展示 |
 
 ### 文档导航
 
 - [架构与当前边界](docs/architecture.md)
 - [68 场 Mirage 固定验证摘要](docs/training-report-68-matches.md)
+- [schema v4.2 重训报告](docs/training-report-v4.md)
 - [6 场初训历史报告](docs/preliminary-training-report.md)
 - [回合与时钟上游接口核查](docs/round-clock-upstream-review.md)
 - [v4 数据语义修正与迁移方案](docs/data-semantics-v4-plan.md)
 
-**保留现有 v3 数据和模型，不直接覆盖。** v4 将使用独立版本和输出目录；当前 CLI 仍只导出／训练 v3，不能仅修改输出文件名就得到 v4。
+**保留现有 v3 数据和模型，不直接覆盖。** v4 使用独立版本、导出目录、训练入口和模型目录；v3 与 v4 特征不得交叉输入。
 
 ## Demo 演示
 
@@ -159,18 +173,16 @@ Schema v3 在因果 C4 状态变化、归一化队伍站位分散度、双方最
 
 ## 训练基线胜率模型
 
-训练工具要求 Python 3.11 或更高版本。安装固定版本依赖后，可以传入一个或多个 schema v3 JSONL：
+训练工具要求 Python 3.11 或更高版本。安装固定版本依赖后，v4 入口要求完整导出数据、导出 manifest、独立审计报告和固定验证名单：
 
-```powershell
+~~~powershell
 python -m pip install -r requirements-train.txt
-python tools/train_win_baseline.py `
-  --input "datasets\mirage-68-local-v3.jsonl" `
-  --output-dir "models\win-baseline-v3-new-run"
-```
+python tools/train_win_baseline_v4.py --input datasets/mirage-v4-20260906/samples.jsonl --manifest datasets/mirage-v4-20260906/manifest.json --comparison datasets/mirage-v4-20260906/comparison.json --validation-split models/win-baseline-v3-holdout-68-5/validation-split.json --v3-predictions models/win-baseline-v3-holdout-68-5/validation_predictions.jsonl --output-dir models/win-baseline-v4-new-run --threads 4 --folds 5 --seed 42
+~~~
 
-数据和模型不随仓库分发；以上输入路径指本地已导出的数据。每次训练请使用新的输出目录：当前训练脚本会写入同名工件，**不要将 `--output-dir` 指向需要保留的历史模型目录**。
+数据和模型不随仓库分发；以上输入路径指本地已导出的数据。v4 训练在输出目录已经存在时直接拒绝运行，并以临时目录写完全部文件后原子改名。每次训练仍应使用新的输出目录。
 
-也可以重复传入 `--validation-match-id`，将指定比赛完整保留为固定验证集：
+v3 入口继续保留用于复现历史模型，也可以重复传入 validation-match-id：
 
 ```powershell
 python tools/train_win_baseline.py `
@@ -180,22 +192,23 @@ python tools/train_win_baseline.py `
   --validation-match-id "<match-id-2>"
 ```
 
-CLI 会先验证 schema、重复样本、回合内标签一致性，以及每回合样本权重之和。未指定固定验证集时评估采用留一比赛交叉验证；指定后，两个模型及最终保存的模型都只拟合非验证比赛，并仅在完整保留的比赛上计算指标。两种模式都不会把同一个 `matchId` 的相邻时刻分到训练和测试两侧。输入特征排除了 `matchId`、tick、Demo 绝对时间、玩家身份、完整玩家数组和最终胜负标签。
+两个入口都会验证 schema、重复样本、回合内标签一致性和回合权重。v4 还要求语义版本为 mirage-semantics-v4.2、完整导出 manifest 与独立 comparison 审计通过；模型和校准只在训练比赛内部按 matchId 分组选择，固定留出比赛不会参与选择。输入特征排除了比赛/回合身份、tick、Demo 绝对时间、玩家身份、完整玩家/区域数组和最终胜负标签。
 
 输出目录包含：
 
-- `baseline.joblib`：当前正式选定的逻辑回归基线模型，供后续推理接口统一加载。
+- `baseline.joblib`：训练集 OOF 选出的基础模型与校准器统一包装，供后续推理接口加载。
 - `logistic.joblib`：同一逻辑回归模型的具名工件。
 - `lightgbm.joblib`：保留用于比较的 LightGBM 挑战模型，不作为当前默认基线。
-- `report.json` 和 `report.md`：评估协议、总体/逐场指标、校准分箱与特征重要性。
-- `oof_predictions.jsonl`：每个样本的严格样本外预测，可用于复核和绘制校准曲线。
+- `report.json` 和 `report.md`：评估协议、总体/逐场/切片指标、校准分箱与特征重要性。
+- `training_oof_predictions.jsonl`：训练比赛的严格 OOF 预测，可用于复核模型选择。
 - `validation_predictions.jsonl`：使用固定验证集时生成，只包含保留比赛的预测。
+- `model-manifest.json`、`feature-manifest.json` 和 `inference-fixtures.json`：数据/代码/工件哈希、特征契约与模型加载回放样例。
 
-当前代码通过 `SELECTED_BASELINE = "logistic"` 固定默认模型，并未实现每次训练自动择优；报告记录其实际验证 Log Loss。本次 68 场实验中逻辑回归也优于 LightGBM。报告的选择指标说明不应理解为自动发布或切换模型。
+v4 入口按训练集 5 折 OOF 加权 Log Loss 自动选择基础模型和校准方法，再在固定留出集上做一次评估。本次选择逻辑回归与 identity；训练完成不代表自动发布或切换回放服务模型。
 
 `models/` 和 `datasets/` 默认不提交到 Git，避免误传训练数据和二进制模型。少量比赛只能验证训练管线；需要更多独立比赛后，才能将这些指标作为泛化性能依据。
 
-最新的 68 场固定比赛验证见 [验证摘要](docs/training-report-68-matches.md)。[6 场初训报告](docs/preliminary-training-report.md) 作为历史记录保留，两次实验切分协议不同，不能直接用分数差声称性能提升。
+最新结果见 [v4 重训报告](docs/training-report-v4.md)。[v3 68 场验证摘要](docs/training-report-68-matches.md) 和 [6 场初训报告](docs/preliminary-training-report.md) 作为历史记录保留。
 
 ## 地图资源
 
@@ -214,7 +227,7 @@ dotnet build apps/api/CsDemoMap.Api.csproj
 npm run test:train
 ```
 
-现有后端数据管线检查主要使用合成时间线。上游核查中的三场 Demo 诊断是独立研究验证，尚未纳入自动回归测试；硬暂停、技术暂停恢复等场景仍需补充样本。
+现有后端数据管线检查主要使用合成时间线。现已补充语义状态/v4 导出测试和真实 DEM 前缀检查，见 v4 验收报告；硬暂停、技术暂停恢复等场景仍需补充样本。
 
 ## 参考与许可证
 

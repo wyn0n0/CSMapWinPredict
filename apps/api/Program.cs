@@ -26,6 +26,27 @@ if (args is ["--verify-win-data-pipeline"])
     return;
 }
 
+if (args is ["--verify-semantics"])
+{
+    SemanticsVerifier.Verify();
+    await V4DataVerifier.VerifyAsync();
+    return;
+}
+if (args is ["--export-win-data-v4", var v4Input, var v4Output])
+{
+    await WinDatasetV4Exporter.ExportAsync(v4Input, v4Output, CancellationToken.None);
+    return;
+}
+if (args is ["--verify-demo-prefix", var prefixPath, var prefixTick])
+{
+    await SemanticPrefixVerifier.VerifyAsync(prefixPath, int.Parse(prefixTick), CancellationToken.None);
+    return;
+}
+if (args is ["--trace-roster", var tracePath, var traceFrom, var traceTo])
+{
+    await DemoRosterTrace.RunAsync(tracePath, int.Parse(traceFrom), int.Parse(traceTo));
+    return;
+}
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseUrls("http://localhost:5088");

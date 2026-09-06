@@ -1,6 +1,6 @@
 # 架构与参考仓库分析
 
-状态更新：2026-08-31。当前实现为 Demo 回放与离线回合胜率训练；下文明确区分已有能力与待实施方案。最新模型结果见 [68 场验证摘要](training-report-68-matches.md)。
+状态更新：2026-09-06。独立 v4 语义导出、验收与同切分重训已完成，见 [实现说明](semantic-v4-implementation.md) 和 [v4 重训报告](training-report-v4.md)；以下 v3 结果及早期边界保留为迁移背景。当前实现为 Demo 回放与离线回合胜率训练；回放推理和实时源仍待实施。
 
 ## 1. 参考仓库结论
 
@@ -33,8 +33,8 @@
 - `DemoEvents.DemoFileInfo`：总 tick/时长元数据。
 - `Players -> PlayerPawn`：玩家状态与世界坐标。
 - `Source1GameEvents`：回合、击杀和炸弹事件。
-- `GameRules.RoundStartRoundNumber`、`TotalRoundsPlayed`、`WarmupPeriod`、`HasMatchStarted`：下一步修正正式回合编号与阶段的候选依据。
-- `CurrentGameTime`、`GameRules.RoundStartTime`、暂停字段与 `CPlantedC4` 双截止时间：下一步修正时钟语义的基础接口。
+- `GameRules.RoundStartRoundNumber`、`TotalRoundsPlayed`、`WarmupPeriod`、`HasMatchStarted`：独立 v4 路径确认正式回合编号与阶段的依据。
+- `CurrentGameTime`、`GameRules.RoundStartTime`、暂停字段与 `CPlantedC4` 双截止时间：独立 v4 路径修正时钟语义的基础接口。
 
 2026-08-31 已对照源码和本地 DLL 核验：demofile-net 0.44.1 对应 `fd59701a998cf30a46adc4942e063d90de73c07a`；cs-hud 对应 `5595dd02d67f0ca674d96d8c629e067ec6528c1b`。第一、二步不需要先升级依赖。三场诊断结果、事件顺序和暂停限制见 [接口核查](round-clock-upstream-review.md)。
 
@@ -121,12 +121,12 @@ DemoTimeline
 - 装备覆盖率以已经出现在快照中的玩家为分母，不代表阵容完整性。
 - 现有训练校验检查 schema 版本、重复键、标签和权重，但并非完整的比赛语义校验。
 
-## 7. 下一阶段：v4 迁移方案（尚未实施）
+## 7. v4 迁移路线（语义导出与重训已实施，推理待实施）
 
 1. 新增 `RoundStateTracker`，分离回合尝试 ID、正式回合号与作废状态；结合规则快照处理同一 command 的多个事件。
 2. 新增 `RoundClockResolver`，分离 Demo 时间、有效 live 时间、回合／爆炸／拆包倒计时；补充真实暂停样本，未知情况明确标记。
 3. 建立阵容与字段质量契约，再重新解析原始 Demo 导出独立 v4 数据；不在 v3 JSONL 上直接替换字段。
-4. 保留现有 v3 数据和模型；沿用原 63/5 比赛切分，在新旧共有样本及完整 v4 验证集上分别比较。
+4. 已保留现有 v3 数据和模型，并沿用原 63/5 比赛切分，在新旧共有样本及完整 v4 验证集上分别比较；结果见 [v4 重训报告](training-report-v4.md)。
 5. 数据语义通过验证后，再接入回放中的胜率推理与曲线，随后接真实直播源、增量状态、延迟与断线恢复。
 6. 持久化任务与 manifest、增加有界队列和 TTL 清理，并逐步实现增量解析和真实 Demo 集成测试。
 
