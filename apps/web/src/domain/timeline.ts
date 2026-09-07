@@ -173,6 +173,29 @@ export interface DemoTimeline {
   events: TimelineEvent[]
 }
 
+export interface WinPredictionPoint {
+  tick: number
+  timeSeconds: number
+  roundId: string
+  segmentId: number
+  roundNumber: number
+  phase: 'live' | 'post-plant' | string
+  tWin: number
+  ctWin: number
+}
+
+export interface WinPredictionManifest {
+  status: 'ready' | 'unavailable' | string
+  schemaVersion: number
+  semanticVersion: string
+  selectedModel: string | null
+  calibration: string | null
+  artifactSha256: string | null
+  sampleCount: number
+  sampleIntervalSeconds: number
+  error: string | null
+}
+
 export interface DemoManifest {
   id: string
   metadata: DemoMetadata
@@ -186,6 +209,7 @@ export interface DemoManifest {
   windowCount: number
   schemaVersion?: number
   roundResults?: RoundResult[]
+  winPrediction: WinPredictionManifest
 }
 
 export interface DemoWindow {
@@ -201,6 +225,7 @@ export interface DemoWindow {
   utilityEffects: UtilityEffectTrack[]
   playerUtilityStates: PlayerUtilityState[]
   playerEquipmentStates: PlayerEquipmentState[]
+  winPredictions: WinPredictionPoint[]
 }
 
 export function findTickIndex<T extends { tick: number }>(items: T[], tick: number): number {
@@ -214,6 +239,48 @@ export function findTickIndex<T extends { tick: number }>(items: T[], tick: numb
     else high = middle - 1
   }
   return high
+}
+
+export function winPredictionAt(
+  points: WinPredictionPoint[],
+  timeSeconds: number,
+  phase: string,
+  maxAgeSeconds = 1.5,
+): WinPredictionPoint | null {
+  if (phase !== 'live' && phase !== 'post-plant') return null
+  if (points.length === 0 || maxAgeSeconds < 0) return null
+
+  let low = 0
+  let high = points.length - 1
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2)
+    if (points[middle].timeSeconds <= timeSeconds) low = middle + 1
+    else high = middle - 1
+  }
+
+  if (high < 0) return null
+  const from = points[high]
+  const age = timeSeconds - from.timeSeconds
+  if (from.phase !== phase || age < 0 || age > maxAgeSeconds) return null
+
+  const to = points[high + 1]
+  const canInterpolate = to
+    && to.roundId === from.roundId
+    && to.segmentId === from.segmentId
+    && to.phase === from.phase
+    && to.timeSeconds > from.timeSeconds
+    && to.timeSeconds - from.timeSeconds <= maxAgeSeconds
+  if (!canInterpolate) return from
+
+  const amount = Math.min(1, Math.max(0,
+    (timeSeconds - from.timeSeconds) / (to.timeSeconds - from.timeSeconds)))
+  return {
+    ...from,
+    tick: Math.round(from.tick + (to.tick - from.tick) * amount),
+    timeSeconds,
+    tWin: from.tWin + (to.tWin - from.tWin) * amount,
+    ctWin: from.ctWin + (to.ctWin - from.ctWin) * amount,
+  }
 }
 
 export function utilityPointAt(points: UtilityPoint[], tick: number): UtilityPoint | null {

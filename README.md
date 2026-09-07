@@ -84,16 +84,34 @@ tools/
 
 - Node.js 20+
 - .NET SDK 10.0+（注意：仅安装 .NET Runtime 不能编译后端）
+- Python 3 与 `pip`（用于加载 v4 胜率模型）
 
 ## 启动
 
 ```bash
 npm install
 dotnet restore apps/api/CsDemoMap.Api.csproj
+python -m pip install -r requirements-inference.txt
 npm run dev
 ```
 
-打开 `http://localhost:5173`。前端会把 `/api` 代理到 `http://localhost:5088`。
+打开 `http://localhost:5173`。前端会把 `/api` 代理到 `http://localhost:5088`。API 启动时会自动创建 Python 推理子进程，无需单独启动模型服务。
+
+默认模型目录是 `models/win-baseline-v4-holdout-68-5-20260906`。该目录被 Git 忽略，需要使用本地训练产物；模型缺失或依赖不兼容时，API 仍可解析回放，manifest 和前端会明确显示预测不可用。可以在启动前覆盖运行配置：
+
+```powershell
+$env:WinInference__PythonExecutable = "python"
+$env:WinInference__ModelDirectory = "models/win-baseline-v4-holdout-68-5-20260906"
+npm run dev
+```
+
+模型状态可独立检查：
+
+```http
+GET /api/win-model/status
+```
+
+`status: ready` 时响应包含 schema、语义版本、模型、校准方法、工件哈希和 Python 运行时；不可用时返回 `status: unavailable` 或 `disabled` 以及 `error`。
 
 如果暂时没有 .NET SDK，可以只启动内置示例：
 
@@ -115,7 +133,9 @@ GET /api/demos/{id}/status
 GET /api/demos/{id}/windows/{index}
 ```
 
-上传完成后 API 返回 `202 Accepted`，页面会显示排队、解析、生成窗口和载入首屏等阶段。解析完成前仍可保留在示例数据界面；完成后只解压当前时间附近的数据，不再一次传输并反序列化整场 JSON。窗口带有前后 2 秒重叠，跨边界时玩家轨迹、投掷物、持续效果、经济和装备状态不会断层。
+上传完成后 API 返回 `202 Accepted`，页面会显示排队、解析、计算胜率、生成窗口和载入首屏等阶段。解析完成前仍可保留在示例数据界面；完成后只解压当前时间附近的数据，不再一次传输并反序列化整场 JSON。窗口带有前后 2 秒重叠，跨边界时玩家轨迹、投掷物、持续效果、经济、装备状态和胜率不会断层。
+
+`status` 响应的 `manifest.winPrediction` 记录模型状态与样本总数；每个窗口的 `winPredictions[]` 保存约 1 秒间隔的 T/CT 回合胜率。前端只在 `live` 和 `post-plant` 阶段显示当前回合结果，在相邻同阶段样本间插值；冻结、结束、跨阶段或样本过期时不沿用旧值。
 
 ### 从本地目录离线导入
 

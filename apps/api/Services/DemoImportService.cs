@@ -9,7 +9,7 @@ namespace CsDemoMap.Api.Services;
 
 public sealed class DemoImportService : BackgroundService
 {
-    public const int SchemaVersion = 2;
+    public const int SchemaVersion = 3;
     public const int WindowSeconds = 30;
     private const int WindowOverlapSeconds = 2;
 
@@ -21,15 +21,18 @@ public sealed class DemoImportService : BackgroundService
     });
     private readonly ConcurrentDictionary<string, ImportJob> jobs = new(StringComparer.Ordinal);
     private readonly DemoParserService parser;
+    private readonly WinTimelinePredictionService predictor;
     private readonly ILogger<DemoImportService> logger;
     private readonly string storageRoot;
 
     public DemoImportService(
         DemoParserService parser,
+        WinTimelinePredictionService predictor,
         IWebHostEnvironment environment,
         ILogger<DemoImportService> logger)
     {
         this.parser = parser;
+        this.predictor = predictor;
         this.logger = logger;
         storageRoot = Path.Combine(environment.ContentRootPath, "data", "imports");
         Directory.CreateDirectory(storageRoot);
@@ -143,10 +146,17 @@ public sealed class DemoImportService : BackgroundService
                 FileShare.Read,
                 1024 * 1024,
                 FileOptions.Asynchronous | FileOptions.SequentialScan);
-            var timeline = await parser.ParseAsync(source, job.FileName, cancellationToken);
+            var timeline = await parser.ParseAsync(
+                source,
+                job.FileName,
+                cancellationToken,
+                collectSemantics: true);
             var parseSeconds = stopwatch.Elapsed.TotalSeconds;
+            job.Status = "predicting";
+            var winPredictions = await predictor.PredictAsync(timeline, cancellationToken);
             job.Status = "chunking";
-            job.Manifest = await WriteWindowsAsync(job, timeline, cancellationToken);
+            job.Manifest = await WriteWindowsAsync(
+                job, timeline, winPredictions, cancellationToken);
             stopwatch.Stop();
             job.Status = "completed";
 
@@ -188,6 +198,7 @@ public sealed class DemoImportService : BackgroundService
     private static async Task<DemoManifest> WriteWindowsAsync(
         ImportJob job,
         DemoTimeline timeline,
+        WinTimelinePredictionResult winPredictions,
         CancellationToken cancellationToken)
     {
         var duration = Math.Max(0, timeline.Metadata.DurationSeconds);
@@ -230,6 +241,9 @@ public sealed class DemoImportService : BackgroundService
                 .OrderBy(state => state.Tick)
                 .ToArray();
 
+            var windowPredictions = winPredictions.Points
+                .Where(point => point.TimeSeconds >= dataFrom && point.TimeSeconds <= dataTo)
+                .ToArray();
             var window = new DemoWindow(
                 index,
                 coreFrom,
@@ -242,7 +256,8 @@ public sealed class DemoImportService : BackgroundService
                 utilityTracks,
                 utilityEffects,
                 utilityStates,
-                equipmentStates);
+                equipmentStates,
+                windowPredictions);
             await WriteBrotliJsonAsync(WindowPath(job.Directory, index), window, cancellationToken);
         }
 
@@ -258,7 +273,8 @@ public sealed class DemoImportService : BackgroundService
             WindowSeconds,
             windowCount,
             SchemaVersion,
-            timeline.RoundResults);
+            timeline.RoundResults,
+            winPredictions.Manifest);
     }
 
     private static IReadOnlyList<UtilityPoint> SliceUtilityPoints(

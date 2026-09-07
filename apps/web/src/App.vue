@@ -3,11 +3,13 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import BrandMark from './components/BrandMark.vue'
 import EventFeed from './components/EventFeed.vue'
 import RadarMap from './components/RadarMap.vue'
-import { sampleTimeline } from './data/sampleTimeline'
+import WinProbabilityCard from './components/WinProbabilityCard.vue'
+import { sampleTimeline, sampleWinPredictions } from './data/sampleTimeline'
 import {
   findFrameIndex,
   findTickIndex,
   formatTime,
+  winPredictionAt,
   windowIndexAt,
   type DemoManifest,
   type DemoTimeline,
@@ -45,6 +47,7 @@ const stageLabels: Record<ImportStage, string> = {
   uploading: '正在上传…',
   queued: '等待解析…',
   parsing: '正在解析…',
+  predicting: '正在计算胜率…',
   chunking: '正在生成窗口…',
   loading: '正在载入首屏…',
 }
@@ -132,6 +135,33 @@ const teamStats = computed(() => {
     }
   }
   return { t: summarize('T'), ct: summarize('CT') }
+})
+const predictionPoints = computed(() => activeWindow.value?.winPredictions
+  ?? (manifest.value ? [] : sampleWinPredictions))
+const currentWinPrediction = computed(() => winPredictionAt(
+  predictionPoints.value,
+  currentTime.value,
+  currentFrame.value?.round.phase ?? '',
+))
+const winPredictionState = computed<'ready' | 'waiting' | 'unavailable'>(() => {
+  if (manifest.value && manifest.value.winPrediction?.status !== 'ready') return 'unavailable'
+  return currentWinPrediction.value ? 'ready' : 'waiting'
+})
+const winPredictionStatusLabel = computed(() => {
+  if (winPredictionState.value === 'unavailable') return '模型当前不可用'
+  if (winPredictionState.value === 'ready') return '实时更新'
+  const phase = currentFrame.value?.round.phase ?? ''
+  if (phase !== 'live' && phase !== 'post-plant') return `${roundPhaseLabel.value}阶段不预测`
+  if (manifest.value?.winPrediction?.sampleCount === 0) return '没有有效回合预测'
+  return '等待当前阶段采样'
+})
+const winPredictionSourceLabel = computed(() => {
+  if (!manifest.value) return '示例曲线 · 非模型输出'
+  const metadata = manifest.value.winPrediction
+  if (!metadata) return '此 Demo 没有预测数据'
+  if (metadata.status !== 'ready') return metadata.error ?? '预测服务未返回模型结果'
+  const model = metadata.selectedModel ?? metadata.semanticVersion
+  return `${model} · ${metadata.sampleIntervalSeconds}s 采样`
 })
 
 function togglePlayback() {
@@ -372,6 +402,12 @@ onBeforeUnmount(() => {
               <b>{{ teamStats.ct.alive }}</b>
             </div>
           </div>
+          <WinProbabilityCard
+            :prediction="currentWinPrediction"
+            :state="winPredictionState"
+            :status-label="winPredictionStatusLabel"
+            :source-label="winPredictionSourceLabel"
+          />
         </section>
 
         <section class="settings-panel panel">

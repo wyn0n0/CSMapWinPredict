@@ -32,6 +32,11 @@ if (args is ["--verify-semantics"])
     await V4DataVerifier.VerifyAsync();
     return;
 }
+if (args is ["--verify-win-inference"])
+{
+    await WinInferenceVerifier.VerifyAsync();
+    return;
+}
 if (args is ["--export-win-data-v4", var v4Input, var v4Output])
 {
     await WinDatasetV4Exporter.ExportAsync(v4Input, v4Output, CancellationToken.None);
@@ -60,6 +65,11 @@ builder.Services.Configure<FormOptions>(options =>
 builder.Services.AddSingleton<DemoParserService>();
 builder.Services.AddSingleton<DemoImportService>();
 builder.Services.AddSingleton<OfflineDemoCatalog>();
+builder.Services.Configure<WinInferenceOptions>(
+    builder.Configuration.GetSection(WinInferenceOptions.SectionName));
+builder.Services.AddSingleton<WinInferenceClient>();
+builder.Services.AddSingleton<WinTimelinePredictionService>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<WinInferenceClient>());
 builder.Services.AddHostedService(provider => provider.GetRequiredService<DemoImportService>());
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
     policy.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
@@ -73,6 +83,16 @@ app.MapGet("/api/health", () => Results.Ok(new
     parser = "DemoFile.Game.Cs",
     sampleRate = DemoParserService.SampleRate
 }));
+
+app.MapGet("/api/win-model/status", (WinInferenceClient inference) =>
+{
+    var status = inference.GetStatus();
+    return Results.Json(
+        status,
+        statusCode: status.Ready
+            ? StatusCodes.Status200OK
+            : StatusCodes.Status503ServiceUnavailable);
+});
 
 app.MapGet("/api/demos/offline", (OfflineDemoCatalog catalog) =>
 {

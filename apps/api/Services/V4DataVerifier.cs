@@ -7,7 +7,15 @@ internal static class V4DataVerifier
 {
     public static async Task VerifyAsync()
     {
-        var timeline = Timeline(9000);
+        var timeline = CreateTimeline(9000);
+        var built = new WinFeatureSampleBuilder().Build(timeline);
+        Check(built.Samples.Count == 2, "shared builder sample count");
+        Check(built.Samples.All(sample => sample.RoundId == "s0-a2" && sample.RoundNumber == 1),
+            "shared builder identity");
+        Check(built.Targets["s0-a2"] == new WinTrainingTarget(1, 2), "training target separated");
+        Check(built.Report.RowCount == 2 && built.Report.ExportedRounds == 1, "shared builder report");
+        Check(built.Samples[0].GetType().GetProperty("LabelTWin") is null,
+            "inference sample excludes label");
         using var writer = new StringWriter();
         await WinDatasetV4Exporter.WriteTimelineAsync(timeline, "match", writer, CancellationToken.None);
         var rows = writer.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
@@ -17,10 +25,12 @@ internal static class V4DataVerifier
         Check(rows.Sum(r => (double)r["sampleWeight"]!) == 1, "v4 round weights");
         Check(rows[0]["features"]!["elapsedSeconds"] is null &&
             (double)rows[0]["features"]!["clock"]!["liveElapsedSeconds"]! == 0, "v4 explicit clock");
+        Check(JsonNode.DeepEquals(built.Samples[0].Features, rows[0]["features"]),
+            "exporter uses shared feature node");
         Check((int)rows[0]["features"]!["t"]!["totalMoney"]! == 1000, "future money excluded");
         Check(!writer.ToString().Contains("playerId") && !writer.ToString().Contains("carrierId"), "no identity features");
         using var changed = new StringWriter();
-        await WinDatasetV4Exporter.WriteTimelineAsync(Timeline(99000), "match", changed, CancellationToken.None);
+        await WinDatasetV4Exporter.WriteTimelineAsync(CreateTimeline(99000), "match", changed, CancellationToken.None);
         var firstChanged = JsonNode.Parse(changed.ToString().Split(Environment.NewLine)[0])!;
         Check(JsonNode.DeepEquals(rows[0]["features"], firstChanged["features"]), "future state does not change historical v4 features");
 
@@ -52,12 +62,12 @@ internal static class V4DataVerifier
         var missingRow = JsonNode.Parse(missingWriter.ToString().Split(Environment.NewLine)[0])!;
         Check(missingRow["features"]!["baseline"]!["nearestOpponentDistance"] is null,
             "unknown positions yield null distances without nonfinite JSON");
-        Console.WriteLine("V4 export checks passed: 9");
+        Console.WriteLine("V4 export checks passed: 15");
         static void Check(bool condition, string message)
         { if (!condition) throw new InvalidOperationException(message); }
     }
 
-    private static DemoTimeline Timeline(int futureMoney)
+    internal static DemoTimeline CreateTimeline(int futureMoney)
     {
         var players = new[]
         {

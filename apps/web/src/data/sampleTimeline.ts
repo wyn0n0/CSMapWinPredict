@@ -9,6 +9,7 @@ import type {
   Team,
   UtilityAreaPoint,
   UtilityPoint,
+  WinPredictionPoint,
 } from '../domain/timeline'
 
 interface SamplePlayer {
@@ -35,6 +36,29 @@ const samplePlayers: SamplePlayer[] = [
 
 const duration = 90
 const sampleRate = 4
+
+function sampleTWin(timeSeconds: number): number {
+  const opening = .46 + Math.sin(timeSeconds / 7) * .035
+  const afterFirstPick = timeSeconds >= 62 ? .18 : 0
+  const tradedBack = timeSeconds >= 68 ? -.12 : 0
+  const postPlant = timeSeconds >= 74 ? .18 + Math.min(.1, (timeSeconds - 74) * .006) : 0
+  return Math.min(.92, Math.max(.08, opening + afterFirstPick + tradedBack + postPlant))
+}
+
+export const sampleWinPredictions: WinPredictionPoint[] = Array.from({ length: duration }, (_, second) => {
+  const tWin = sampleTWin(second)
+  return {
+    tick: second * 64,
+    timeSeconds: second,
+    roundId: 'sample-round-12',
+    segmentId: 0,
+    roundNumber: 12,
+    phase: second >= 74 ? 'post-plant' : 'live',
+    tWin,
+    ctWin: 1 - tWin,
+  }
+})
+
 const frames: DemoFrame[] = Array.from({ length: duration * sampleRate + 1 }, (_, index) => {
   const timeSeconds = index / sampleRate
   const progress = Math.min(1, timeSeconds / 72)

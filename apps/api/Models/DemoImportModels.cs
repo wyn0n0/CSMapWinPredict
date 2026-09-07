@@ -12,7 +12,8 @@ public sealed record DemoManifest(
     int WindowSeconds,
     int WindowCount,
     int SchemaVersion,
-    IReadOnlyList<RoundResult> RoundResults);
+    IReadOnlyList<RoundResult> RoundResults,
+    WinPredictionManifest WinPrediction);
 
 public sealed record DemoWindow(
     int Index,
@@ -26,7 +27,8 @@ public sealed record DemoWindow(
     IReadOnlyList<UtilityTrack> UtilityTracks,
     IReadOnlyList<UtilityEffectTrack> UtilityEffects,
     IReadOnlyList<PlayerUtilityState> PlayerUtilityStates,
-    IReadOnlyList<PlayerEquipmentState> PlayerEquipmentStates);
+    IReadOnlyList<PlayerEquipmentState> PlayerEquipmentStates,
+    IReadOnlyList<WinPredictionPoint> WinPredictions);
 
 public sealed record DemoImportAccepted(string Id, string Status);
 

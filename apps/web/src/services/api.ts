@@ -30,7 +30,7 @@ export interface OfflineDemoCatalog {
   files: OfflineDemoFile[]
 }
 
-export type ImportStage = 'uploading' | 'queued' | 'parsing' | 'chunking' | 'loading'
+export type ImportStage = 'uploading' | 'queued' | 'parsing' | 'predicting' | 'chunking' | 'loading'
 
 export async function importDemo(
   file: File,
@@ -94,6 +94,7 @@ export async function loadDemoWindow(id: string, index: number): Promise<DemoWin
     utilityEffects: window.utilityEffects ?? [],
     playerUtilityStates: window.playerUtilityStates ?? [],
     playerEquipmentStates: window.playerEquipmentStates ?? [],
+    winPredictions: window.winPredictions ?? [],
   }
 }
 
@@ -108,7 +109,7 @@ async function readJson<T>(response: Response, fallback: string): Promise<T> {
 }
 
 function normalizeStage(status: string): ImportStage {
-  return status === 'queued' || status === 'parsing' || status === 'chunking' ? status : 'queued'
+  return status === 'queued' || status === 'parsing' || status === 'predicting' || status === 'chunking' ? status : 'queued'
 }
 
 function delay(milliseconds: number) {

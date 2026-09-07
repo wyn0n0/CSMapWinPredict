@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findFrameIndex, findTickIndex, formatTime, utilityPointAt, windowIndexAt, type DemoFrame, type UtilityPoint } from './timeline'
+import { findFrameIndex, findTickIndex, formatTime, utilityPointAt, windowIndexAt, winPredictionAt, type DemoFrame, type UtilityPoint, type WinPredictionPoint } from './timeline'
 
 const frames = [0, 0.5, 1, 1.5].map((timeSeconds, index): DemoFrame => ({
   tick: index * 32,
@@ -44,4 +44,25 @@ describe('timeline utilities', () => {
     expect(windowIndexAt(30, 30, 4)).toBe(1)
     expect(windowIndexAt(999, 30, 4)).toBe(3)
   })
-})
+
+  it('interpolates fresh predictions only within one round phase', () => {
+    const predictions: WinPredictionPoint[] = [
+      { tick: 640, timeSeconds: 10, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'live', tWin: .4, ctWin: .6 },
+      { tick: 704, timeSeconds: 11, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'live', tWin: .6, ctWin: .4 },
+      { tick: 768, timeSeconds: 12, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'post-plant', tWin: .8, ctWin: .2 },
+    ]
+
+    expect(winPredictionAt(predictions, 10.5, 'live')).toMatchObject({ tWin: .5, ctWin: .5, tick: 672 })
+    expect(winPredictionAt(predictions, 11.5, 'post-plant')).toBeNull()
+    expect(winPredictionAt(predictions, 12, 'post-plant')).toMatchObject({ tWin: .8, ctWin: .2 })
+  })
+
+  it('does not show stale predictions outside active round phases', () => {
+    const predictions: WinPredictionPoint[] = [
+      { tick: 640, timeSeconds: 10, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'live', tWin: .4, ctWin: .6 },
+    ]
+
+    expect(winPredictionAt(predictions, 12, 'live')).toBeNull()
+    expect(winPredictionAt(predictions, 10.2, 'freeze')).toBeNull()
+    expect(winPredictionAt(predictions, 9.9, 'live')).toBeNull()
+  })})

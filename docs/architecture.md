@@ -1,6 +1,6 @@
 # 架构与参考仓库分析
 
-状态更新：2026-09-06。独立 v4 语义导出、验收与同切分重训已完成，见 [实现说明](semantic-v4-implementation.md) 和 [v4 重训报告](training-report-v4.md)；以下 v3 结果及早期边界保留为迁移背景。当前实现为 Demo 回放与离线回合胜率训练；回放推理和实时源仍待实施。
+状态更新：2026-09-07。独立 v4 语义导出、验收、同切分重训和回放胜率推理均已完成，见 [实现说明](semantic-v4-implementation.md) 和 [v4 重训报告](training-report-v4.md)；以下 v3 结果及早期边界保留为迁移背景。当前实现可在导入 Demo 后按回合阶段生成并显示秒级胜率；真实直播源仍待实施。
 
 ## 1. 参考仓库结论
 
@@ -52,31 +52,40 @@ DemoFile.Game.Cs
 DemoParserService -- 玩家/回合/C4 8 Hz + 道具 16 Hz 抽样 + 事件归一化
    |
    v
+WinFeatureSampleBuilder -- schema v4.2 时点特征
+   |
+   v
+WinInferenceClient -- 托管 Python 子进程 + 模型契约/工件自检
+   |
+   v
+WinTimelinePredictionService -- live / post-plant 约 1 Hz 胜率点
+   |
+   v
 DemoImportService -- 单工作线程队列 + 30 秒窗口 + Brotli 落盘
    |
    v
-manifest + 当前/预取窗口 JSON
+manifest + 当前/预取窗口 JSON（含 winPredictions）
    |
    v
 Vue playback state -- 最近 3 个窗口缓存
    |
    v
-SVG radar + timeline + event feed
+SVG radar + timeline + event feed + 实时胜率卡片
 ```
 
 前端不知道 demofile-net 类型，后端也不知道 SVG 或地图皮肤。
 
-离线训练使用另一条已经实现的链路：
+离线训练使用独立的 v4 链路：
 
 ```text
 DemoTimeline
-  -> WinDatasetExporter + AsOfTickFeatureBuilder
-  -> schema v3 JSONL（live / post-plant 秒级样本）
-  -> train_win_baseline.py（按比赛切分）
-  -> baseline.joblib + 模型对比与验证报告
+  -> WinDatasetV4Exporter + WinFeatureSampleBuilder
+  -> schema v4.2 JSONL（live / post-plant 秒级样本）
+  -> train_win_baseline_v4.py（固定比赛切分）
+  -> baseline.joblib + 模型清单、固化推理样例与验证报告
 ```
 
-两条链路目前尚未通过推理服务连接：API 没有模型加载或胜率预测端点，前端没有胜率曲线。训练标签只表示当前回合 T 方是否获胜。
+训练和回放推理复用同一个 `WinFeatureSampleBuilder` 特征顺序。API 启动时验证模型清单、依赖版本、工件哈希和固化推理样例；验证失败会保留回放功能，并把预测状态标为不可用。训练标签和页面概率都以当前回合 T 方是否获胜为目标。
 
 ## 3. 时间线契约
 
@@ -90,6 +99,8 @@ DemoTimeline
 - `playerUtilityStates[]`：仅在变化时记录的玩家完整道具库存。
 - `playerEquipmentStates[]`：仅在变化时记录金钱、护甲、头盔、拆弹器、装备价值、本回合花费，以及带弹药量的完整装备。
 - `events[]`：tick、秒数、事件类型、标题与描述。
+- `manifest.winPrediction`：推理状态、schema/语义版本、模型、校准、工件哈希、样本数、采样间隔和错误原因。
+- `windows[].winPredictions[]`：tick、Demo 秒数、回合尝试 ID、segment、正式回合号、阶段和 T/CT 胜率。
 
 导入完成后 `DemoManifest` 保存全局元数据、事件和总计数；`DemoWindow` 保存一个 30 秒主体窗口及前后 2 秒重叠，并带有 `firstFrameIndex`，因此前端在只持有局部帧时仍能显示全局帧号。
 
@@ -102,6 +113,8 @@ DemoTimeline
 - 单工作线程主动限制并发解析，代价是多文件同时上传时会排队。
 - 任务状态只在进程内，窗口只在本机磁盘；重启恢复、TTL 清理和多实例共享尚未实现。
 - 玩家 8 Hz 对战术移动回放通常足够，道具单独用 16 Hz 并由前端插值。
+- 胜率约 1 Hz 采样，前端只在同一回合 segment 和同一阶段的相邻点间插值；跨阶段、冻结、结束或样本过期时显示空状态。
+- Python 推理由 API 托管为单个长期子进程，批量请求上限为 512；启动自检失败时不阻断 Demo 解析。
 - Simple Radar 当前覆盖 Cache、Dust II、Mirage 和 Nuke；其他地图仍回退到 SVG 示意底图。
 
 ## 5. Mirage 历史回放实测
@@ -113,6 +126,13 @@ DemoTimeline
 - 扩充数据后仍生成 136 个窗口，Brotli 文件总计 8,931,240 bytes；浏览器继续只加载当前窗口和少量缓存。
 - 在真实页面 100 秒显示“A Site 正在下包”，102 秒切换为“A 区已安放”，145 秒显示“已爆炸”，200 秒进入第 2 回合；经济、装备和区域人数同步变化。
 
+2026-09-07 使用 `furia-vs-pain-m1-mirage.dem` 完成胜率端到端验收：
+
+- 2,124.92 秒回放生成 71 个窗口和 1,282 个胜率点，模型为 `logistic`，语义版本为 `mirage-semantics-v4.2`。
+- 页面在 163.125 秒显示 T 28% / CT 72%，在 731.875 秒下包后显示 T 11% / CT 89%，与窗口 API 原始概率取整一致。
+- 179.125 秒窗口边界附近继续显示当前概率；4.625 秒冻结阶段不显示旧概率。
+- 禁用推理后同一 Demo 仍完成导入，manifest 返回 `unavailable`、0 个预测点和错误原因，页面显示“模型当前不可用”。
+
 ## 6. 已确认的语义风险
 
 - 事件累计编号与游戏正式回合号没有分离；额外 RoundStart 可能造成漂移。
@@ -121,13 +141,13 @@ DemoTimeline
 - 装备覆盖率以已经出现在快照中的玩家为分母，不代表阵容完整性。
 - 现有训练校验检查 schema 版本、重复键、标签和权重，但并非完整的比赛语义校验。
 
-## 7. v4 迁移路线（语义导出与重训已实施，推理待实施）
+## 7. v4 迁移路线
 
 1. 新增 `RoundStateTracker`，分离回合尝试 ID、正式回合号与作废状态；结合规则快照处理同一 command 的多个事件。
 2. 新增 `RoundClockResolver`，分离 Demo 时间、有效 live 时间、回合／爆炸／拆包倒计时；补充真实暂停样本，未知情况明确标记。
 3. 建立阵容与字段质量契约，再重新解析原始 Demo 导出独立 v4 数据；不在 v3 JSONL 上直接替换字段。
 4. 已保留现有 v3 数据和模型，并沿用原 63/5 比赛切分，在新旧共有样本及完整 v4 验证集上分别比较；结果见 [v4 重训报告](training-report-v4.md)。
-5. 数据语义通过验证后，再接入回放中的胜率推理与曲线，随后接真实直播源、增量状态、延迟与断线恢复。
+5. 已接入回放胜率推理、窗口传输和前端显示；后续接真实直播源、增量状态、延迟与断线恢复。
 6. 持久化任务与 manifest、增加有界队列和 TTL 清理，并逐步实现增量解析和真实 Demo 集成测试。
 
 完整字段方案、迁移保护与验收门槛见 [v4 数据语义方案](data-semantics-v4-plan.md)。训练 schema v3/v4 与回放窗口 schema 是不同契约，不能混同版本。
