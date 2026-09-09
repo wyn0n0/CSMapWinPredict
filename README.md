@@ -40,7 +40,7 @@ The API owns one long-lived Python inference subprocess. At startup it validates
 - Python 3 and pip for model inference
 - A local schema v4.2 model bundle when real predictions are required
 
-The default model directory is models/win-baseline-v4-holdout-68-5-20260906. Model bundles, datasets, and demo files are intentionally ignored by Git.
+The default model directory is models/win-baseline-v4-holdout-87-8-20260908. Model bundles, datasets, and demo files are intentionally ignored by Git.
 
 ## Quick start
 
@@ -66,7 +66,7 @@ Before starting the API, these optional environment variables override the defau
 
 ~~~powershell
 $env:WinInference__PythonExecutable = "python"
-$env:WinInference__ModelDirectory = "models/win-baseline-v4-holdout-68-5-20260906"
+$env:WinInference__ModelDirectory = "models/win-baseline-v4-holdout-87-8-20260908"
 npm run dev
 ~~~
 
@@ -129,11 +129,18 @@ python -m pip install -r requirements-train.txt
 ~~~
 
 ~~~powershell
-dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --export-win-data-v4 data/mirage datasets/mirage-v4-new-run
-python tools/train_win_baseline_v4.py --input datasets/mirage-v4-20260906/samples.jsonl --manifest datasets/mirage-v4-20260906/manifest.json --comparison datasets/mirage-v4-20260906/comparison.json --validation-split models/win-baseline-v3-holdout-68-5/validation-split.json --v3-predictions models/win-baseline-v3-holdout-68-5/validation_predictions.jsonl --output-dir models/win-baseline-v4-new-run --threads 4 --folds 5 --seed 42
+dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --export-win-data-v4 data/mirage datasets/mirage-v4-20260908-87
+python tools/audit_win_v4.py --v3 datasets/mirage-68-local-v3.jsonl --v4-dir datasets/mirage-v4-20260908-87 --output datasets/mirage-v4-20260908-87/comparison.json
+python tools/train_win_baseline_v4.py --input datasets/mirage-v4-20260908-87/samples.jsonl --manifest datasets/mirage-v4-20260908-87/manifest.json --comparison datasets/mirage-v4-20260908-87/comparison.json --validation-split datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json --output-dir models/win-baseline-v4-holdout-87-8-20260908 --threads 4 --folds 5 --seed 42
 ~~~
 
 Use a new output directory for every export and training run. Historical v3 data and models are retained only for reproducibility and must not be mixed with v4 inputs or model bundles.
+
+### Current model baseline
+
+The current local bundle was trained on 87 Mirage matches (1,899 completed rounds) with 79 matches used for training and 8 held out by match for evaluation. Model and calibration selection used five-fold, match-grouped out-of-fold weighted log loss on the training matches only. The selected bundle is `logistic + sigmoid`.
+
+On the fixed held-out matches, it achieved log loss **0.4682**, Brier score **0.1585**, ROC-AUC **0.8423**, accuracy **0.7691**, and ECE-10 **0.0381**. These are validation results for Mirage only, not a guarantee for unseen matches, other maps, or the opening seconds of a round. See the [87-match v4.2 training report](docs/training-report-v4-87-matches.md) for the split, model comparison, and reproduction details.
 
 ## Validation
 
@@ -155,6 +162,7 @@ The latest end-to-end verification imported furia-vs-pain-m1-mirage.dem: 2,124.9
 - [Architecture and runtime boundaries](docs/architecture.md)
 - [Schema v4.2 implementation](docs/semantic-v4-implementation.md)
 - [Semantic validation](docs/semantic-v4-validation.md)
+- [Latest 87-match v4.2 training report](docs/training-report-v4-87-matches.md)
 - [v4 training report](docs/training-report-v4.md)
 - [68-match historical validation summary](docs/training-report-68-matches.md)
 - [Round and clock upstream review](docs/round-clock-upstream-review.md)
