@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getMapConfig, worldToMap } from '../domain/maps'
+import { getMapConfig, worldToMap, worldYawToMapRotation } from '../domain/maps'
 import {
   findTickIndex,
   utilityPointAt,
@@ -195,7 +195,7 @@ function inventoryOffset(index: number, length: number): number {
       </g>
 
       <g v-for="player in players" :key="player.id" :transform="`translate(${player.point.x} ${player.point.y})`" :class="['player', `team-${player.team.toLowerCase()}`, { dead: !player.alive }]">
-        <g :transform="`rotate(${player.yaw})`" filter="url(#player-shadow)">
+        <g :transform="`rotate(${worldYawToMapRotation(player.yaw)})`" filter="url(#player-shadow)">
           <path v-if="player.alive" d="M0-24 13 9 0 5-13 9Z" />
           <circle v-else r="11" />
           <path v-if="!player.alive" d="M-6-6 6 6M6-6-6 6" class="death-cross" />

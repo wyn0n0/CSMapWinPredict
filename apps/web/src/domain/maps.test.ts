@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mapConfigs, mapToWorld, worldToMap } from './maps'
+import { mapConfigs, mapToWorld, worldToMap, worldYawToMapRotation } from './maps'
 
 describe('overview coordinate conversion', () => {
   it('maps the overview origin to pixel zero', () => {
@@ -16,3 +16,14 @@ describe('overview coordinate conversion', () => {
   })
 })
 
+describe('world yaw conversion', () => {
+  it.each([
+    { yaw: 0, rotation: 90 },
+    { yaw: 90, rotation: 0 },
+    { yaw: 180, rotation: 270 },
+    { yaw: -90, rotation: 180 },
+    { yaw: 450, rotation: 0 },
+  ])('maps world yaw $yaw to SVG rotation $rotation', ({ yaw, rotation }) => {
+    expect(worldYawToMapRotation(yaw)).toBe(rotation)
+  })
+})

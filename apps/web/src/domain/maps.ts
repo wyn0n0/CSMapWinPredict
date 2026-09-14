@@ -70,6 +70,13 @@ export function worldToMap(point: MapPoint, config: MapConfig): MapPoint {
   }
 }
 
+export function worldYawToMapRotation(yaw: number): number {
+  // Source yaw is zero on +X and increases toward +Y. The SVG marker starts
+  // pointing up and positive SVG rotation is clockwise on the screen.
+  const rotation = 90 - yaw
+  return ((rotation % 360) + 360) % 360
+}
+
 export function mapToWorld(point: MapPoint, config: MapConfig): MapPoint {
   return {
     x: config.posX + point.x * config.scale,
