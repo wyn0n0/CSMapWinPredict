@@ -11,6 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="SituationRules\*.json" />
+    <EmbeddedResource Include="Features\Situation\Analysis\Rules\*.json">
+      <LogicalName>CsDemoMap.Api.SituationRules.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

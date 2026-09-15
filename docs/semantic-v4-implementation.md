@@ -37,10 +37,10 @@ npm run test:semantics
 npm run test:audit
 
 # 输出必须是不存在的新目录；原有目录不会覆盖。
-dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --export-win-data-v4 data/mirage datasets/mirage-v4-new-run
+dotnet run --project apps/cli/CsDemoMap.Cli.csproj -c Release -- --export-win-data-v4 data/mirage datasets/mirage-v4-new-run
 
 # 完整解析与截断解析的历史状态/特征一致性验证。
-dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --verify-demo-prefix data/mirage/9z-vs-faze-m1-mirage.dem 65000
+dotnet run --project tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj -c Release -- --verify-demo-prefix data/mirage/9z-vs-faze-m1-mirage.dem 65000
 
 python tools/audit_win_v4.py --v3 datasets/mirage-68-local-v3.jsonl --v4-dir datasets/mirage-v4-new-run --output datasets/mirage-v4-new-run/comparison.json
 ```

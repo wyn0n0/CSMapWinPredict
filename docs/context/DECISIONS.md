@@ -2,6 +2,9 @@
 
 > 最后核验：2026-09-15。
 
+- **保持模块化单体。** 后端仍部署为一个 API，但源码按 Replay、Semantics、Maps、WinPrediction 和 Situation 划分；目录先表达职责，现有命名空间保持兼容。
+- **运行入口与开发入口分离。** `apps/api/Program.cs` 只负责 HTTP 宿主；数据导出、诊断和验收工作流由 `apps/cli` 提供。
+- **验证代码不进入产品程序集。** 所有 Verifier 位于 `tests/CsDemoMap.Api.Tests`；测试项目只引用 API，API 不引用测试。需要复用的样例目录校验属于产品工作流，放在 Situation Contracts 中。
 - **公开契约与构建算法分别版本化。** 四套契约保持 v1；输出变化通过 `sceneBuilderVersion` 标识，当前为 v1.3。
 - **旧回放窗口协议保持稳定。** 局势语义使用独立 `situation-window-sidecar-v1`；不向 `DemoWindow` 或 manifest 添加局势字段。
 - **旧 sidecar 只做显式独立目录补建。** 调用方必须提供源 Demo，补建逐窗口核对旧数据并写入 `situation-sidecar-rebuild-v1` 清单；运行时只采用显式登记且仍完整有效的目录，撤销登记即可回退。

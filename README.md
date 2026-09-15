@@ -33,6 +33,14 @@ The repository also includes a synthetic Mirage timeline, so the UI can be explo
 
 The API owns one long-lived Python inference subprocess. At startup it validates the model manifest, artifact hashes, dependency contract, and fixed inference fixtures. If the model cannot load, demo replay remains available and the UI reports that predictions are unavailable.
 
+The repository is organized by responsibility:
+
+- `apps/api/Program.cs` contains only the HTTP host and dependency wiring.
+- `apps/api/Features/` groups backend code into Replay, Semantics, Maps, WinPrediction, and Situation modules.
+- `apps/cli/` contains data export, diagnostics, and acceptance workflows.
+- `tests/CsDemoMap.Api.Tests/` contains the .NET verification suites and real-Demo prefix checks.
+- `tools/` contains Python model training, auditing, and inference.
+
 ## Requirements
 
 - Node.js 20+
@@ -47,6 +55,8 @@ The default model directory is models/win-baseline-v4-holdout-87-8-20260908. Mod
 ~~~bash
 npm install
 dotnet restore apps/api/CsDemoMap.Api.csproj
+dotnet restore apps/cli/CsDemoMap.Cli.csproj
+dotnet restore tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj
 python -m pip install -r requirements-inference.txt
 npm run dev
 ~~~
@@ -129,7 +139,7 @@ python -m pip install -r requirements-train.txt
 ~~~
 
 ~~~powershell
-dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --export-win-data-v4 data/mirage datasets/mirage-v4-20260908-87
+dotnet run --project apps/cli/CsDemoMap.Cli.csproj -c Release -- --export-win-data-v4 data/mirage datasets/mirage-v4-20260908-87
 python tools/audit_win_v4.py --v3 datasets/mirage-68-local-v3.jsonl --v4-dir datasets/mirage-v4-20260908-87 --output datasets/mirage-v4-20260908-87/comparison.json
 python tools/train_win_baseline_v4.py --input datasets/mirage-v4-20260908-87/samples.jsonl --manifest datasets/mirage-v4-20260908-87/manifest.json --comparison datasets/mirage-v4-20260908-87/comparison.json --validation-split datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json --output-dir models/win-baseline-v4-holdout-87-8-20260908 --threads 4 --folds 5 --seed 42
 ~~~
@@ -143,6 +153,8 @@ The current local bundle was trained on 87 Mirage matches (1,899 completed round
 On the fixed held-out matches, it achieved log loss **0.4682**, Brier score **0.1585**, ROC-AUC **0.8423**, accuracy **0.7691**, and ECE-10 **0.0381**. These are validation results for Mirage only, not a guarantee for unseen matches, other maps, or the opening seconds of a round. See the [87-match v4.2 training report](docs/training-report-v4-87-matches.md) for the split, model comparison, and reproduction details.
 
 ## Validation
+
+Restore the three .NET projects once before using the repeatable, offline `npm` validation commands below.
 
 ~~~bash
 npm run typecheck

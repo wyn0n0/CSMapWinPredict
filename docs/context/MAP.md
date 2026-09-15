@@ -1,32 +1,44 @@
 # 路径与版本地图
 
-> 最后核验：2026-09-15。
+> 最后核验：2026-09-15。后端保持模块化单体；目录表达职责，现有命名空间保持兼容。
 
-| 范围 | 权威路径 | 当前版本或用途 |
+## 程序边界
+
+| 程序 | 权威路径 | 职责 |
 | --- | --- | --- |
-| 局势模型 | `apps/api/Models/SituationModels.cs` | 四套 v1 公开契约 |
-| 窗口侧车模型 | `apps/api/Models/SituationWindowModels.cs` | `situation-window-sidecar-v1` |
-| Timeline 输入 | `apps/api/Services/SituationInputAdapter.cs` | 未来信息裁剪和状态锚点 |
-| 窗口输入 | `apps/api/Services/SituationWindowPipeline.cs` | Brotli/sidecar 合并和冲突检测 |
-| 共享窗口切分 | `apps/api/Services/DemoWindowSliceBuilder.cs` | 导入与旧 sidecar 补建共用 30 秒核心窗口和 2 秒重叠逻辑 |
-| 旧 sidecar 补建 | `apps/api/Services/SituationSidecarRebuilder.cs` | `situation-sidecar-rebuild-v1` 清单、来源核对、独立输出、登记与撤销 |
-| 场景构建 | `apps/api/Services/SituationSceneBuilder.cs` | `situation-scene-builder-v1.3` |
-| 统一场景服务 | `apps/api/Services/SituationSceneService.cs` | 导入任务、Timeline、窗口 → 边界校验、场景、规范化 JSON、SHA-256 |
-| 场景执行控制 | `apps/api/Services/SituationSceneExecution.cs` | 文件来源 LRU、来源/版本缓存键、同键合并、2 个构建槽与 32 个排队上限 |
-| 场景错误与诊断 | `apps/api/Services/SituationSceneDiagnostics.cs` | 12 类稳定错误码、安全消息、窗口读取计数和分阶段结构化耗时 |
-| 共享工件基础设施 | `apps/api/Services/SituationArtifactIO.cs`、`SituationFrozenDataset.cs` | UTF-8 无 BOM 原子写入、SHA-256、递归文件清单、仓库/Git 定位，以及严格 87/79/8 切分与 manifest 成员加载 |
-| 阶段二验收入口 | `apps/api/Services/SituationStageTwoAcceptance.cs`、`situation-implementation/stage2-acceptance-request-v1.json` | 训练来源校验、真实拆除样例、固定跨窗口请求、三种性能状态与 100 ms 门禁 |
-| 阶段三规则配置 | `apps/api/SituationRules/`、`SituationAnalysisRuleLoader.cs` | 嵌入式 candidate 历史与冻结 `situation-analysis-rules-v1`；严格加载、规范化配置 SHA-256 |
-| 阶段三分析核心 | `SituationFactsAnalyzer.cs`、`SituationEvidenceBuilder.cs`、`SituationTemplateNarrator.cs`、`SituationDeterministicAnalyzer.cs` | scene → Facts/evidence → 模板 Narrative，内部无状态且稳定哈希 |
-| 阶段三校准与验收 | `SituationStageThreeCalibration.cs`、`SituationStageThreeHoldoutRequestBuilder.cs`、`SituationStageThreeAcceptance.cs`、`SituationStageThreeCalibrationVerifier.cs`、`SituationStageThreeAcceptanceVerifier.cs` | 固定训练场景、candidate/冻结对比、保留请求承诺、一次性验收及完整工件重放 |
-| 阶段三请求与复核 | `situation-implementation/stage3-calibration-request-v1.json`、`stage3-frozen-calibration-request-v1.json`、`stage3-holdout-request-v1.json`、`stage3-acceptance-review-20260915.md` | 30 条训练 scene 哈希、8 场/16 tick 保留承诺与逐字段通过记录 |
-| 模型白名单 | `apps/api/Services/SituationModelInputProjector.cs` | 排除路径和运行元数据 |
-| Schema | `schemas/situation/` | 四份 Draft 2020-12 Schema |
-| 验证 | `SituationStageTwoAutomaticVerifier.cs` 统一调用 `SituationContractVerifier.cs`、`SituationSceneServiceVerifier.cs`、`SituationSidecarRebuilderVerifier.cs`、`SituationSceneExecutionVerifier.cs`、`SituationSceneDiagnosticsVerifier.cs` | 合成/流程、跨入口深度一致、补建兼容与中断、缓存/并发、错误/诊断、匿名/版本和样例门禁 |
-| 样例导出 | `SituationSampleExporter.cs` | 拒绝覆盖、incomplete → complete |
-| 当前验收工件 | `datasets/situation-v1-review-20260914-r9/` | 32 条冻结样例 |
-| 阶段二验收工件 | `datasets/situation-stage2-acceptance-20260914-r2/` | 真实拆除场景、固定请求、600 次性能测量、17 个文件哈希 |
-| 阶段三冻结训练工件 | `datasets/situation-stage3-calibration-frozen-20260915-r1/` | 冻结规则、5 场 30 条、candidate 对比、规则裕量、性能及保留请求承诺；manifest complete |
-| 阶段三保留验收工件 | `datasets/situation-stage3-acceptance-20260915-r1/` | 8 场 16 条、Facts/Narrative、逐字段复核、性能及完整哈希；manifest complete |
+| Vue Web | `apps/web/` | 回放界面、窗口缓存、雷达和胜率卡片 |
+| .NET API | `apps/api/` | HTTP 宿主和产品功能；`Program.cs` 只负责配置、依赖注入与路由 |
+| .NET CLI | `apps/cli/` | Demo 检查、数据导出、sidecar 补建、校准和验收工作流 |
+| .NET 验证 | `tests/CsDemoMap.Api.Tests/` | 合成门禁、集成验证和真实 Demo 前缀检查 |
+| Python 工具 | `tools/` | v3/v4 审计、训练和模型推理进程 |
 
-r8 与 r9 的 32 个场景哈希完全相同；r9 包含冻结后的样例选择版本、写后复验、复核与来源证明。阶段二 r1 工件只使用训练 Demo 进行样例选择和性能测量，保留侧只运行冻结契约回归。此前阶段一 r1–r7 仅保留为演进记录，不回写、不覆盖。
+API 通过 `InternalsVisibleTo` 只向 CLI 和验证程序集开放必要的内部工作流。验证程序集不被 API 引用；产品工作流也不再调用 Verifier。
+
+## 后端功能模块
+
+| 模块 | 路径 | 主要入口 |
+| --- | --- | --- |
+| Replay | `apps/api/Features/Replay/` | `DemoParserService`、`DemoImportService`、`DemoWindowSliceBuilder`、回放契约 |
+| Semantics | `apps/api/Features/Semantics/` | `DemoSemanticCollector`、`RoundStateTracker`、`RoundClockResolver`、`RoundRosterTracker` |
+| Maps | `apps/api/Features/Maps/` | `MapFeatureGeometry`；当前仅有 Mirage 模型几何 |
+| WinPrediction | `apps/api/Features/WinPrediction/` | as-of 特征、v3/v4 导出、Python 客户端和时间线预测 |
+| Situation/Contracts | `apps/api/Features/Situation/Contracts/` | 四套 v1 契约、规范化 JSON、跨字段验证和模型白名单 |
+| Situation/Scenes | `apps/api/Features/Situation/Scenes/` | Timeline/窗口适配、场景构建、缓存并发和诊断 |
+| Situation/Analysis | `apps/api/Features/Situation/Analysis/` | 冻结规则、Facts、evidence 和模板 Narrative |
+| Situation/Storage | `apps/api/Features/Situation/Storage/` | 工件 IO、冻结数据集、sidecar 补建和登记 |
+| Situation/Workflows | `apps/api/Features/Situation/Workflows/` | 样例导出、阶段二验收、阶段三校准与验收 |
+
+## 当前版本与工件
+
+- 回放窗口协议：`DemoImportService.SchemaVersion = 3`；原窗口、manifest 和 HTTP 路由不变。
+- 胜率数据：schema v4、`mirage-semantics-v4.2`；v3 仅用于历史复现。
+- 局势契约：`minimap-scene-v1`、`situation-facts-v1`、`situation-narrative-v1`、`situation-analysis-v1`。
+- 场景构建器：`situation-scene-builder-v1.3`；几何：`mirage-geometry-v1`。
+- 窗口侧车：`situation-window-sidecar-v1`；补建清单：`situation-sidecar-rebuild-v1`。
+- 阶段三冻结规则位于 `apps/api/Features/Situation/Analysis/Rules/`，SHA-256 为 `afa19d686b4c5ade2a53b8bdfd0655965d5230d032d39ea0bb8685e7929daa35`。
+- 阶段一验收工件：`datasets/situation-v1-review-20260914-r9/`。
+- 阶段二验收工件：`datasets/situation-stage2-acceptance-20260914-r2/`。
+- 阶段三冻结训练工件：`datasets/situation-stage3-calibration-frozen-20260915-r1/`。
+- 阶段三保留验收工件：`datasets/situation-stage3-acceptance-20260915-r1/`。
+
+模型、数据集和 Demo 是本地对象，均不因源码目录调整而移动、覆盖或进入 Git。

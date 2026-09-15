@@ -4,7 +4,7 @@
 
 ## 当前目标
 
-阶段一局势契约、阶段二服务化和阶段三冻结 v1 均已完成。置信度规格已统一并补齐定向回归；下一步按冻结 v1 进入阶段四，正式 HTTP API、前端和文本模型接入留在后续阶段。
+阶段一局势契约、阶段二服务化和阶段三冻结 v1 均已完成。后端已按 Replay、Semantics、Maps、WinPrediction、Situation 整理，开发 CLI 和 .NET 验证门禁已从 Web 产品程序集分离。下一步按冻结 v1 进入阶段四，正式 HTTP API、前端和文本模型接入留在后续阶段。
 
 ## 已完成闭环
 
@@ -30,6 +30,7 @@
 - 冻结训练工件 `datasets/situation-stage3-calibration-frozen-20260915-r1/` 含 5 场 30 条固定场景，manifest complete；热态 p95 1.7779 ms，Scene 未命中组合 p95 18.2808 ms。
 - 保留请求承诺 SHA-256 为 `6ff14b6c912bf6fdb9a221fbb91920c88eaa91fb87ad6693c69c1ebeee5b8ff7`。唯一一次正式验收工件 `datasets/situation-stage3-acceptance-20260915-r1/` 覆盖 8 场 16 条，16/16 逐字段通过且阻断错误为 0；热态/组合 p95 为 1.3468/7.5401 ms。
 - 工件公共层已收敛到 `SituationArtifactIO` 与 `SituationFrozenDatasetLoader`：阶段一样例、阶段二验收、阶段三校准/验收和 sidecar 补建共用 SHA-256/原子写入/文件清单/仓库定位，冻结切分只保留一套严格 87/79/8 成员校验。
+- 架构入口已收敛：`apps/api/Program.cs` 只启动 HTTP 服务；导出、诊断和验收命令进入 `apps/cli`；18 个 Verifier 进入 `tests/CsDemoMap.Api.Tests`；`package.json` 保留统一测试入口。
 
 ## 下一步
 
@@ -38,4 +39,4 @@
 
 ## 短期阻塞
 
-Mirage 楼层与区域邻接仍没有经过验证的定义，冻结 v1 保守保持 floor unknown 且不推断区域邻接。保留集已正式观察；任何后续规则修订仍必须只在训练侧选择。checkpoint 之后的公共设施提取与阶段四方案仍在工作树中，尚未形成新的提交；任何提交或发布前必须重新核验范围。
+Mirage 楼层与区域邻接仍没有经过验证的定义，冻结 v1 保守保持 floor unknown 且不推断区域邻接。保留集已正式观察；任何后续规则修订仍必须只在训练侧选择。

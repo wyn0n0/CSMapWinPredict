@@ -33,6 +33,14 @@ CS Demo Map 用于导入 Counter-Strike 2 .dem 文件，在交互式雷达中回
 
 API 管理一个长期运行的 Python 推理子进程。启动时会校验模型清单、工件哈希、依赖契约和固定推理样例。模型无法加载时，Demo 回放仍可使用，页面会明确显示预测不可用。
 
+仓库按职责组织：
+
+- `apps/api/Program.cs` 只包含 HTTP 宿主和依赖装配。
+- `apps/api/Features/` 按 Replay、Semantics、Maps、WinPrediction 和 Situation 划分后端代码。
+- `apps/cli/` 保存数据导出、诊断和验收工作流。
+- `tests/CsDemoMap.Api.Tests/` 保存 .NET 验证门禁和真实 Demo 前缀检查。
+- `tools/` 保存 Python 模型训练、审计与推理。
+
 ## 环境要求
 
 - Node.js 20+
@@ -47,6 +55,8 @@ API 管理一个长期运行的 Python 推理子进程。启动时会校验模�
 ~~~bash
 npm install
 dotnet restore apps/api/CsDemoMap.Api.csproj
+dotnet restore apps/cli/CsDemoMap.Cli.csproj
+dotnet restore tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj
 python -m pip install -r requirements-inference.txt
 npm run dev
 ~~~
@@ -129,7 +139,7 @@ python -m pip install -r requirements-train.txt
 ~~~
 
 ~~~powershell
-dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --export-win-data-v4 data/mirage datasets/mirage-v4-20260908-87
+dotnet run --project apps/cli/CsDemoMap.Cli.csproj -c Release -- --export-win-data-v4 data/mirage datasets/mirage-v4-20260908-87
 python tools/audit_win_v4.py --v3 datasets/mirage-68-local-v3.jsonl --v4-dir datasets/mirage-v4-20260908-87 --output datasets/mirage-v4-20260908-87/comparison.json
 python tools/train_win_baseline_v4.py --input datasets/mirage-v4-20260908-87/samples.jsonl --manifest datasets/mirage-v4-20260908-87/manifest.json --comparison datasets/mirage-v4-20260908-87/comparison.json --validation-split datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json --output-dir models/win-baseline-v4-holdout-87-8-20260908 --threads 4 --folds 5 --seed 42
 ~~~
@@ -137,6 +147,8 @@ python tools/train_win_baseline_v4.py --input datasets/mirage-v4-20260908-87/sam
 每次导出和训练都应使用新的输出目录。历史 v3 数据与模型仅用于复现，不能与 v4 输入或模型包混用。
 
 ## 验证
+
+首次运行前先还原三个 .NET 项目；下列 `npm` 验证命令随后使用本地依赖重复运行，不再隐式联网还原。
 
 ~~~bash
 npm run typecheck

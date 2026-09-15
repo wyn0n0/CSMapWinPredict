@@ -10,8 +10,8 @@
 
 已核实的实现按 `low → medium → high` 优先级判断，单纯靠近阈值返回 medium，已有边界测试明确要求这一结果。
 
-- 实现依据：`apps/api/Services/SituationFactsAnalyzer.cs` 的 `AnalyzeConfidence`。
-- 测试依据：`apps/api/Services/SituationRuleVerifier.cs` 中的置信度边界与优先级检查。
+- 实现依据：`apps/api/Features/Situation/Analysis/SituationFactsAnalyzer.cs` 的 `AnalyzeConfidence`。
+- 测试依据：`tests/CsDemoMap.Api.Tests/Situation/SituationRuleVerifier.cs` 中的置信度边界与优先级检查。
 - 配置依据：冻结训练工件中的 `rules.json`，`boundaryBand=0.02`、`comparisonEpsilon=0.000001`、`lowUnknownCount=2`。
 
 ## 2. 统一后的判定标准
