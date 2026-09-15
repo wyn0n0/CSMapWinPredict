@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "situation-sample-request-v1-draft.1",
+  "splitFile": "../datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json",
+  "demos": [
+    {
+      "fileName": "9z-vs-parivision-m1-mirage.dem",
+      "role": "training",
+      "sampleCount": 16
+    },
+    {
+      "fileName": "b8-vs-fut-m2-mirage.dem",
+      "role": "holdout",
+      "sampleCount": 16
+    }
+  ]
+}

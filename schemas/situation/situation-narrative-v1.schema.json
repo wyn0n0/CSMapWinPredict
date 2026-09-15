@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-narrative-v1.schema.json",
+  "title": "SituationNarrativeV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "highlights", "summaryZh", "uncertainties"],
+  "properties": {
+    "schemaVersion": { "const": "situation-narrative-v1" },
+    "highlights": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["textZh", "evidenceIds"],
+        "properties": {
+          "textZh": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "[\\u3400-\\u9fff]" },
+          "evidenceIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true }
+        }
+      }
+    },
+    "summaryZh": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "[\\u3400-\\u9fff]" },
+    "uncertainties": { "type": "array", "items": { "type": "string", "minLength": 1, "pattern": "[\\u3400-\\u9fff]" }, "uniqueItems": true }
+  }
+}

@@ -16,3 +16,6 @@ apps/api/data/imports/
 __pycache__/
 *.py[cod]
 .venv/
+**/TODO*.md
+/AGENT.md
+/SKILL.md

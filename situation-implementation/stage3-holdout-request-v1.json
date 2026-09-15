@@ -1,0 +1,74 @@
+{
+  "demoCount": 8,
+  "demos": [
+    {
+      "expectedSha256": "ccac2b282793dafb57d206ce4d2bcf10da7acbad78cd6bfbed0ac8486e529866",
+      "fileName": "b8-vs-fut-m2-mirage.dem",
+      "ticks": [
+        { "category": "post-plant", "selectionKey": "007147641b53995636afbc46c7e6130c63d90bb6ec414b9bd0305d6590d0d32a", "tick": 4800 },
+        { "category": "pre-plant", "selectionKey": "001e2e62bd69419cbac56e1152bd579c3aea8156d7afe9f60849f17208fe6090", "tick": 18752 }
+      ]
+    },
+    {
+      "expectedSha256": "edac91f68159bd8d59b6231d9bb7a26cb9907dd688ecabdfe7f3d1470dba4daa",
+      "fileName": "falcons-vs-mouz-m1-mirage.dem",
+      "ticks": [
+        { "category": "post-plant", "selectionKey": "018dae48313d79f018fac87d2b20b3cb0228911bc43abbf37b8cb9cab16dcfa4", "tick": 87360 },
+        { "category": "pre-plant", "selectionKey": "0056c45ea6f3d3adb0046be30f94e9feffc7fcd29306b0d9a39bc9eff309acea", "tick": 117888 }
+      ]
+    },
+    {
+      "expectedSha256": "f8304048510239b00b88893946bf3543855b03125abbbfbea20471d5b66d050c",
+      "fileName": "faze-vs-furia-m2-mirage.dem",
+      "ticks": [
+        { "category": "post-plant", "selectionKey": "0031c0f83ba91e51c05886ed2abb8c7383f6e02fa9653ab49144baa28eae676b", "tick": 38720 },
+        { "category": "pre-plant", "selectionKey": "0070a2b9836e0fffba0b53b9cf70d0dd17f8cde6505532a032a13c996127790b", "tick": 146304 }
+      ]
+    },
+    {
+      "expectedSha256": "8800d56bb4ed02833612f03056d642b836435e35f4eabff4bfc8d0b8e53f91d6",
+      "fileName": "furia-vs-aurora-m3-mirage.dem",
+      "ticks": [
+        { "category": "post-plant", "selectionKey": "00c2a9d459be75fab3c501febabb8dba28f61fe3679759986d2eb86f1b24cf14", "tick": 99712 },
+        { "category": "pre-plant", "selectionKey": "00749de10155937f57924c06e2d281866994813d97e99ebaf76c277e05bfa5ea", "tick": 110016 }
+      ]
+    },
+    {
+      "expectedSha256": "5a837c8300474f2927998a6b82edd86053344933653f812490e761b7f4690a3c",
+      "fileName": "fut-vs-mouz-m3-mirage.dem",
+      "ticks": [
+        { "category": "post-plant", "selectionKey": "00b682fd0a091215a94587e72798ad3116340b9e0855748c3c3747cb6b777dc8", "tick": 144704 },
+        { "category": "pre-plant", "selectionKey": "000c75d8d6fc4c4ec65010886027dd1d4f1ce6df3eeb337bc652e81be9a16c7b", "tick": 158416 }
+      ]
+    },
+    {
+      "expectedSha256": "cb58cba15d97163e138b366e1a11ee00d2e1757f1a20a1eefa800eb5bf66a756",
+      "fileName": "g2-vs-m80-mirage.dem",
+      "ticks": [
+        { "category": "post-plant", "selectionKey": "011e2f941648555b3520022d342960d309d6b535e313a92cc4f5f46594925381", "tick": 117888 },
+        { "category": "pre-plant", "selectionKey": "002734fcfec668f045ec393a8ee6a9266b274d52137757de413dad85ee31b2fa", "tick": 155712 }
+      ]
+    },
+    {
+      "expectedSha256": "c2f492c3f30ec0532c9e0cf0925f5dc8321da55dfa7fea6c11819ba23ec226bb",
+      "fileName": "legacy-vs-faze-m2-mirage.dem",
+      "ticks": [
+        { "category": "pre-plant", "selectionKey": "003e24214d104b3cf0467d7cce9f5bea678f2ca296c840b879f7a729a02e4581", "tick": 117504 },
+        { "category": "post-plant", "selectionKey": "011918b37a7d43470c099cf2ebbca075bd2e716f81abb2e1caa64c6edf2d3aee", "tick": 144640 }
+      ]
+    },
+    {
+      "expectedSha256": "555f486b19daad0b1e3b4f7796b03d8afd99ca6771333950f07f9340866ec8e3",
+      "fileName": "vitality-vs-fut-m1-mirage.dem",
+      "ticks": [
+        { "category": "post-plant", "selectionKey": "0163ac97e3e0fe3dac668aa359e3323cbad5532f7b9956dde30019a05823053a", "tick": 98816 },
+        { "category": "pre-plant", "selectionKey": "000da1406c56ccbfe7c17bf64449e1183a8cbe054ff2217b66f495ea69cd999c", "tick": 123712 }
+      ]
+    }
+  ],
+  "expectedSplitSha256": "b176d96c063921f6a1a8718c700fb6d193903693539e4d1b447e37fca4aa43d8",
+  "samplesPerDemo": 2,
+  "schemaVersion": "situation-stage3-holdout-request-v1",
+  "selectionVersion": "situation-stage3-holdout-selection-v1",
+  "splitFile": "datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json"
+}

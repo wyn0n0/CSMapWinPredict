@@ -124,7 +124,7 @@ internal static class WinInferenceVerifier
     private static string ResolveFixturePath()
     {
         const string configured =
-            "models/win-baseline-v4-holdout-68-5-20260906/inference-fixtures.json";
+            "models/win-baseline-v4-holdout-87-8-20260908/inference-fixtures.json";
         foreach (var root in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
         {
             for (var current = new DirectoryInfo(root); current is not null; current = current.Parent)

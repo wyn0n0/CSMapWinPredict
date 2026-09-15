@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json",
+  "title": "MinimapSceneV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sceneBuilderVersion", "geometryVersion", "source", "map", "demoRef", "windowIndex", "requestedTick", "tick", "tickRate", "round", "players", "teams", "bomb", "utilities", "effects", "geometry", "dataQuality"],
+  "properties": {
+    "schemaVersion": { "const": "minimap-scene-v1" },
+    "sceneBuilderVersion": { "const": "situation-scene-builder-v1.3" },
+    "geometryVersion": { "const": "mirage-geometry-v1" },
+    "source": { "const": "structured" },
+    "map": { "const": "de_mirage" },
+    "demoRef": { "$ref": "#/$defs/nonEmptyString" },
+    "windowIndex": { "$ref": "#/$defs/nonNegativeInteger" },
+    "requestedTick": { "$ref": "#/$defs/nonNegativeInteger" },
+    "tick": { "$ref": "#/$defs/nonNegativeInteger" },
+    "tickRate": { "type": "integer", "minimum": 1 },
+    "round": { "$ref": "#/$defs/round" },
+    "players": { "type": "array", "items": { "$ref": "#/$defs/player" }, "maxItems": 10 },
+    "teams": { "$ref": "#/$defs/teams" },
+    "bomb": { "$ref": "#/$defs/bomb" },
+    "utilities": { "type": "array", "items": { "$ref": "#/$defs/utility" } },
+    "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
+    "geometry": { "$ref": "#/$defs/geometry" },
+    "dataQuality": { "type": "array", "items": { "$ref": "#/$defs/dataQuality" } }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "nullableString": { "type": ["string", "null"], "minLength": 1 },
+    "nonNegativeInteger": { "type": "integer", "minimum": 0 },
+    "nullableNonNegativeInteger": { "type": ["integer", "null"], "minimum": 0 },
+    "nullableNonNegativeNumber": { "type": ["number", "null"], "minimum": 0 },
+    "side": { "enum": ["T", "CT"] },
+    "nullableSide": { "enum": ["T", "CT", null] },
+    "site": { "enum": ["A", "B", null] },
+    "vec2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+    },
+    "vec3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" } }
+    },
+    "dataQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "fieldPaths", "severity"],
+      "properties": {
+        "code": { "enum": ["missing-frame", "stale-frame", "history-truncated", "history-file-boundary", "history-round-boundary", "history-gap", "clock-unknown", "roster-incomplete", "equipment-unknown", "utility-unknown", "position-invalid", "position-outside-radar", "region-unknown", "floor-unknown", "effect-state-incomplete", "legacy-default-ambiguous", "health-state-conflict"] },
+        "fieldPaths": { "type": "array", "items": { "type": "string", "pattern": "^/" }, "minItems": 1, "uniqueItems": true },
+        "severity": { "enum": ["info", "warning", "error"] }
+      }
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "ct"],
+      "properties": { "t": { "$ref": "#/$defs/nullableNonNegativeInteger" }, "ct": { "$ref": "#/$defs/nullableNonNegativeInteger" } }
+    },
+    "round": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "segmentId", "number", "phase", "elapsedSeconds", "remainingSeconds", "score", "clockSource"],
+      "properties": {
+        "ref": { "type": ["string", "null"], "pattern": "^s[0-9]+-a[1-9][0-9]*$" },
+        "segmentId": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "number": { "type": ["integer", "null"], "minimum": 1 },
+        "phase": { "enum": ["warmup", "team-intro", "freeze", "live", "post-plant", "ended", "unknown"] },
+        "elapsedSeconds": { "$ref": "#/$defs/nullableNonNegativeNumber" },
+        "remainingSeconds": { "$ref": "#/$defs/nullableNonNegativeNumber" },
+        "score": { "$ref": "#/$defs/score" },
+        "clockSource": { "$ref": "#/$defs/nullableString" }
+      }
+    },
+    "utilityCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["flash", "smoke", "he", "molotov", "incendiary", "decoy"],
+      "properties": {
+        "flash": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "smoke": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "he": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "molotov": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "incendiary": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "decoy": { "$ref": "#/$defs/nullableNonNegativeInteger" }
+      }
+    },
+    "weaponCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pistol", "smg", "rifle", "sniper", "shotgun", "machinegun", "grenade", "knife", "bomb", "other", "unknown"],
+      "properties": {
+        "pistol": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "smg": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "rifle": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "sniper": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "shotgun": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "machinegun": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "grenade": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "knife": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "bomb": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "other": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "unknown": { "$ref": "#/$defs/nullableNonNegativeInteger" }
+      }
+    },
+    "trajectoryPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tick", "position"],
+      "properties": { "tick": { "$ref": "#/$defs/nonNegativeInteger" }, "position": { "$ref": "#/$defs/vec3" } }
+    },
+    "trajectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromTick", "toTick", "coverageSeconds", "points"],
+      "properties": {
+        "fromTick": { "$ref": "#/$defs/nonNegativeInteger" },
+        "toTick": { "$ref": "#/$defs/nonNegativeInteger" },
+        "coverageSeconds": { "type": "number", "minimum": 0, "maximum": 4.5 },
+        "points": { "type": "array", "items": { "$ref": "#/$defs/trajectoryPoint" } }
+      }
+    },
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slot", "side", "position", "floor", "region", "regionSource", "heading", "velocity", "health", "armor", "weaponCategory", "utilityCounts", "trajectory"],
+      "properties": {
+        "slot": { "type": "string", "pattern": "^(T|CT)[1-5]$" },
+        "side": { "$ref": "#/$defs/side" },
+        "position": { "anyOf": [{ "$ref": "#/$defs/vec3" }, { "type": "null" }] },
+        "floor": { "enum": ["upper", "lower", "unknown"] },
+        "region": { "$ref": "#/$defs/nullableString" },
+        "regionSource": { "enum": ["demo-place-name", "geometry", "unknown"] },
+        "heading": { "anyOf": [{ "$ref": "#/$defs/vec2" }, { "type": "null" }] },
+        "velocity": { "anyOf": [{ "$ref": "#/$defs/vec3" }, { "type": "null" }] },
+        "health": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "armor": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "weaponCategory": { "enum": ["pistol", "smg", "rifle", "sniper", "shotgun", "machinegun", "grenade", "knife", "bomb", "other", "unknown"] },
+        "utilityCounts": { "$ref": "#/$defs/utilityCounts" },
+        "trajectory": { "$ref": "#/$defs/trajectory" }
+      }
+    },
+    "teamSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alive", "totalHealth", "totalArmor", "totalMoney", "equipmentValue", "helmetCount", "defuserCount", "utilityCounts", "weaponCounts"],
+      "properties": {
+        "alive": { "type": ["integer", "null"], "minimum": 0, "maximum": 5 },
+        "totalHealth": { "type": ["integer", "null"], "minimum": 0, "maximum": 500 },
+        "totalArmor": { "type": ["integer", "null"], "minimum": 0, "maximum": 500 },
+        "totalMoney": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "equipmentValue": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "helmetCount": { "type": ["integer", "null"], "minimum": 0, "maximum": 5 },
+        "defuserCount": { "type": ["integer", "null"], "minimum": 0, "maximum": 5 },
+        "utilityCounts": { "$ref": "#/$defs/utilityCounts" },
+        "weaponCounts": { "$ref": "#/$defs/weaponCounts" }
+      }
+    },
+    "teams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "ct"],
+      "properties": { "t": { "$ref": "#/$defs/teamSummary" }, "ct": { "$ref": "#/$defs/teamSummary" } }
+    },
+    "bomb": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "carrierSlot", "defuserSlot", "site", "position", "region", "regionSource", "secondsToExplosion", "secondsToDefuse"],
+      "properties": {
+        "state": { "enum": ["carried", "dropped", "planting", "planted", "defusing", "defused", "exploded", "unknown"] },
+        "carrierSlot": { "type": ["string", "null"], "pattern": "^T[1-5]$" },
+        "defuserSlot": { "type": ["string", "null"], "pattern": "^CT[1-5]$" },
+        "site": { "$ref": "#/$defs/site" },
+        "position": { "anyOf": [{ "$ref": "#/$defs/vec3" }, { "type": "null" }] },
+        "region": { "$ref": "#/$defs/nullableString" },
+        "regionSource": { "enum": ["demo-place-name", "geometry", "unknown"] },
+        "secondsToExplosion": { "$ref": "#/$defs/nullableNonNegativeNumber" },
+        "secondsToDefuse": { "$ref": "#/$defs/nullableNonNegativeNumber" }
+      }
+    },
+    "utility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "side", "throwerSlot", "observedStartTick", "position", "trajectory"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^utility-[1-9][0-9]*$" },
+        "type": { "enum": ["flash", "smoke", "he", "molotov", "incendiary", "decoy", "unknown"] },
+        "side": { "$ref": "#/$defs/nullableSide" },
+        "throwerSlot": { "type": ["string", "null"], "pattern": "^(T|CT)[1-5]$" },
+        "observedStartTick": { "$ref": "#/$defs/nonNegativeInteger" },
+        "position": { "anyOf": [{ "$ref": "#/$defs/vec3" }, { "type": "null" }] },
+        "trajectory": { "$ref": "#/$defs/trajectory" }
+      }
+    },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "side", "observedStartTick", "sampleTick", "position", "radius", "area"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^effect-[1-9][0-9]*$" },
+        "type": { "enum": ["smoke", "fire"] },
+        "side": { "$ref": "#/$defs/nullableSide" },
+        "observedStartTick": { "$ref": "#/$defs/nonNegativeInteger" },
+        "sampleTick": { "$ref": "#/$defs/nonNegativeInteger" },
+        "position": { "anyOf": [{ "$ref": "#/$defs/vec3" }, { "type": "null" }] },
+        "radius": { "$ref": "#/$defs/nullableNonNegativeNumber" },
+        "area": { "type": ["array", "null"], "items": { "$ref": "#/$defs/vec3" }, "minItems": 1 }
+      }
+    },
+    "regionOccupancy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["region", "tAlive", "ctAlive"],
+      "properties": {
+        "region": { "$ref": "#/$defs/nonEmptyString" },
+        "tAlive": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "ctAlive": { "type": "integer", "minimum": 0, "maximum": 5 }
+      }
+    },
+    "playerDistances": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slot", "siteA", "siteB", "nearestAlly", "nearestEnemy"],
+      "properties": {
+        "slot": { "type": "string", "pattern": "^(T|CT)[1-5]$" },
+        "siteA": { "$ref": "#/$defs/nullableNonNegativeNumber" },
+        "siteB": { "$ref": "#/$defs/nullableNonNegativeNumber" },
+        "nearestAlly": { "$ref": "#/$defs/nullableNonNegativeNumber" },
+        "nearestEnemy": { "$ref": "#/$defs/nullableNonNegativeNumber" }
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["regionOccupancy", "playerDistances"],
+      "properties": {
+        "regionOccupancy": { "type": "array", "items": { "$ref": "#/$defs/regionOccupancy" } },
+        "playerDistances": { "type": "array", "items": { "$ref": "#/$defs/playerDistances" } }
+      }
+    }
+  }
+}

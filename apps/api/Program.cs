@@ -4,6 +4,7 @@ using DemoFile;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 
 const long MaxUploadBytes = 1024L * 1024 * 1024;
@@ -37,6 +38,86 @@ if (args is ["--verify-win-inference"])
     await WinInferenceVerifier.VerifyAsync();
     return;
 }
+if (args is ["--verify-situation-contracts"])
+{
+    SituationContractVerifier.Verify();
+    return;
+}
+if (args is ["--verify-situation-contracts", var situationSampleDirectory])
+{
+    SituationContractVerifier.Verify(situationSampleDirectory);
+    return;
+}
+if (args is ["--export-situation-samples", var situationRequest, var situationOutput])
+{
+    await SituationSampleExporter.ExportAsync(situationRequest, situationOutput, CancellationToken.None);
+    return;
+}
+if (args.Length >= 3 && args[0] == "--verify-situation-source")
+{
+    var sourceTicks = args[2..].Select(value => int.Parse(value, CultureInfo.InvariantCulture)).ToArray();
+    await SituationSourceVerifier.VerifyAsync(args[1], sourceTicks, CancellationToken.None);
+    return;
+}
+if (args is ["--verify-situation-service"])
+{
+    await SituationSceneServiceVerifier.VerifyAsync(CancellationToken.None);
+    return;
+}
+if (args is ["--rebuild-situation-sidecars", var targetImportDirectory, var sourceDemo, var rebuildOutput])
+{
+    await SituationSidecarRebuilder.RebuildAsync(
+        targetImportDirectory, sourceDemo, rebuildOutput, CancellationToken.None);
+    return;
+}
+if (args is ["--verify-situation-sidecar-rebuild"])
+{
+    await SituationSidecarRebuilderVerifier.VerifyAsync(CancellationToken.None);
+    return;
+}
+if (args is ["--verify-situation-cache"])
+{
+    await SituationSceneExecutionVerifier.VerifyAsync(CancellationToken.None);
+    return;
+}
+if (args is ["--verify-situation-diagnostics"])
+{
+    await SituationSceneDiagnosticsVerifier.VerifyAsync(CancellationToken.None);
+    return;
+}
+if (args is ["--verify-situation-stage-two-automatic"])
+{
+    await SituationStageTwoAutomaticVerifier.VerifyAsync(CancellationToken.None);
+    return;
+}
+if (args is ["--verify-situation-rules"])
+{
+    SituationRuleVerifier.Verify();
+    return;
+}
+if (args is ["--verify-situation-stage-three-automatic"])
+{
+    await SituationStageThreeAutomaticVerifier.VerifyAsync(CancellationToken.None);
+    return;
+}
+if (args is ["--run-situation-stage-two-acceptance", var acceptanceRequest, var acceptanceOutput])
+{
+    await SituationStageTwoAcceptance.RunAsync(
+        acceptanceRequest, acceptanceOutput, CancellationToken.None);
+    return;
+}
+if (args is ["--run-situation-stage-three-calibration", var calibrationRequest, var calibrationOutput])
+{
+    await SituationStageThreeCalibration.RunAsync(
+        calibrationRequest, calibrationOutput, CancellationToken.None);
+    return;
+}
+if (args is ["--run-situation-stage-three-acceptance", var stageThreeAcceptanceRequest, var stageThreeAcceptanceOutput])
+{
+    await SituationStageThreeAcceptance.RunAsync(
+        stageThreeAcceptanceRequest, stageThreeAcceptanceOutput, CancellationToken.None);
+    return;
+}
 if (args is ["--export-win-data-v4", var v4Input, var v4Output])
 {
     await WinDatasetV4Exporter.ExportAsync(v4Input, v4Output, CancellationToken.None);
@@ -54,7 +135,7 @@ if (args is ["--trace-roster", var tracePath, var traceFrom, var traceTo])
 }
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("http://localhost:5088");
+builder.WebHost.UseUrls(builder.Configuration["urls"] ?? "http://localhost:5088");
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = MaxUploadBytes);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -64,6 +145,13 @@ builder.Services.Configure<FormOptions>(options =>
 });
 builder.Services.AddSingleton<DemoParserService>();
 builder.Services.AddSingleton<DemoImportService>();
+builder.Services.AddSingleton<SituationSidecarOverrideRegistry>();
+builder.Services.AddSingleton(provider => new SituationSceneService(
+    provider.GetRequiredService<DemoImportService>().GetSituationSource,
+    provider.GetRequiredService<SituationSidecarOverrideRegistry>(),
+    provider.GetRequiredService<ILogger<SituationSceneService>>(),
+    SituationSceneServiceLimits.Default,
+    provider.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping));
 builder.Services.AddSingleton<OfflineDemoCatalog>();
 builder.Services.Configure<WinInferenceOptions>(
     builder.Configuration.GetSection(WinInferenceOptions.SectionName));
@@ -77,11 +165,12 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 var app = builder.Build();
 app.UseCors();
 
-app.MapGet("/api/health", () => Results.Ok(new
+app.MapGet("/api/health", (SituationSceneService _) => Results.Ok(new
 {
     status = "ok",
     parser = "DemoFile.Game.Cs",
-    sampleRate = DemoParserService.SampleRate
+    sampleRate = DemoParserService.SampleRate,
+    situationScene = "ready"
 }));
 
 app.MapGet("/api/win-model/status", (WinInferenceClient inference) =>

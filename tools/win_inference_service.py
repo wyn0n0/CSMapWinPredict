@@ -25,7 +25,7 @@ SEMANTIC_VERSION = "mirage-semantics-v4.2"
 DEFAULT_MODEL_DIR = (
     Path(__file__).resolve().parents[1]
     / "models"
-    / "win-baseline-v4-holdout-68-5-20260906"
+    / "win-baseline-v4-holdout-87-8-20260908"
 )
 DEFAULT_MAX_BATCH_SIZE = 512
 DEFAULT_MAX_REQUEST_BYTES = 4 * 1024 * 1024

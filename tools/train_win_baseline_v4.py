@@ -381,7 +381,7 @@ def markdown(report):
         for name in ("v3Logistic", "v4Selected"):
             m = report["pairedV3V4"][name]
             lines.append(f"| {name} | {m['logLoss']:.4f} | {m['brierScore']:.4f} | {m['rocAuc']:.4f} | {m['ece10']:.4f} |")
-    lines += ["", "## Limits", "", "The five held-out matches are a migration regression set that has already been inspected. New unseen matches are required for a final generalization claim.", ""]
+    lines += ["", "## Limits", "", "The held-out matches form a fixed evaluation set. Results should be confirmed on future unseen matches before making a final generalization claim.", ""]
     return "\n".join(lines)
 
 

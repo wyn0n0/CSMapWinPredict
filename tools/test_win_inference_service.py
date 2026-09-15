@@ -16,7 +16,7 @@ from tools.win_inference_service import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL_DIR = ROOT / "models" / "win-baseline-v4-holdout-68-5-20260906"
+MODEL_DIR = ROOT / "models" / "win-baseline-v4-holdout-87-8-20260908"
 
 
 def nested_sample(flattened):

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "situation-stage2-acceptance-request-v1",
+  "splitFile": "../datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json",
+  "expectedSplitSha256": "b176d96c063921f6a1a8718c700fb6d193903693539e4d1b447e37fca4aa43d8",
+  "frozenSamplesDirectory": "../datasets/situation-v1-review-20260914-r9",
+  "sourceDemoFile": "9z-vs-parivision-m1-mirage.dem",
+  "expectedSourceSha256": "dbd48fff0a309b2aded0d5205120943135740dfd2aef9e93d32d6672db5894da",
+  "iterationsPerMode": 200
+}

@@ -40,7 +40,7 @@ API 管理一个长期运行的 Python 推理子进程。启动时会校验模�
 - Python 3 与 pip，用于模型推理
 - 需要真实预测时，准备本地 schema v4.2 模型包
 
-默认模型目录为 models/win-baseline-v4-holdout-68-5-20260906。模型包、数据集和 Demo 文件均被 Git 忽略。
+默认模型目录为 models/win-baseline-v4-holdout-87-8-20260908。模型包、数据集和 Demo 文件均被 Git 忽略。
 
 ## 快速启动
 
@@ -66,7 +66,7 @@ npm run dev:web
 
 ~~~powershell
 $env:WinInference__PythonExecutable = "python"
-$env:WinInference__ModelDirectory = "models/win-baseline-v4-holdout-68-5-20260906"
+$env:WinInference__ModelDirectory = "models/win-baseline-v4-holdout-87-8-20260908"
 npm run dev
 ~~~
 
@@ -129,8 +129,9 @@ python -m pip install -r requirements-train.txt
 ~~~
 
 ~~~powershell
-dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --export-win-data-v4 data/mirage datasets/mirage-v4-new-run
-python tools/train_win_baseline_v4.py --input datasets/mirage-v4-20260906/samples.jsonl --manifest datasets/mirage-v4-20260906/manifest.json --comparison datasets/mirage-v4-20260906/comparison.json --validation-split models/win-baseline-v3-holdout-68-5/validation-split.json --v3-predictions models/win-baseline-v3-holdout-68-5/validation_predictions.jsonl --output-dir models/win-baseline-v4-new-run --threads 4 --folds 5 --seed 42
+dotnet apps/api/bin/Release/net10.0/CsDemoMap.Api.dll --export-win-data-v4 data/mirage datasets/mirage-v4-20260908-87
+python tools/audit_win_v4.py --v3 datasets/mirage-68-local-v3.jsonl --v4-dir datasets/mirage-v4-20260908-87 --output datasets/mirage-v4-20260908-87/comparison.json
+python tools/train_win_baseline_v4.py --input datasets/mirage-v4-20260908-87/samples.jsonl --manifest datasets/mirage-v4-20260908-87/manifest.json --comparison datasets/mirage-v4-20260908-87/comparison.json --validation-split datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json --output-dir models/win-baseline-v4-holdout-87-8-20260908 --threads 4 --folds 5 --seed 42
 ~~~
 
 每次导出和训练都应使用新的输出目录。历史 v3 数据与模型仅用于复现，不能与 v4 输入或模型包混用。
@@ -155,6 +156,7 @@ npm run build
 - [架构与运行边界](docs/architecture.md)
 - [schema v4.2 实现说明](docs/semantic-v4-implementation.md)
 - [语义验收](docs/semantic-v4-validation.md)
+- [最新 87 场 v4.2 训练报告](docs/training-report-v4-87-matches.md)
 - [v4 重训报告](docs/training-report-v4.md)
 - [68 场历史验证摘要](docs/training-report-68-matches.md)
 - [回合与时钟接口核查](docs/round-clock-upstream-review.md)

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "situation-analysis-rule-config-v1",
+  "analysisRuleVersion": "situation-analysis-rules-v1-candidate-2",
+  "map": "de_mirage",
+  "sceneSchemaVersion": "minimap-scene-v1",
+  "sceneBuilderVersion": "situation-scene-builder-v1.3",
+  "geometryVersion": "mirage-geometry-v1",
+  "factsSchemaVersion": "situation-facts-v1",
+  "comparisonEpsilon": 0.0000005,
+  "formation": {
+    "linkDistance": 0.10,
+    "groupedCoverageRatio": 0.80,
+    "groupedMaxDiameter": 0.18,
+    "splitMinClusterSize": 2,
+    "splitCoverageRatio": 0.80,
+    "splitMinCentroidDistance": 0.22
+  },
+  "pressure": {
+    "siteRadius": 0.16,
+    "minPlayers": 2,
+    "minHistorySeconds": 1.50,
+    "minApproachDelta": 0.04
+  },
+  "contact": {
+    "highDistance": 0.06,
+    "mediumDistance": 0.12,
+    "cueDistance": 0.20,
+    "facingDotMin": 0.50,
+    "minHistorySeconds": 1.00,
+    "minClosingDelta": 0.03
+  },
+  "isolation": {
+    "allyDistanceMin": 0.18,
+    "enemyCloserMargin": 0.04
+  },
+  "spatial": {
+    "localRadius": 0.14,
+    "alivePerPlayer": 1.00,
+    "aliveMaxContribution": 2.00,
+    "healthPerHundred": 0.35,
+    "healthMaxContribution": 1.00,
+    "localPerPlayer": 0.50,
+    "localMaxContribution": 1.00,
+    "pressureContribution": 0.50,
+    "plantedBombContribution": 0.75,
+    "defusingBombContribution": 0.75,
+    "isolationContribution": 0.50,
+    "requiredComponents": 4,
+    "decisiveScore": 1.00,
+    "evenScore": 0.35
+  },
+  "confidence": {
+    "boundaryBand": 0.02,
+    "lowUnknownCount": 2
+  },
+  "qualityImpacts": {
+    "missing-frame": ["formation", "pressure", "contact", "isolation", "spatial"],
+    "stale-frame": ["formation", "pressure", "contact", "isolation", "spatial"],
+    "history-truncated": ["pressure", "contact"],
+    "history-file-boundary": ["pressure", "contact"],
+    "history-round-boundary": ["pressure", "contact"],
+    "history-gap": ["pressure", "contact"],
+    "roster-incomplete": ["formation", "pressure", "contact", "isolation", "spatial"],
+    "position-invalid": ["formation", "pressure", "contact", "isolation", "spatial"],
+    "position-outside-radar": ["formation", "pressure", "contact", "isolation", "spatial"],
+    "region-unknown": ["contested", "contact"],
+    "health-state-conflict": ["spatial"]
+  },
+  "templatePriority": [
+    "bomb.state",
+    "spatial-advantage",
+    "contact-risk",
+    "pressure.side",
+    "contested-regions",
+    "isolated-side",
+    "alive.t",
+    "alive.ct",
+    "total-health.t",
+    "total-health.ct",
+    "formation.t",
+    "formation.ct",
+    "input-quality",
+    "confidence"
+  ]
+}

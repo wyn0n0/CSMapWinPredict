@@ -14,7 +14,7 @@ public sealed class WinInferenceOptions
     public string PythonExecutable { get; set; } = "python";
     public string ScriptPath { get; set; } = "tools/win_inference_service.py";
     public string ModelDirectory { get; set; } =
-        "models/win-baseline-v4-holdout-68-5-20260906";
+        "models/win-baseline-v4-holdout-87-8-20260908";
     public int StartupTimeoutSeconds { get; set; } = 30;
     public int RequestTimeoutSeconds { get; set; } = 15;
     public int ShutdownTimeoutSeconds { get; set; } = 3;

@@ -11,7 +11,6 @@ public sealed class DemoImportService : BackgroundService
 {
     public const int SchemaVersion = 3;
     public const int WindowSeconds = 30;
-    private const int WindowOverlapSeconds = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly Channel<string> queue = Channel.CreateUnbounded<string>(new UnboundedChannelOptions
@@ -110,6 +109,11 @@ public sealed class DemoImportService : BackgroundService
         ? job.ToStatus()
         : null;
 
+    internal SituationImportedDemoSource? GetSituationSource(string id) =>
+        jobs.TryGetValue(id, out var job)
+            ? new(job.Id, job.Status, job.Directory, job.Manifest?.Metadata, job.Manifest?.WindowCount)
+            : null;
+
     public string? GetWindowPath(string id, int index)
     {
         if (!jobs.TryGetValue(id, out var job) || job.Status != "completed" ||
@@ -201,64 +205,17 @@ public sealed class DemoImportService : BackgroundService
         WinTimelinePredictionResult winPredictions,
         CancellationToken cancellationToken)
     {
-        var duration = Math.Max(0, timeline.Metadata.DurationSeconds);
-        var windowCount = Math.Max(1, (int)Math.Ceiling(duration / WindowSeconds));
+        var windowCount = DemoWindowSliceBuilder.GetWindowCount(timeline.Metadata);
         for (var index = 0; index < windowCount; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var coreFrom = index * WindowSeconds;
-            var coreTo = Math.Min(duration, (index + 1) * WindowSeconds);
-            var dataFrom = Math.Max(0d, coreFrom - WindowOverlapSeconds);
-            var dataTo = Math.Min(duration, coreTo + WindowOverlapSeconds);
-            var startTick = (int)Math.Floor(dataFrom * timeline.Metadata.TickRate);
-            var endTick = (int)Math.Ceiling(dataTo * timeline.Metadata.TickRate);
-
-            var indexedFrames = timeline.Frames
-                .Select((frame, frameIndex) => (frame, frameIndex))
-                .Where(item => item.frame.TimeSeconds >= dataFrom && item.frame.TimeSeconds <= dataTo)
-                .ToArray();
-            var frames = indexedFrames.Select(item => item.frame).ToArray();
-            var firstFrameIndex = indexedFrames.Length == 0 ? 0 : indexedFrames[0].frameIndex;
-
-            var utilityTracks = timeline.UtilityTracks
-                .Where(track => track.EndTick >= startTick && track.StartTick <= endTick)
-                .Select(track => track with { Trajectory = SliceUtilityPoints(track.Trajectory, startTick, endTick) })
-                .Where(track => track.Trajectory.Count > 0)
-                .ToArray();
-            var utilityEffects = timeline.UtilityEffects
-                .Where(effect => effect.EndTick >= startTick && effect.StartTick <= endTick)
-                .Select(effect => effect with { Samples = SliceEffectSamples(effect.Samples, startTick, endTick) })
-                .Where(effect => effect.Samples.Count > 0)
-                .ToArray();
-            var utilityStates = timeline.PlayerUtilityStates
-                .GroupBy(state => state.PlayerId)
-                .SelectMany(group => SliceStateChanges(group, startTick, endTick))
-                .OrderBy(state => state.Tick)
-                .ToArray();
-            var equipmentStates = timeline.PlayerEquipmentStates
-                .GroupBy(state => state.PlayerId)
-                .SelectMany(group => SliceEquipmentStateChanges(group, startTick, endTick))
-                .OrderBy(state => state.Tick)
-                .ToArray();
-
-            var windowPredictions = winPredictions.Points
-                .Where(point => point.TimeSeconds >= dataFrom && point.TimeSeconds <= dataTo)
-                .ToArray();
-            var window = new DemoWindow(
-                index,
-                coreFrom,
-                coreTo,
-                dataFrom,
-                dataTo,
-                firstFrameIndex,
-                timeline.Frames.Count,
-                frames,
-                utilityTracks,
-                utilityEffects,
-                utilityStates,
-                equipmentStates,
-                windowPredictions);
-            await WriteBrotliJsonAsync(WindowPath(job.Directory, index), window, cancellationToken);
+            var slice = DemoWindowSliceBuilder.Build(timeline, index, winPredictions.Points);
+            await WriteBrotliJsonAsync(
+                WindowPath(job.Directory, index), slice.Window, cancellationToken);
+            var situationSidecar = SituationWindowSidecarStore.Build(
+                timeline, index, slice.DataFromTick, slice.DataToTick);
+            await SituationWindowSidecarStore.WriteAsync(
+                job.Directory, situationSidecar, cancellationToken);
         }
 
         return new DemoManifest(
@@ -275,88 +232,6 @@ public sealed class DemoImportService : BackgroundService
             SchemaVersion,
             timeline.RoundResults,
             winPredictions.Manifest);
-    }
-
-    private static IReadOnlyList<UtilityPoint> SliceUtilityPoints(
-        IReadOnlyList<UtilityPoint> items,
-        int startTick,
-        int endTick)
-        => SliceSamples(items, startTick, endTick, item => item.Tick);
-
-    private static IReadOnlyList<UtilityEffectSample> SliceEffectSamples(
-        IReadOnlyList<UtilityEffectSample> items,
-        int startTick,
-        int endTick)
-        => SliceSamples(items, startTick, endTick, item => item.Tick);
-
-    private static IReadOnlyList<T> SliceSamples<T>(
-        IReadOnlyList<T> items,
-        int startTick,
-        int endTick,
-        Func<T, int> getTick)
-    {
-        if (items.Count == 0)
-            return [];
-
-        var startIndex = FindLastAtOrBefore(items, startTick, getTick);
-        if (startIndex < 0)
-            startIndex = 0;
-
-        var result = new List<T>();
-        for (var index = startIndex; index < items.Count; index++)
-        {
-            var item = items[index];
-            result.Add(item);
-            if (getTick(item) > endTick)
-                break;
-        }
-        return result;
-    }
-
-    private static IEnumerable<PlayerUtilityState> SliceStateChanges(
-        IEnumerable<PlayerUtilityState> source,
-        int startTick,
-        int endTick)
-    {
-        var states = source.OrderBy(item => item.Tick).ToArray();
-        var previous = states.LastOrDefault(item => item.Tick <= startTick);
-        if (previous is not null)
-            yield return previous;
-
-        foreach (var state in states.Where(item => item.Tick > startTick && item.Tick <= endTick))
-            yield return state;
-    }
-
-    private static IEnumerable<PlayerEquipmentState> SliceEquipmentStateChanges(
-        IEnumerable<PlayerEquipmentState> source,
-        int startTick,
-        int endTick)
-    {
-        var states = source.OrderBy(item => item.Tick).ToArray();
-        var previous = states.LastOrDefault(item => item.Tick <= startTick);
-        if (previous is not null)
-            yield return previous;
-
-        foreach (var state in states.Where(item => item.Tick > startTick && item.Tick <= endTick))
-            yield return state;
-    }
-
-    private static int FindLastAtOrBefore<T>(
-        IReadOnlyList<T> items,
-        int tick,
-        Func<T, int> getTick)
-    {
-        var low = 0;
-        var high = items.Count - 1;
-        while (low <= high)
-        {
-            var middle = low + (high - low) / 2;
-            if (getTick(items[middle]) <= tick)
-                low = middle + 1;
-            else
-                high = middle - 1;
-        }
-        return high;
     }
 
     private static async Task WriteBrotliJsonAsync(string path, DemoWindow window, CancellationToken cancellationToken)

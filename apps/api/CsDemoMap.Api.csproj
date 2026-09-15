@@ -9,4 +9,8 @@
   <ItemGroup>
     <PackageReference Include="DemoFile.Game.Cs" Version="0.44.1" />
   </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="SituationRules\*.json" />
+  </ItemGroup>
 </Project>

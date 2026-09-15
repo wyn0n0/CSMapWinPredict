@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "situation-stage3-calibration-request-v1",
+  "splitFile": "../datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json",
+  "expectedSplitSha256": "b176d96c063921f6a1a8718c700fb6d193903693539e4d1b447e37fca4aa43d8",
+  "expectedRuleVersion": "situation-analysis-rules-v1-candidate-2",
+  "expectedRuleConfigSha256": "197e28cbf3426d46c4770a948a71251268ce5e5c7213debc37940c05f6a355fa",
+  "totalSampleCount": 30,
+  "maxSamplesPerDemo": 6,
+  "demos": [
+    {
+      "fileName": "9z-vs-parivision-m1-mirage.dem",
+      "expectedSha256": "dbd48fff0a309b2aded0d5205120943135740dfd2aef9e93d32d6672db5894da",
+      "sampleCount": 6,
+      "seedTicks": [13944, 14968, 18312, 58496, 122432, 230944],
+      "expectedSamples": [
+        { "tick": 13944, "sceneSha256": "54d96a9cf4b2796da8e0678ce62d042b1d79a6835d0325c77c52d10594fae585" },
+        { "tick": 14968, "sceneSha256": "65ecdc3d61867891bdc5a8dbaefd052ab889622938882a6c01d608ac19a5b4c3" },
+        { "tick": 18312, "sceneSha256": "2b04413cb6881397127f31356d8b69b88eb8b17c24828e5117c04fe193448090" },
+        { "tick": 58496, "sceneSha256": "0c5a614bc02d96e5adc4eb2a570a3bb6be19356cbc06b2724eb8dd5bae39187a" },
+        { "tick": 122432, "sceneSha256": "eaaa84e3795ddcba0fd159cbcdf7f8b327b667960a857db81319e4cdaef45beb" },
+        { "tick": 230944, "sceneSha256": "62995527775fc0b04085f565b6645cdb15e4e91a164db0825f3337069d44cffd" }
+      ]
+    },
+    {
+      "fileName": "9z-vs-faze-m1-mirage.dem",
+      "expectedSha256": "372c82f8233f2b1f194ab670cd76a0fc0d49c6cfbdf941520c57be360ea6d96a",
+      "sampleCount": 6,
+      "seedTicks": [],
+      "expectedSamples": [
+        { "tick": 1368, "sceneSha256": "95f51d396385003d2989192fd8f1319d8667436e873c0199ecddcb3cb2cdbb08" },
+        { "tick": 2624, "sceneSha256": "933ed9078827ea8d95f88d09b275c3df82d8e0e81a8b9e8b3097abb8102e6be3" },
+        { "tick": 12736, "sceneSha256": "bba6f6c15cce83e420a52931c6b43481730c35d0c4acba54bb965db0c99edfa8" },
+        { "tick": 32192, "sceneSha256": "603357b1a7e79ffdd0d6af0ba140e5fa177c86a6eacf858add6c5a81cb70daf8" },
+        { "tick": 42816, "sceneSha256": "665aa89f6b167d7784bb39715947d9c51a62377b503ba5576f3fe56a2efb3528" },
+        { "tick": 48064, "sceneSha256": "48beb0a90ec5162288c12d462433856b8d14a4ece10190b96702777aa790ebdc" }
+      ]
+    },
+    {
+      "fileName": "astralis-vs-mouz-m2-mirage.dem",
+      "expectedSha256": "470552d7a33d78f8e49f4d294a03d656252dba31d17726836c0f3079c701979e",
+      "sampleCount": 6,
+      "seedTicks": [],
+      "expectedSamples": [
+        { "tick": 24768, "sceneSha256": "ad0e7c780bea22adc07657aafabeb2051d0fc4ccb5b0a68bcea4ecee388417b5" },
+        { "tick": 51712, "sceneSha256": "4424547704a21a503fce095f5de9db2f7dea0771de10b894c8e69500da4a36d3" },
+        { "tick": 77120, "sceneSha256": "1498d801c3a20a82c34acc231b98803ac1539bd53a67a0df6731ab60e86bc451" },
+        { "tick": 92160, "sceneSha256": "d19268bc7f78f47cb3a65733994df38fb4a33ff0f3c05dd2c39396f69f7ce421" },
+        { "tick": 122368, "sceneSha256": "262384670e3da556ad8b00cc618041eaaae109fe060bef1329ec5e66fddfc511" },
+        { "tick": 146176, "sceneSha256": "5eda975d901559f669ff3400eaae1d1f93d22c29ae2b5515853c85d595031172" }
+      ]
+    },
+    {
+      "fileName": "b8-vs-gamerlegion-m2-mirage.dem",
+      "expectedSha256": "85bc6b0252493b5a28993d5139b736efae5c5fe6ebc755479ad2cae3a2eed5c1",
+      "sampleCount": 6,
+      "seedTicks": [],
+      "expectedSamples": [
+        { "tick": 1280, "sceneSha256": "e4d4fecb9c0c5f25b1321122ce024f4148b7eb596200a433471e706d7b893daa" },
+        { "tick": 62400, "sceneSha256": "fe68d72bdc4721305495066e8fffff10082576fb72789c8886320866e4c95166" },
+        { "tick": 81792, "sceneSha256": "75cdfe158c716cd284f1212e897d1bc9ded8272980c8ce311f43dd4b08938596" },
+        { "tick": 114304, "sceneSha256": "ea321559d78151002a67b4875becaec6cab33d2be7d3097d3ba3752dbc217f6b" },
+        { "tick": 115904, "sceneSha256": "d577e235c4d9b895a5facc9c877624998258c93a08bc0303b7bb2a893c383ae6" },
+        { "tick": 160512, "sceneSha256": "50d1ab81e259960e1c6b066530399f7850a2ba28be1bd9aa57c11d3d8bd1eb7c" }
+      ]
+    },
+    {
+      "fileName": "b8-vs-m80-mirage.dem",
+      "expectedSha256": "13cc1ab1ac85432da55ddd87e1d3edc9798f46478cce76d813b2f20278c1f056",
+      "sampleCount": 6,
+      "seedTicks": [],
+      "expectedSamples": [
+        { "tick": 1280, "sceneSha256": "8576458423def103b1668fc761aab8b21b0079cf86ad499d9ffe2bbda65ac4d9" },
+        { "tick": 28992, "sceneSha256": "cdafc69a4821c237e979c7816578a1106a6f40352234f5a714419ea64674c1ef" },
+        { "tick": 30080, "sceneSha256": "76c7bbd1b26a904815ce8d99f9d0804d0804c30e1dae174ad1bd28ea1c647ba0" },
+        { "tick": 43072, "sceneSha256": "4603e193f662cbaa10b576c4d7934e6726892c2d123199dcf644b6e7b076bb43" },
+        { "tick": 45120, "sceneSha256": "75829252eba7ada1027b091f99c8a2f802a7f5271aa4b11ebdfe2563eb6964db" },
+        { "tick": 155584, "sceneSha256": "68ba890e3548f33d3ee8d7f9aaee26431cda4818aed61ae08e38ca6a4cd68e77" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-facts-v1.schema.json",
+  "title": "SituationFactsV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "analysisRuleVersion", "alive", "totalHealth", "bomb", "formation", "pressure", "contestedRegions", "contactRisk", "isolatedSide", "spatialAdvantage", "confidence", "evidence", "dataQuality"],
+  "properties": {
+    "schemaVersion": { "const": "situation-facts-v1" },
+    "analysisRuleVersion": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$" },
+    "alive": { "$ref": "#/$defs/nullableSideCounts" },
+    "totalHealth": { "$ref": "#/$defs/nullableSideHealth" },
+    "bomb": {
+      "type": "object", "additionalProperties": false, "required": ["state", "site"],
+      "properties": {
+        "state": { "enum": ["carried", "dropped", "planting", "planted", "defusing", "defused", "exploded", "unknown"] },
+        "site": { "enum": ["A", "B", null] }
+      }
+    },
+    "formation": {
+      "type": "object", "additionalProperties": false, "required": ["t", "ct"],
+      "properties": { "t": { "$ref": "#/$defs/formation" }, "ct": { "$ref": "#/$defs/formation" } }
+    },
+    "pressure": {
+      "type": "object", "additionalProperties": false, "required": ["side", "site"],
+      "properties": { "side": { "enum": ["T", "CT", null] }, "site": { "enum": ["A", "B", null] } },
+      "oneOf": [
+        { "properties": { "side": { "type": "null" }, "site": { "type": "null" } } },
+        { "properties": { "side": { "enum": ["T", "CT"] }, "site": { "enum": ["A", "B"] } } }
+      ]
+    },
+    "contestedRegions": { "type": ["array", "null"], "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "contactRisk": { "enum": ["low", "medium", "high", "unknown"] },
+    "isolatedSide": { "enum": ["T", "CT", "both", "none", "unknown"] },
+    "spatialAdvantage": { "enum": ["T", "CT", "even", "uncertain"] },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
+    "dataQuality": { "type": "array", "items": { "$ref": "#/$defs/dataQuality" } }
+  },
+  "$defs": {
+    "nullableSideCounts": {
+      "type": "object", "additionalProperties": false, "required": ["t", "ct"],
+      "properties": { "t": { "type": ["integer", "null"], "minimum": 0, "maximum": 5 }, "ct": { "type": ["integer", "null"], "minimum": 0, "maximum": 5 } }
+    },
+    "nullableSideHealth": {
+      "type": "object", "additionalProperties": false, "required": ["t", "ct"],
+      "properties": { "t": { "type": ["integer", "null"], "minimum": 0, "maximum": 500 }, "ct": { "type": ["integer", "null"], "minimum": 0, "maximum": 500 } }
+    },
+    "formation": { "enum": ["grouped", "split", "spread", "unknown"] },
+    "evidence": {
+      "type": "object", "additionalProperties": false, "required": ["id", "sourcePaths", "ruleId", "textZh"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.(?:[a-z][a-z0-9-]*|(?:T|CT)[1-5]))*$" },
+        "sourcePaths": { "type": "array", "items": { "type": "string", "pattern": "^/" }, "minItems": 1, "uniqueItems": true },
+        "ruleId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$" },
+        "textZh": { "type": "string", "minLength": 1, "pattern": "[\\u3400-\\u9fff]" }
+      }
+    },
+    "dataQuality": {
+      "type": "object", "additionalProperties": false, "required": ["code", "fieldPaths", "severity"],
+      "properties": {
+        "code": { "enum": ["missing-frame", "stale-frame", "history-truncated", "history-file-boundary", "history-round-boundary", "history-gap", "clock-unknown", "roster-incomplete", "equipment-unknown", "utility-unknown", "position-invalid", "position-outside-radar", "region-unknown", "floor-unknown", "effect-state-incomplete", "legacy-default-ambiguous", "health-state-conflict"] },
+        "fieldPaths": { "type": "array", "items": { "type": "string", "pattern": "^/" }, "minItems": 1, "uniqueItems": true },
+        "severity": { "enum": ["info", "warning", "error"] }
+      }
+    }
+  }
+}
