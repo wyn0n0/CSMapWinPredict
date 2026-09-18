@@ -4,7 +4,7 @@
 
 ## 项目定位
 
-本项目解析 Counter-Strike 2 Demo，生成窗口化回放时间线，并在 Mirage 雷达界面展示回合状态与实时胜率。局势理解路径现已能把目标 tick 之前的结构化观察转换为匿名、可复算、可稳定哈希的场景、Facts 和模板 Narrative；阶段四比赛子切分、训练/复核契约和 schema v4.2 共用 eligibility 均已获批，当前进入候选检测与每回合最多 16 条选择，实际数据导出尚未开始。正式局势 API 和前端接入仍在后续阶段。胜率模型训练与回放接入已经完成，两条模型路径不得混同。
+本项目解析 Counter-Strike 2 Demo，生成窗口化回放时间线，并在 Mirage 雷达界面展示回合状态与实时胜率。局势理解路径现已能把目标 tick 之前的结构化观察转换为匿名、可复算、可稳定哈希的场景、Facts 和模板 Narrative；阶段四比赛子切分、训练/复核契约和 schema v4.2 共用 eligibility 均已获批，候选检测与每回合最多 16 条选择的步骤四实现正在等待用户审核，实际数据导出尚未开始。正式局势 API 和前端接入仍在后续阶段。胜率模型训练与回放接入已经完成，两条模型路径不得混同。
 
 ## 当前权威基线
 
@@ -22,12 +22,13 @@
 - 局势工件公共设施：`SituationArtifactIO.cs` 与 `SituationFrozenDataset.cs`；阶段一至三的导出与验收路径已统一复用。
 - 阶段四比赛切分：`situation-implementation/situation-stage4-split-v1.json`，71 train / 8 dev / 8 test；SHA-256 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。
 - 阶段四契约：`situation-training-record-v1`、`situation-training-selection-v1`、`situation-training-manifest-v1`、label stats、review candidate/decision、冻结 review label/manifest；Schema 文件由版本与 SHA-256 双重绑定，已随本地 checkpoint `34fa03d` 获批。
-- 阶段四 eligibility 基线：`situation-implementation/situation-stage4-eligibility-baseline-v1.json`，绑定 checkpoint `34fa03d`、真实 v4.2 的 87 场/1,899 回合/166,122 行及三个完整文件哈希；步骤三已获用户审核通过。
+- 阶段四 eligibility 基线：`situation-implementation/situation-stage4-eligibility-baseline-v1.json`，绑定 checkpoint `34fa03d`、真实 v4.2 的 87 场/1,899 回合/166,122 行及三个完整文件哈希；步骤三已固定在本地 checkpoint `b370b8a`。
+- 阶段四候选选择：`SituationTrainingCandidateSelector` 使用版本化配置完成 16 类核心/事件/稀有锚点、1 秒映射、每回合 16 条上限、确定性远点填充与精确 1/n 权重；当前改动未提交供审核。
 - 程序边界：`apps/api` 只承载 HTTP 宿主和产品模块，`apps/cli` 承载开发工作流，`tests/CsDemoMap.Api.Tests` 承载 .NET 验证门禁；后端源码位于 `apps/api/Features` 的五个功能模块。
 
 ## 活动里程碑
 
-阶段一、阶段二与阶段三冻结 v1 均已完成技术闭环。阶段四步骤一、二已固定在本地 checkpoint `34fa03d`；步骤三已抽取 v4.2/阶段四共用的 outcome-free eligibility，通过真实工件、小夹具和未来信息不变性门禁并获用户审核。当前实施步骤四的候选选择算法；实际导出和人工复核仍未开始，正式局势 HTTP API、前端和文本模型接入继续留在后续阶段。
+阶段一、阶段二与阶段三冻结 v1 均已完成技术闭环。阶段四步骤一、二固定在 checkpoint `34fa03d`，步骤三固定在 `b370b8a`。步骤四已实现 16 类确定性候选选择、短缺/合并/裁剪统计和 1/n 权重，通过合成与完整 Timeline 门禁并保持未提交等待审核。500 条表示探针、实际导出和人工复核仍未开始；正式局势 HTTP API、前端和文本模型接入继续留在后续阶段。
 
 ## 主要风险与缺口
 
@@ -36,6 +37,7 @@
 - 上游不可空数值中的零可能是默认值，依赖 `legacy-default-ambiguous` 保守标记。
 - 首次文件读取测试不控制操作系统页缓存，只能解释为新服务、无结果缓存且无显式预读的首次文件访问；物理冷盘性能未测量。
 - 阶段四尚未实际导出数据；后续候选选择、导出与人工复核必须沿用冻结 split、共享 eligibility、逐项版本和 Schema 哈希，不可覆盖输出目录或跨用途复用 dev/test。
+- 步骤四目前只完成选择核心；全量类别分布、短缺率、每场解析耗时与理论 30,384 条上限必须由后续 500 条 train-only pilot 实测，不能把合成覆盖当作真实分布结论。
 
 ## 专题入口
 

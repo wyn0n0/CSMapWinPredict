@@ -31,3 +31,12 @@
 - 未来信息不变性门禁确认：赢家 T/CT、结束原因、目标 tick 后 TimelineEvent/RoundResult/装备状态变化均不改变阶段四选择、模型输入或冻结 prelabel 哈希；不合格 tick 不触发 scene 构建。
 - 验证结果：Release 构建 0 warning/0 error；阶段四 eligibility 46 项、contracts 56 项、API 38 项、语义 34 项、v4 15 项和阶段三五套自动门禁通过；真实 492 MB v4.2 samples 已执行全量哈希核验。
 - 用户已审核通过步骤三；批准内容可固定为本地 checkpoint，未授权推送。
+
+## 2026-09-18 — 阶段四步骤四
+
+- 步骤三已提交为本地 checkpoint `b370b8a`，未推送；步骤四在该提交之上保持未暂存、未提交，可独立撤回。
+- 新增 `SituationTrainingCandidateSelector`，严格按 round ID 隔离完整回合结构化状态，只把事件 type/tick 送入选择核心；内部玩家 ID 仅用于相邻合格快照伤害比较，不进入选择结果。
+- 实现 16 类核心/事件/稀有候选：live、部署、尾段、首次接触/伤害/减员、四类 C4、2vN/1vN、post-plant、分路、孤立和高接触风险。事件锚点只映射到 1 秒内首个不早于事件的合格帧，超限和仅有 kill 无状态下降均记录短缺。
+- 同 tick 标签合并并按 ordinal 排序；核心、事件、稀有优先级后使用最大最小 tick 距离填满，完全并列取较早 tick 再取稳定候选摘要。输出按 tick 排序、唯一且最多 16 条，每条带 1/n 分子/分母和值，总权重为 1。
+- `situation-training-selection-v1` 与 Schema 补齐 round-tail、1vN/2vN 阈值和 post-plant 偏好；结果记录配置哈希、逐类候选/入选/合并/上限移除/缺失、eligibility 拒绝与短缺。
+- 新增 `npm run test:situation:stage4:selection`；148 项覆盖全类别、缺失、同 tick 合并、映射超时、0/1/15/16/>16、远点并列、跨回合、输入乱序、四种文化区、同一完整 Timeline 100 次重复和 outcome/event-text/future 不变性。Release 构建 0 warning/0 error，eligibility 46、contracts 58、API 38、语义 34、v4 15 和阶段三五套门禁回归通过。

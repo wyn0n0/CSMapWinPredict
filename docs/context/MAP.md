@@ -26,7 +26,7 @@ API 通过 `InternalsVisibleTo` 只向 CLI 和验证程序集开放必要的内�
 | Situation/Scenes | `apps/api/Features/Situation/Scenes/` | Timeline/窗口适配、场景构建、缓存并发和诊断 |
 | Situation/Analysis | `apps/api/Features/Situation/Analysis/` | 冻结规则、Facts、evidence 和模板 Narrative |
 | Situation/Storage | `apps/api/Features/Situation/Storage/` | 工件 IO、冻结数据集、sidecar 补建和登记 |
-| Situation/Training | `apps/api/Features/Situation/Training/` | 阶段四训练/复核强类型契约、冻结选择配置、严格 JSON、Schema/manifest/权重门禁、合格 tick 到 as-of scene 的桥接 |
+| Situation/Training | `apps/api/Features/Situation/Training/` | 阶段四训练/复核强类型契约、冻结选择配置、严格 JSON、Schema/manifest/权重门禁、合格 tick 到 as-of scene 的桥接、16 类候选与每回合 16 条选择 |
 | Situation/Workflows | `apps/api/Features/Situation/Workflows/` | 样例导出、阶段二验收、阶段三校准/验收与阶段四 split |
 
 ## 当前版本与工件
@@ -44,5 +44,6 @@ API 通过 `InternalsVisibleTo` 只向 CLI 和验证程序集开放必要的内�
 - 阶段四 split：`situation-implementation/situation-stage4-split-v1.json`，SHA-256 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。
 - 阶段四契约：`situation-training-record-v1`、`situation-training-selection-v1`、`situation-training-manifest-v1`、`situation-label-stats-v1`、review candidate/decision、冻结 review label/manifest；Schema 位于 `schemas/situation/`。
 - 阶段四 eligibility 基线：`situation-implementation/situation-stage4-eligibility-baseline-v1.json`，文件 SHA-256 `a084c525323682722657a1ae4d0fb580e87c445cba2fde8540e534b0b8b0341f`；真实大工件仍位于忽略目录，不进入 Git。
+- 阶段四选择核心：`apps/api/Features/Situation/Training/SituationTrainingCandidateSelector.cs`；结果绑定选择配置规范化 SHA-256，包含排序 tick/tags、1/n 权重、类别统计、eligibility 拒绝与短缺，不包含事件文字或回合结果。
 
 模型、数据集和 Demo 是本地对象，均不因源码目录调整而移动、覆盖或进入 Git。

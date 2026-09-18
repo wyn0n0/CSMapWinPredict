@@ -4,7 +4,7 @@
   "title": "SituationTrainingSelectionV1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "algorithmVersion", "maxSamplesPerRound", "eventMappingToleranceSeconds", "deploymentComplete", "corePriority", "eventPriority", "rarePriority", "coverageStrategy", "allowPhysicalSampleDuplication", "fillStrategy", "fillTieBreakers"],
+  "required": ["schemaVersion", "algorithmVersion", "maxSamplesPerRound", "eventMappingToleranceSeconds", "deploymentComplete", "roundTail", "clutch2vN", "clutch1vN", "postPlantPreference", "corePriority", "eventPriority", "rarePriority", "coverageStrategy", "allowPhysicalSampleDuplication", "fillStrategy", "fillTieBreakers"],
   "properties": {
     "schemaVersion": { "const": "situation-training-selection-v1" },
     "algorithmVersion": { "const": "situation-training-selection-v1" },
@@ -21,6 +21,34 @@
         "stableSeconds": { "const": 1.0 }
       }
     },
+    "roundTail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maximumRoundRemainingSeconds", "maximumBombRemainingSeconds"],
+      "properties": {
+        "maximumRoundRemainingSeconds": { "const": 10.0 },
+        "maximumBombRemainingSeconds": { "const": 10.0 }
+      }
+    },
+    "clutch2vN": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sideAlive", "minimumOpponentAlive"],
+      "properties": {
+        "sideAlive": { "const": 2 },
+        "minimumOpponentAlive": { "const": 3 }
+      }
+    },
+    "clutch1vN": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sideAlive", "minimumOpponentAlive"],
+      "properties": {
+        "sideAlive": { "const": 1 },
+        "minimumOpponentAlive": { "const": 2 }
+      }
+    },
+    "postPlantPreference": { "const": "closest-known-bomb-countdown-midpoint" },
     "corePriority": { "const": ["live-start", "deployment-complete", "round-tail"] },
     "eventPriority": { "const": ["first-contact", "first-damage", "first-casualty", "bomb-dropped", "bomb-picked-up", "bomb-planting-or-planted", "bomb-defusing", "clutch-2vN", "clutch-1vN"] },
     "rarePriority": { "const": ["post-plant", "formation-split", "isolated", "high-contact-risk"] },

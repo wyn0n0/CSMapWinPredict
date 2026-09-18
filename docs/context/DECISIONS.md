@@ -22,6 +22,8 @@
 - **模型边界采用显式白名单。** `SituationModelInputProjector` 移除来源、Demo、窗口、requested tick 和真实 round ID；prompt 投影只包含 `input/output`。分组引用、split、选择标签、权重、哈希及 provenance 只留在模型不可见的门禁层。
 - **阶段四版本逐项隔离。** split、记录、选择、manifest、标签统计和各 review 工件分别版本化；manifest 逐项记录 Scene/Builder/Geometry/Facts/Rules/Narrative/eligibility/selection/input/review 版本，并绑定 12 个依赖/阶段四 Schema 的文件 SHA-256。步骤二已获批并固定在 checkpoint `34fa03d`。
 - **v4.2 与阶段四共用单一 outcome-free eligibility。** `RoundSampleEligibility` 集中判断 Mirage、完成回合、半开 live 区间、live/post-plant、回合号、时钟、阵容和存活快照；返回值不含赢家、结束原因或训练标签。v4.2 继续保留既有拒绝原因，阶段四只在合格后通过 `SituationSceneService.BuildFromTimeline` 形成 as-of scene。
+- **候选选择是配置驱动且 outcome-free。** 选择核心只接收同回合结构化快照、冻结 Facts 与事件类型/tick；部署、tail、1vN/2vN、映射容差、类别优先级、post-plant 偏好、上限和 tie-breaker 全部由 `situation-training-selection-v1` 绑定。事件标题/详情、赢家和结束原因不进入接口或结果。
+- **先覆盖锚点，再做确定性远点填充。** 核心、事件、稀有类别按配置顺序加入，同 tick 合并全部 ordinal 标签；空位最大化与已选 tick 的最小距离，完全并列取更早 tick 后再用域分隔候选摘要。最终 tick 排序，每回合唯一且不超过 16 条，每条权重固定为 1/n。
 - **覆盖靠替换而非放大。** 每回合最多 16 个唯一 tick，稀有场景替换低优先级普通样本；最终每条写 1/n 有理权重。人工 train 标签只携带 `recommendedSftRepeat=5`，dev/test 明确禁止 SFT 重复。
 - **性能请求只来自训练侧。** 阶段二固定请求包含真实拆除和跨窗口读取；保留比赛仅运行冻结契约回归。首次文件读取定义为新服务、无结果缓存且无显式预读，操作系统页缓存状态另行说明。
 - **阶段边界保持清晰。** 阶段二负责服务化与性能，阶段三负责 Facts 规则和模板叙述。

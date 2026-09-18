@@ -87,6 +87,21 @@ internal static class SituationTrainingSelectionLoader
             Require(config.DeploymentComplete.StableSeconds == 1,
                 "deployment stability duration mismatch", errors);
         }
+        if (config.RoundTail is null)
+        {
+            errors.Add("roundTail is missing");
+        }
+        else
+        {
+            Require(config.RoundTail.MaximumRoundRemainingSeconds == 10,
+                "round-tail round clock threshold mismatch", errors);
+            Require(config.RoundTail.MaximumBombRemainingSeconds == 10,
+                "round-tail bomb clock threshold mismatch", errors);
+        }
+        ValidateClutch(config.Clutch2vN, 2, 3, "clutch2vN", errors);
+        ValidateClutch(config.Clutch1vN, 1, 2, "clutch1vN", errors);
+        Require(config.PostPlantPreference == "closest-known-bomb-countdown-midpoint",
+            "post-plant preference mismatch", errors);
         Require(config.CorePriority?.SequenceEqual(ExpectedCore, StringComparer.Ordinal) == true,
             "core priority mismatch", errors);
         Require(config.EventPriority?.SequenceEqual(ExpectedEvents, StringComparer.Ordinal) == true,
@@ -115,5 +130,22 @@ internal static class SituationTrainingSelectionLoader
     {
         if (!condition)
             errors.Add(error);
+    }
+
+    private static void ValidateClutch(
+        SituationClutchSelectionRuleV1? rule,
+        int expectedSideAlive,
+        int expectedMinimumOpponentAlive,
+        string label,
+        ICollection<string> errors)
+    {
+        if (rule is null)
+        {
+            errors.Add(label + " is missing");
+            return;
+        }
+        Require(rule.SideAlive == expectedSideAlive, label + " sideAlive mismatch", errors);
+        Require(rule.MinimumOpponentAlive == expectedMinimumOpponentAlive,
+            label + " minimumOpponentAlive mismatch", errors);
     }
 }

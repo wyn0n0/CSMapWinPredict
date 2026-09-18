@@ -104,7 +104,7 @@ npm run test:situation:stage4:split
 npm run test:situation:stage4:contracts
 ```
 
-该门禁当前为 56 项，验证 `situation-training-record-v1` 的严格完整 JSON 形状、稳定字段顺序、UTF-8 无 BOM 单行编码、域分隔身份摘要、白名单模型输入、精确 evidence 集合、敏感属性/字符串扫描和 1/n 回合权重。它同时加载版本化的嵌入选择配置候选，验证稀有覆盖只能替换低优先级样本且不能物理复制，并约束 train 人工标签的 `recommendedSftRepeat=5` 不得进入 dev/test。
+该门禁当前为 58 项，验证 `situation-training-record-v1` 的严格完整 JSON 形状、稳定字段顺序、UTF-8 无 BOM 单行编码、域分隔身份摘要、白名单模型输入、精确 evidence 集合、敏感属性/字符串扫描和 1/n 回合权重。它同时加载版本化的嵌入选择配置，验证 round-tail、1vN/2vN、部署、映射容差、post-plant 偏好、类别顺序与 tie-breaker，且稀有覆盖只能替换低优先级样本、不能物理复制；train 人工标签的 `recommendedSftRepeat=5` 不得进入 dev/test。
 
 阶段四 manifest 必须逐项记录 Scene、Builder、Geometry、Facts、Rules、Narrative、semantic eligibility、selection、input representation 和 review 版本；`SituationTrainingSchemaRegistry` 同时核对 12 个依赖/阶段四 Draft 2020-12 Schema 的版本、仓库相对路径和文件 SHA-256。manifest 回读还会复核所列工件的存在性、字节数、可选行数和 SHA-256。当前仅完成契约，尚未生成 `train/dev/test.jsonl`。
 
@@ -117,6 +117,16 @@ npm run test:situation:stage4:eligibility
 该门禁当前为 46 项。它验证共享 helper 只返回合格状态与稳定原因码，v4.2 保持原有拒绝原因顺序，并对固定小夹具重新导出后核对字段、tick、拒绝统计、1/n 权重和规范化 JSONL 哈希。若本地存在 `datasets/mirage-v4-20260908-87/`，还会对 87 场、1,899 完成回合、166,122 行及 manifest/comparison/491,811,329 字节 samples 文件执行长度与 SHA-256 全量核验；目录缺失时只验证不可变基线元数据并明确提示跳过真实大工件。
 
 阶段四构建入口必须先调用 `RoundSampleEligibility`，合格后再由 `SituationEligibleSceneBuilder` 进入 `SituationSceneService.BuildFromTimeline`。不得把完整 Timeline 直接序列化为模型输入；赢家、结束原因和目标 tick 后事件不得进入选择、输入或预标注哈希。
+
+## 阶段四候选选择
+
+```powershell
+npm run test:situation:stage4:selection
+```
+
+该门禁当前为 148 项，覆盖 16 个配置类别、部署连续性、C4/伤害/减员映射、1 秒超限丢弃、同 tick 合并、0/1/15/16/>16 候选、远点填充、1/n 权重、跨回合隔离、输入乱序、四种文化区及同一完整 Timeline 100 次重复。选择器只读取 `TimelineEvent.Type/Tick`；标题、详情、赢家、结束原因及目标后事件变化必须保持选择 SHA-256 不变。
+
+这一步不创建数据集目录，也不读取 test 分布。类别命中率、缺失率、实际行数、体积与耗时必须在后续 500 条 train-only pilot 中记录；当前只可运行上述合成/流程门禁，不能把它解释为真实数据导出完成。
 
 ## 阶段二真实样例与性能
 

@@ -4,7 +4,7 @@
 
 ## 当前目标
 
-阶段一局势契约、阶段二服务化、阶段三冻结 v1 和阶段四步骤一至三均已完成并获批。当前进入步骤四，实现版本化候选检测与每回合最多 16 条的确定性选择。正式 HTTP API、前端和文本模型接入留在后续阶段。
+阶段一局势契约、阶段二服务化、阶段三冻结 v1 和阶段四步骤一至三均已完成并获批，步骤三 checkpoint 为 `b370b8a`。步骤四的版本化候选检测与每回合最多 16 条确定性选择已实现，保持未提交等待用户审核。正式 HTTP API、前端和文本模型接入留在后续阶段。
 
 ## 已完成闭环
 
@@ -37,11 +37,15 @@
 - `RoundSampleEligibility` 成为 v4.2 和阶段四唯一的完成回合/时点合格性判断；结果只含 `Eligible/ReasonCode`，原有 `round-unconfirmed`、阵容 reasons、时钟来源和 `alive-snapshot-mismatch` 语义保持不变。
 - `SituationEligibleSceneBuilder` 只为合格 tick 调用 `SituationSceneService.BuildFromTimeline`；赢家、结束原因及目标后 TimelineEvent/装备状态变化不会改变选择、模型输入或冻结 prelabel 哈希。
 - `situation-stage4-eligibility-baseline-v1.json` 绑定获批 checkpoint、真实 v4.2 的 87 场/1,899 完成回合/166,122 行/0 拒绝及完整 samples SHA-256 `5ec3d56b265a1f51ddeb5c228f75cfbfdb966cae8b252afd80ef34aadf8442cc`；小夹具规范化 JSONL SHA-256 保持 `3c0a300bcdb1ee94f508206e04b57294122b48d1948e2f71aea80500b74b7cdf`。
-- `npm run test:situation:stage4:eligibility` 当前通过 46 项；Release 构建 0 警告/0 错误，API 38 项、语义 34 项、v4 15 项、阶段四 contracts 56 项和阶段三五套门禁回归通过。
+- `npm run test:situation:stage4:eligibility` 当前通过 46 项；步骤三已获批并固定在本地 checkpoint `b370b8a`，未推送。
+- `SituationTrainingCandidateSelector` 只消费同回合结构化快照、冻结 Facts 和事件类型；实现 live/deployment/tail、首次接触/伤害/减员、四类 C4、2vN/1vN 和四类稀有 Facts 锚点。事件文字、赢家、结束原因和目标后事件不会进入选择结果。
+- 所有选择阈值、类别顺序、1 秒映射容差、post-plant 偏好、16 条上限和 tie-breaker 均由嵌入 `situation-training-selection-v1` 与 Schema 约束；同 tick 合并并 ordinal 排序标签，剩余名额使用最大最小 tick 距离填充。
+- 每回合输出 `min(16, uniqueEligibleTicks)`，每条保存精确 `1/n` 分子/分母与数值权重；类别统计覆盖候选、入选、合并、上限移除、缺失锚点及 eligibility 拒绝原因。
+- `npm run test:situation:stage4:selection` 当前通过 148 项，包含同一完整 Timeline 重复 100 次、跨文化/输入乱序、0/1/15/16/>16、事件超时、跨回合隔离和 outcome/event-text/future 不变性；阶段四 contracts 当前为 58 项。
 
 ## 下一步
 
-1. 实现步骤四的事件/稀有类别检测、1 秒锚点映射、稳定合并、16 条上限和远点填充，并保持新改动未提交供审核。
+1. 等待用户审核步骤四；通过后进入步骤五，使用同一选择/场景/Facts/预标注链路运行两次 500 条 train-only 表示探针。
 2. 正式 HTTP 路由、错误映射和跨进程补建登记留到阶段七。
 
 ## 短期阻塞

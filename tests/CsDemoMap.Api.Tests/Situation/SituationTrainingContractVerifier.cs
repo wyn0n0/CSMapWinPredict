@@ -194,7 +194,13 @@ internal static class SituationTrainingContractVerifier
         var frozen = SituationTrainingSelectionLoader.LoadFrozen();
         var repeat = SituationTrainingSelectionLoader.LoadFrozen();
         Check(frozen.Config.SchemaVersion == SituationTrainingContractVersions.Selection &&
-              frozen.Config.MaxSamplesPerRound == 16, "frozen selection config loaded", ref checks);
+              frozen.Config.MaxSamplesPerRound == 16 &&
+              frozen.Config.RoundTail.MaximumRoundRemainingSeconds == 10 &&
+              frozen.Config.RoundTail.MaximumBombRemainingSeconds == 10 &&
+              frozen.Config.Clutch2vN == new SituationClutchSelectionRuleV1(2, 3) &&
+              frozen.Config.Clutch1vN == new SituationClutchSelectionRuleV1(1, 2) &&
+              frozen.Config.PostPlantPreference == "closest-known-bomb-countdown-midpoint",
+            "frozen selection config loaded", ref checks);
         Check(frozen.Sha256 == repeat.Sha256 && frozen.CanonicalJson == repeat.CanonicalJson,
             "selection config is deterministic", ref checks);
         CheckThrows(() => SituationTrainingSelectionLoader.ParseForVerification(
@@ -212,6 +218,14 @@ internal static class SituationTrainingContractVerifier
             frozen.CanonicalJson.Replace("\"allowPhysicalSampleDuplication\":false,", string.Empty,
                 StringComparison.Ordinal), "missing-false.json"),
             "selection missing false-valued field rejected", ref checks);
+        CheckThrows(() => SituationTrainingSelectionLoader.ParseForVerification(
+            frozen.CanonicalJson.Replace("\"maximumRoundRemainingSeconds\":10",
+                "\"maximumRoundRemainingSeconds\":11", StringComparison.Ordinal),
+            "bad-tail.json"), "selection round-tail threshold drift rejected", ref checks);
+        CheckThrows(() => SituationTrainingSelectionLoader.ParseForVerification(
+            frozen.CanonicalJson.Replace("\"minimumOpponentAlive\":3",
+                "\"minimumOpponentAlive\":4", StringComparison.Ordinal),
+            "bad-clutch.json"), "selection clutch threshold drift rejected", ref checks);
     }
 
     private static async Task<int> VerifySchemasAndManifestAsync(

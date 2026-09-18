@@ -100,6 +100,12 @@ if (args is ["--verify-situation-stage-four-eligibility"])
     return 0;
 }
 
+if (args is ["--verify-situation-stage-four-selection"])
+{
+    SituationTrainingCandidateSelectorVerifier.Verify();
+    return 0;
+}
+
 if (args is ["--verify-demo-prefix", var demoPath, var stopTick])
 {
     await SemanticPrefixVerifier.VerifyAsync(

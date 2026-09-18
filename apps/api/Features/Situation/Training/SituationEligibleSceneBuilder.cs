@@ -31,6 +31,22 @@ internal sealed class SituationEligibleSceneBuilder
         cancellationToken.ThrowIfCancellationRequested();
         var snapshot = timeline.Frames.SingleOrDefault(item => item.Tick == frame.Tick)
             ?? throw new InvalidDataException($"Timeline frame {frame.Tick} is missing.");
+        return Build(
+            timeline, demoRef, windowIndex, attempt, frame, snapshot, cancellationToken);
+    }
+
+    internal SituationEligibleSceneBuildResult Build(
+        DemoTimeline timeline,
+        string demoRef,
+        int windowIndex,
+        RoundAttempt attempt,
+        SemanticFrame frame,
+        DemoFrame snapshot,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(timeline);
+        ArgumentNullException.ThrowIfNull(snapshot);
+        cancellationToken.ThrowIfCancellationRequested();
         var eligibility = RoundSampleEligibility.Evaluate(
             timeline.Metadata.MapName, attempt, frame, snapshot);
         if (!eligibility.Eligible)

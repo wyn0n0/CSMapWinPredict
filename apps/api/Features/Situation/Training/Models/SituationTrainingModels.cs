@@ -169,12 +169,24 @@ internal sealed record SituationDeploymentSelectionRuleV1(
     double MinimumNormalizedMovement,
     double StableSeconds);
 
+internal sealed record SituationRoundTailSelectionRuleV1(
+    double MaximumRoundRemainingSeconds,
+    double MaximumBombRemainingSeconds);
+
+internal sealed record SituationClutchSelectionRuleV1(
+    int SideAlive,
+    int MinimumOpponentAlive);
+
 internal sealed record SituationTrainingSelectionConfigV1(
     string SchemaVersion,
     string AlgorithmVersion,
     int MaxSamplesPerRound,
     double EventMappingToleranceSeconds,
     SituationDeploymentSelectionRuleV1 DeploymentComplete,
+    SituationRoundTailSelectionRuleV1 RoundTail,
+    SituationClutchSelectionRuleV1 Clutch2vN,
+    SituationClutchSelectionRuleV1 Clutch1vN,
+    string PostPlantPreference,
     IReadOnlyList<string> CorePriority,
     IReadOnlyList<string> EventPriority,
     IReadOnlyList<string> RarePriority,

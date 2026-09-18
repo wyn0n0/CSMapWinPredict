@@ -9,6 +9,19 @@
     "minimumNormalizedMovement": 0.08,
     "stableSeconds": 1.0
   },
+  "roundTail": {
+    "maximumRoundRemainingSeconds": 10.0,
+    "maximumBombRemainingSeconds": 10.0
+  },
+  "clutch2vN": {
+    "sideAlive": 2,
+    "minimumOpponentAlive": 3
+  },
+  "clutch1vN": {
+    "sideAlive": 1,
+    "minimumOpponentAlive": 2
+  },
+  "postPlantPreference": "closest-known-bomb-countdown-midpoint",
   "corePriority": [
     "live-start",
     "deployment-complete",
