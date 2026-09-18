@@ -32,7 +32,7 @@ internal static class SituationModelInputProjector
             scene.Map,
             scene.Tick,
             scene.TickRate,
-            scene.Round,
+            scene.Round with { Ref = null },
             scene.Players,
             scene.Teams,
             scene.Bomb,

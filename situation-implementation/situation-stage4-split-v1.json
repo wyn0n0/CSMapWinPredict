@@ -1,0 +1,458 @@
+{
+  "schemaVersion": "situation-stage4-split-v1",
+  "parentSplitReference": "datasets/mirage-v4-20260908-87/validation-split-87-8-seed42.json",
+  "parentSplitSha256": "b176d96c063921f6a1a8718c700fb6d193903693539e4d1b447e37fca4aa43d8",
+  "parentManifestReference": "datasets/mirage-v4-20260908-87/manifest.json",
+  "parentManifestSha256": "f7a1bfa23dd7f7d3d42bc6cd4c005fd5ff28aafdb9fab5b8b6b8ced364aaa252",
+  "parentSemanticVersion": "mirage-semantics-v4.2",
+  "algorithmVersion": "situation-stage4-split-v1",
+  "domainSeparator": "situation-stage4-dev-v1",
+  "seed": 42,
+  "hashAlgorithm": "SHA-256",
+  "ordering": "dev: selection digest ordinal, fileName ordinal; members: fileName ordinal",
+  "sourceDemoCount": 87,
+  "trainDemoCount": 71,
+  "devDemoCount": 8,
+  "testDemoCount": 8,
+  "train": [
+    {
+      "fileName": "9z-vs-faze-m1-mirage.dem",
+      "matchId": "372c82f8233f2b1f194ab670cd76a0fc0d49c6cfbdf941520c57be360ea6d96a",
+      "role": "train"
+    },
+    {
+      "fileName": "9z-vs-parivision-m1-mirage.dem",
+      "matchId": "dbd48fff0a309b2aded0d5205120943135740dfd2aef9e93d32d6672db5894da",
+      "role": "train"
+    },
+    {
+      "fileName": "astralis-vs-mouz-m2-mirage.dem",
+      "matchId": "470552d7a33d78f8e49f4d294a03d656252dba31d17726836c0f3079c701979e",
+      "role": "train"
+    },
+    {
+      "fileName": "b8-vs-gamerlegion-m2-mirage.dem",
+      "matchId": "85bc6b0252493b5a28993d5139b736efae5c5fe6ebc755479ad2cae3a2eed5c1",
+      "role": "train"
+    },
+    {
+      "fileName": "b8-vs-m80-mirage.dem",
+      "matchId": "13cc1ab1ac85432da55ddd87e1d3edc9798f46478cce76d813b2f20278c1f056",
+      "role": "train"
+    },
+    {
+      "fileName": "b8-vs-vitality-m1-mirage.dem",
+      "matchId": "930cd15e8112cb468e1ae2e1d2e73c325839146a8018fe3e88ba64d6de01beca",
+      "role": "train"
+    },
+    {
+      "fileName": "betboom-vs-fut-m1-mirage.dem",
+      "matchId": "f8aa64ac8ce329374808355ed653162929f103d51ee65e03f710976a168d91e0",
+      "role": "train"
+    },
+    {
+      "fileName": "ence-vs-bc-game-m1-mirage.dem",
+      "matchId": "7e1aaf9737579e576429c1e5dd580841539ba98a271601cbbc2a53b949aa5784",
+      "role": "train"
+    },
+    {
+      "fileName": "eyeballers-vs-faze-m2-mirage.dem",
+      "matchId": "21ca7217e5f1ef3b12ff3bf3061ad17a4998e9ecd6cb4b5df97a52a9ae4cdc62",
+      "role": "train"
+    },
+    {
+      "fileName": "falcons-vs-9z-m2-mirage.dem",
+      "matchId": "aff086e55dc97aa6bd4d32b0419d4db1fadb0084e0a0dbeec0ab6979d96afe37",
+      "role": "train"
+    },
+    {
+      "fileName": "falcons-vs-legacy-m3-mirage.dem",
+      "matchId": "bddf78636fa318cbf7a008d7ab1dc0442a42a6046461e07bb21ac2b274d7b4a9",
+      "role": "train"
+    },
+    {
+      "fileName": "faze-vs-the-mongolz-m2-mirage.dem",
+      "matchId": "14afe78582ea49c2d75ad219fb3bd0aa68833263ee7f60ba7c2b68c53d9cd808",
+      "role": "train"
+    },
+    {
+      "fileName": "furia-vs-9z-m2-mirage.dem",
+      "matchId": "6cf330bc9d931cffdc088d59fcf38db9afa79d7a4f101268b677b5a635bcc468",
+      "role": "train"
+    },
+    {
+      "fileName": "furia-vs-b8-m1-mirage.dem",
+      "matchId": "eac111c86be7edc8db6765e51d77cc854fb7457bdc48b4dc3d0d89809d7c51da",
+      "role": "train"
+    },
+    {
+      "fileName": "furia-vs-falcons-m1-mirage-Astana.dem",
+      "matchId": "6218e81e3959d049371c0d55ed7131476433c7f02457fa16fe442c05a23ec167",
+      "role": "train"
+    },
+    {
+      "fileName": "furia-vs-falcons-m1-mirage.dem",
+      "matchId": "04f26f0f092f24fd13e7939dc56e72a3783a61872500b97b09810ed5a2363697",
+      "role": "train"
+    },
+    {
+      "fileName": "furia-vs-gamerlegion-m3-mirage.dem",
+      "matchId": "900c97da6988571dcc27d7fb4bae9061db4bd300fa7570aefbe648921f32af48",
+      "role": "train"
+    },
+    {
+      "fileName": "furia-vs-heroic-m1-mirage.dem",
+      "matchId": "06b598223f4a850e626a4acb8c4cb9a56519f7453ae1fc80ec306209ee93c757",
+      "role": "train"
+    },
+    {
+      "fileName": "furia-vs-pain-m1-mirage.dem",
+      "matchId": "90562a7a48689080a233d613f883846205cab54184049d2613d40b86bd880c50",
+      "role": "train"
+    },
+    {
+      "fileName": "furia-vs-spirit-m3-mirage.dem",
+      "matchId": "887a049a7b60fe202f031880c802425bf3ae120deed6dc313361f848b38ce113",
+      "role": "train"
+    },
+    {
+      "fileName": "fut-vs-g2-m3-mirage.dem",
+      "matchId": "059520af6158bc2c4802b94f2080e28eb5b9d078732df3c2323c165d38b582f3",
+      "role": "train"
+    },
+    {
+      "fileName": "fut-vs-magic-m3-mirage.dem",
+      "matchId": "1147ef408f705e2deb32455125fc2018fed7e878b94727a4bcdde03f1107cc43",
+      "role": "train"
+    },
+    {
+      "fileName": "fut-vs-tyloo-mirage.dem",
+      "matchId": "395266c432ac915edf74b087361ead11bd438f89dfe8d5fa291db579b860cf1f",
+      "role": "train"
+    },
+    {
+      "fileName": "g2-vs-faze-m3-mirage.dem",
+      "matchId": "a1da7d6b9089a396ef106608a029b3fe64feff20edf7f416ac64d26aafe2345a",
+      "role": "train"
+    },
+    {
+      "fileName": "gamerlegion-vs-mouz-m1-mirage.dem",
+      "matchId": "e74d2d5135f3dad2bfdca6e16bc8fe120e18b66ce818df856da37174a66d27b7",
+      "role": "train"
+    },
+    {
+      "fileName": "legacy-vs-falcons-m1-mirage.dem",
+      "matchId": "deeda64a7c879f69a10c1bd344e6966e4db44e75d74af1d26a733ee7add4e093",
+      "role": "train"
+    },
+    {
+      "fileName": "legacy-vs-gamerlegion-m2-mirage.dem",
+      "matchId": "cc1e441bcff01386ca844c5063fa0d32c8007e6394e5e44b9acebade4a0faee7",
+      "role": "train"
+    },
+    {
+      "fileName": "legacy-vs-the-mongolz-m2-mirage.dem",
+      "matchId": "c06055355ecde3322033a2de3f7a2c3b07ddb2a95b85032d21f05b7d065a8ec9",
+      "role": "train"
+    },
+    {
+      "fileName": "liquid-vs-mibr-mirage.dem",
+      "matchId": "2cb312fb611579460db9062dae9799473b8d5cc2c0b2081651c46f7db680cd4e",
+      "role": "train"
+    },
+    {
+      "fileName": "m80-vs-mouz-m3-mirage.dem",
+      "matchId": "1277d322b7353785df01eced1b242fbc3eeb665ea27466133f149e561757c429",
+      "role": "train"
+    },
+    {
+      "fileName": "magic-vs-faze-m1-mirage.dem",
+      "matchId": "1cf4e94fbc17b02cb29c160e1d6d768b90627421e7c3c00ddcaf24e902632e10",
+      "role": "train"
+    },
+    {
+      "fileName": "mibr-vs-b8-m1-mirage.dem",
+      "matchId": "cff133b3c6f7ae9cc5a18aa3b827fcaf85475c21054fb42e789f07b92a79dca7",
+      "role": "train"
+    },
+    {
+      "fileName": "mouz-vs-fut-m3-mirage.dem",
+      "matchId": "a3380b5cfc7419f18ff7a47b7a77aee05fd9b3ae91e1b3522969a47d08f36848",
+      "role": "train"
+    },
+    {
+      "fileName": "mouz-vs-g2-m2-mirage.dem",
+      "matchId": "3316571d6262e047228738fed5fa84f65fe453f4dd6de4aa2b6095feacf05fcf",
+      "role": "train"
+    },
+    {
+      "fileName": "mouz-vs-gentle-mates-m2-mirage.dem",
+      "matchId": "459647bdbc3adec16a896158e5bf3a3e8e0259cf63625420078540b71d6848c2",
+      "role": "train"
+    },
+    {
+      "fileName": "natus-vincere-vs-falcons-m2-mirage.dem",
+      "matchId": "585dc788768f6100b762e4560a88ee517ded5f0939945b549934f1dfd16aa732",
+      "role": "train"
+    },
+    {
+      "fileName": "natus-vincere-vs-gamerlegion-m3-mirage.dem",
+      "matchId": "0bc3b3096c1765026473f37801a46cc2079b8098635be3694d6159eb768a2696",
+      "role": "train"
+    },
+    {
+      "fileName": "natus-vincere-vs-m80-m2-mirage.dem",
+      "matchId": "3c83e052385b52b096a02ab8dec073a66c30d33b66b51fdefe9f6b0806f84b7f",
+      "role": "train"
+    },
+    {
+      "fileName": "natus-vincere-vs-passion-ua-m2-mirage.dem",
+      "matchId": "9d162f4aabdcfc78e676858c88b490d3cbdf4703296abbd8abc40a593b56a249",
+      "role": "train"
+    },
+    {
+      "fileName": "natus-vincere-vs-the-mongolz-m3-mirage.dem",
+      "matchId": "5d30f5c0e9f01373a85417a4cb69c0ba47256167c61cbec683d1da4de47979c4",
+      "role": "train"
+    },
+    {
+      "fileName": "nrg-vs-mouz-m3-mirage.dem",
+      "matchId": "9197c85a301776783ae84ea9b06ae19042c18e907e222d2f79c97bbafdbbe5fe",
+      "role": "train"
+    },
+    {
+      "fileName": "pain-vs-astralis-m3-mirage.dem",
+      "matchId": "d6af95d11f43fae8669792a53ff3a605d15c27a3aef19cd7a6fd761e32d56aae",
+      "role": "train"
+    },
+    {
+      "fileName": "pain-vs-m80-mirage.dem",
+      "matchId": "027df3f09bb0f1e8bd448070f2426ae03d84d2a1563d3e6baf1abc68ad1fbe7f",
+      "role": "train"
+    },
+    {
+      "fileName": "pain-vs-tyloo-mirage.dem",
+      "matchId": "2e9d8eb463680f6e2b28158f668f8f73368399f625f394cc846562400c406327",
+      "role": "train"
+    },
+    {
+      "fileName": "parivision-vs-big-m2-mirage.dem",
+      "matchId": "8af562ddbefcb7c7b7ea0daabda5519da67e1c8d7c94f14c821ed7d75ff44dd1",
+      "role": "train"
+    },
+    {
+      "fileName": "parivision-vs-g2-m1-mirage.dem",
+      "matchId": "9113dc25524231f9fa6a824774c01fff41e60c25de2591e668d0eb544051b175",
+      "role": "train"
+    },
+    {
+      "fileName": "parivision-vs-tyloo-mirage.dem",
+      "matchId": "884c23adda15d8cccf2e713ebf2617a490fa515448f288f33cd54133659a7c1c",
+      "role": "train"
+    },
+    {
+      "fileName": "spirit-vs-9z-m1-mirage.dem",
+      "matchId": "e4b78b3f9e3378e5ac5ee85c02f672f9bdf9c59ae586c76fa6bb41534201729c",
+      "role": "train"
+    },
+    {
+      "fileName": "spirit-vs-9z-m2-mirage.dem",
+      "matchId": "416e409951c458dd86e88c5fe522cbd5d6548be6ac8756382aa8d9be420cba7e",
+      "role": "train"
+    },
+    {
+      "fileName": "spirit-vs-betboom-mirage.dem",
+      "matchId": "f7e03662bc3f74b841d8cb5abaf11749b56629fb385e37e13cd91292ce81e636",
+      "role": "train"
+    },
+    {
+      "fileName": "spirit-vs-big-m3-mirage.dem",
+      "matchId": "49dd4fe5a206ad2cfe96525690c35b6c7af9778bf92d5eb89a5605d42c6694aa",
+      "role": "train"
+    },
+    {
+      "fileName": "spirit-vs-falcons-m2-mirage-Astana.dem",
+      "matchId": "5aca999e7f4d631af0f4998cef2c51ddd730701396de7be1e35514a4714d0569",
+      "role": "train"
+    },
+    {
+      "fileName": "spirit-vs-falcons-m2-mirage.dem",
+      "matchId": "016036e5b8c3b9229d9e09adfeeef958fd911d6e1bad54c006fa757beeda023a",
+      "role": "train"
+    },
+    {
+      "fileName": "spirit-vs-jijiehao-mirage.dem",
+      "matchId": "d68a4453645332f2a1da37acb07b1e4621362145e678e056f5252b213df2dd38",
+      "role": "train"
+    },
+    {
+      "fileName": "spirit-vs-mouz-m2-mirage.dem",
+      "matchId": "a1d8cc6e2f9e709d17519157fd577f98db98ea80edd2177c12c9b8c666b11c89",
+      "role": "train"
+    },
+    {
+      "fileName": "the-mongolz-vs-aurora-m2-mirage.dem",
+      "matchId": "6c9d514df35adfe1104dff1db9e6a44de0fab288b8cef0ea8a3cc446cfb594d7",
+      "role": "train"
+    },
+    {
+      "fileName": "the-mongolz-vs-b8-m3-mirage.dem",
+      "matchId": "315a2fd49522afc2e478cfa585a49bfc226946b5ececa263e49823a1f6fc63ff",
+      "role": "train"
+    },
+    {
+      "fileName": "the-mongolz-vs-betboom-m2-mirage.dem",
+      "matchId": "6ba28d5d246c47c0ede6408dd1fb39a71c1edd5c2a79407f8c9cbefb512d0da2",
+      "role": "train"
+    },
+    {
+      "fileName": "the-mongolz-vs-falcons-m3-mirage.dem",
+      "matchId": "a51700b915d9a6672725c2e258fbd2e51afcc85d350e9f76b263f62b8d83d4ec",
+      "role": "train"
+    },
+    {
+      "fileName": "the-mongolz-vs-liquid-m1-mirage.dem",
+      "matchId": "56fe01ef5f1e696303dbf29b8feba84d5a4534ee7abf159b13837c0a7ef17d5d",
+      "role": "train"
+    },
+    {
+      "fileName": "the-mongolz-vs-natus-vincere-m3-mirage.dem",
+      "matchId": "262a6576ea48d836b28b2fa352f9c1895544b3f2ae56f697ac438d9eb53839db",
+      "role": "train"
+    },
+    {
+      "fileName": "the-mongolz-vs-parivision-m2-mirage.dem",
+      "matchId": "cbc39301a46806fedb203912d4b067905fd194cb21a731fcb66fdd22e484f246",
+      "role": "train"
+    },
+    {
+      "fileName": "tyloo-vs-9z-m2-mirage.dem",
+      "matchId": "4aa05341e1de8397c0f138c82b191a620186308a7dc7967cef5d087ccd63204a",
+      "role": "train"
+    },
+    {
+      "fileName": "tyloo-vs-pain-m1-mirage.dem",
+      "matchId": "94d523aef82a7011b35d962adb1997633351b5721885e6028af76e6baf421526",
+      "role": "train"
+    },
+    {
+      "fileName": "vitality-vs-9z-m2-mirage.dem",
+      "matchId": "3b820c246afc4aeacafe912aed446745786111ca19e9cee2a0eebf91c9ee2566",
+      "role": "train"
+    },
+    {
+      "fileName": "vitality-vs-bc-game-m1-mirage.dem",
+      "matchId": "f86e2e1d415d244461a5f4431c2c0ddfdd31eb29dba520dd929904be276ed146",
+      "role": "train"
+    },
+    {
+      "fileName": "vitality-vs-g2-m1-mirage.dem",
+      "matchId": "807e11b7d3373fc03171fa85d134d99da717c997308a730db3bd3dc8f798b5f4",
+      "role": "train"
+    },
+    {
+      "fileName": "vitality-vs-gamerlegion-m1-mirage.dem",
+      "matchId": "686d6ceb6351f918ed85584bd9e8e3770793672cd5581aea53d2a6c066507bbd",
+      "role": "train"
+    },
+    {
+      "fileName": "vitality-vs-mouz-m1-mirage.dem",
+      "matchId": "b125077bb02e251fcc31a8fefa459bdbf4c5a674ef560fac6e9ea4df4be3e1f4",
+      "role": "train"
+    },
+    {
+      "fileName": "vitality-vs-spirit-m3-mirage.dem",
+      "matchId": "9026edcdd8b8026a01de5b81727c83766e397b74b57ff764ac96a6c9dbede7ec",
+      "role": "train"
+    },
+    {
+      "fileName": "wildcard-vs-pain-m3-mirage.dem",
+      "matchId": "e79b9ff483b303d9b7fd618f59a68a817226b1a6baf6f012d8734da992c2a5d4",
+      "role": "train"
+    }
+  ],
+  "dev": [
+    {
+      "fileName": "b8-vs-vitality-m1-mirage-atlanta.dem",
+      "matchId": "321cfe8bd30501f9040a9ae0cfaca900b6db1cc6cc6ab026f56b86a5b3e20ddc",
+      "role": "dev"
+    },
+    {
+      "fileName": "fut-vs-astralis-m1-mirage.dem",
+      "matchId": "d80db7b22a7a18f87034a95b2c8b867699bcdc112ec48ff567b2a4676b06c2b0",
+      "role": "dev"
+    },
+    {
+      "fileName": "legacy-vs-9z-m3-mirage.dem",
+      "matchId": "18ec7f15b864b641036b90f77eeee5443cbab99096bce19b124be7edfe522e3a",
+      "role": "dev"
+    },
+    {
+      "fileName": "legacy-vs-m80-m2-mirage.dem",
+      "matchId": "a688274d240a85e67a686ef7b3c1ba3a559e4c528805f1339714abe8515fdec2",
+      "role": "dev"
+    },
+    {
+      "fileName": "mibr-vs-9z-m2-mirage.dem",
+      "matchId": "b31eeaee8f683887cbe1d50fc634b096c2565bd93052b1e47873cd9f66ae3fa6",
+      "role": "dev"
+    },
+    {
+      "fileName": "mibr-vs-b8-m2-mirage.dem",
+      "matchId": "69f4d558623d121ca75daa967fc78cc648cfc4d2170be123e50b8a08d2f8271c",
+      "role": "dev"
+    },
+    {
+      "fileName": "natus-vincere-vs-gamerlegion-m1-mirage.dem",
+      "matchId": "f3da7bd71d8a46332cf773d1d86c697ac7ad84b8633655a7918819b64137904c",
+      "role": "dev"
+    },
+    {
+      "fileName": "the-mongolz-vs-magic-m1-mirage.dem",
+      "matchId": "9389df5e2c39a6e4a183cadc3d9c92e8b2193d9f2c948d84d3ae8c6bee1eb8d3",
+      "role": "dev"
+    }
+  ],
+  "test": [
+    {
+      "fileName": "b8-vs-fut-m2-mirage.dem",
+      "matchId": "ccac2b282793dafb57d206ce4d2bcf10da7acbad78cd6bfbed0ac8486e529866",
+      "role": "test"
+    },
+    {
+      "fileName": "falcons-vs-mouz-m1-mirage.dem",
+      "matchId": "edac91f68159bd8d59b6231d9bb7a26cb9907dd688ecabdfe7f3d1470dba4daa",
+      "role": "test"
+    },
+    {
+      "fileName": "faze-vs-furia-m2-mirage.dem",
+      "matchId": "f8304048510239b00b88893946bf3543855b03125abbbfbea20471d5b66d050c",
+      "role": "test"
+    },
+    {
+      "fileName": "furia-vs-aurora-m3-mirage.dem",
+      "matchId": "8800d56bb4ed02833612f03056d642b836435e35f4eabff4bfc8d0b8e53f91d6",
+      "role": "test"
+    },
+    {
+      "fileName": "fut-vs-mouz-m3-mirage.dem",
+      "matchId": "5a837c8300474f2927998a6b82edd86053344933653f812490e761b7f4690a3c",
+      "role": "test"
+    },
+    {
+      "fileName": "g2-vs-m80-mirage.dem",
+      "matchId": "cb58cba15d97163e138b366e1a11ee00d2e1757f1a20a1eefa800eb5bf66a756",
+      "role": "test"
+    },
+    {
+      "fileName": "legacy-vs-faze-m2-mirage.dem",
+      "matchId": "c2f492c3f30ec0532c9e0cf0925f5dc8321da55dfa7fea6c11819ba23ec226bb",
+      "role": "test"
+    },
+    {
+      "fileName": "vitality-vs-fut-m1-mirage.dem",
+      "matchId": "555f486b19daad0b1e3b4f7796b03d8afd99ca6771333950f07f9340866ec8e3",
+      "role": "test"
+    }
+  ]
+}

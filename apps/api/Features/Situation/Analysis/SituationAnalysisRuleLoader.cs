@@ -9,6 +9,7 @@ namespace CsDemoMap.Api.Services;
 internal static class SituationAnalysisRuleLoader
 {
     internal const string ConfigSchemaVersion = "situation-analysis-rule-config-v1";
+    internal const string FrozenAnalysisRuleVersion = "situation-analysis-rules-v1";
     internal const string CandidateFileName = "situation-analysis-rules-v1-candidate-2.json";
     internal const string FrozenFileName = "situation-analysis-rules-v1.json";
 

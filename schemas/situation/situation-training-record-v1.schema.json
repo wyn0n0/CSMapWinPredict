@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-training-record-v1.schema.json",
+  "title": "SituationTrainingRecordV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sampleId", "metadata", "input", "output", "labelSource", "reviewStatus"],
+  "properties": {
+    "schemaVersion": { "const": "situation-training-record-v1" },
+    "sampleId": { "type": "string", "pattern": "^sample-[0-9a-f]{64}$" },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "input": { "$ref": "#/$defs/trainingInput" },
+    "output": { "$ref": "situation-narrative-v1.schema.json" },
+    "labelSource": { "const": "template-prelabel" },
+    "reviewStatus": { "const": "unreviewed" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "semanticTag": { "type": "string", "pattern": "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["split", "matchRef", "roundRef", "tick", "phase", "selectionTags", "sampleWeight", "weightNumerator", "weightDenominator", "sourceSceneSha256", "modelInputSha256", "factsSha256", "prelabelSha256"],
+      "properties": {
+        "split": { "enum": ["train", "dev", "test"] },
+        "matchRef": { "type": "string", "pattern": "^match-[0-9a-f]{64}$" },
+        "roundRef": { "type": "string", "pattern": "^round-[0-9a-f]{64}$" },
+        "tick": { "type": "integer", "minimum": 0 },
+        "phase": { "enum": ["live", "post-plant"] },
+        "selectionTags": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/semanticTag" } },
+        "sampleWeight": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "weightNumerator": { "const": 1 },
+        "weightDenominator": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "sourceSceneSha256": { "$ref": "#/$defs/sha256" },
+        "modelInputSha256": { "$ref": "#/$defs/sha256" },
+        "factsSha256": { "$ref": "#/$defs/sha256" },
+        "prelabelSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "modelScene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "sceneBuilderVersion", "geometryVersion", "map", "tick", "tickRate", "round", "players", "teams", "bomb", "utilities", "effects", "geometry", "dataQuality"],
+      "properties": {
+        "schemaVersion": { "const": "minimap-scene-v1" },
+        "sceneBuilderVersion": { "const": "situation-scene-builder-v1.3" },
+        "geometryVersion": { "const": "mirage-geometry-v1" },
+        "map": { "const": "de_mirage" },
+        "tick": { "type": "integer", "minimum": 0 },
+        "tickRate": { "type": "integer", "minimum": 1 },
+        "round": { "$ref": "minimap-scene-v1.schema.json#/$defs/round" },
+        "players": { "type": "array", "maxItems": 10, "items": { "$ref": "minimap-scene-v1.schema.json#/$defs/player" } },
+        "teams": { "$ref": "minimap-scene-v1.schema.json#/$defs/teams" },
+        "bomb": { "$ref": "minimap-scene-v1.schema.json#/$defs/bomb" },
+        "utilities": { "type": "array", "items": { "$ref": "minimap-scene-v1.schema.json#/$defs/utility" } },
+        "effects": { "type": "array", "items": { "$ref": "minimap-scene-v1.schema.json#/$defs/effect" } },
+        "geometry": { "$ref": "minimap-scene-v1.schema.json#/$defs/geometry" },
+        "dataQuality": { "type": "array", "items": { "$ref": "minimap-scene-v1.schema.json#/$defs/dataQuality" } }
+      }
+    },
+    "trainingInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scene", "facts", "allowedEvidenceIds"],
+      "properties": {
+        "scene": { "$ref": "#/$defs/modelScene" },
+        "facts": { "$ref": "situation-facts-v1.schema.json" },
+        "allowedEvidenceIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}

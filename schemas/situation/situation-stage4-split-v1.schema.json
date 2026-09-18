@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-stage4-split-v1.schema.json",
+  "title": "SituationStageFourSplitV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "parentSplitReference", "parentSplitSha256", "parentManifestReference", "parentManifestSha256", "parentSemanticVersion", "algorithmVersion", "domainSeparator", "seed", "hashAlgorithm", "ordering", "sourceDemoCount", "trainDemoCount", "devDemoCount", "testDemoCount", "train", "dev", "test"],
+  "properties": {
+    "schemaVersion": { "const": "situation-stage4-split-v1" },
+    "parentSplitReference": { "$ref": "#/$defs/relativePath" },
+    "parentSplitSha256": { "$ref": "#/$defs/sha256" },
+    "parentManifestReference": { "$ref": "#/$defs/relativePath" },
+    "parentManifestSha256": { "$ref": "#/$defs/sha256" },
+    "parentSemanticVersion": { "const": "mirage-semantics-v4.2" },
+    "algorithmVersion": { "const": "situation-stage4-split-v1" },
+    "domainSeparator": { "const": "situation-stage4-dev-v1" },
+    "seed": { "const": 42 },
+    "hashAlgorithm": { "const": "SHA-256" },
+    "ordering": { "type": "string", "minLength": 1 },
+    "sourceDemoCount": { "const": 87 },
+    "trainDemoCount": { "const": 71 },
+    "devDemoCount": { "const": 8 },
+    "testDemoCount": { "const": 8 },
+    "train": { "type": "array", "minItems": 71, "maxItems": 71, "items": { "$ref": "#/$defs/trainMember" } },
+    "dev": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "$ref": "#/$defs/devMember" } },
+    "test": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "$ref": "#/$defs/testMember" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "relativePath": { "type": "string", "minLength": 1, "pattern": "^(?![A-Za-z]:)(?![/\\\\])(?!.*(?:^|[/\\\\])\\.\\.(?:[/\\\\]|$)).+$" },
+    "memberBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "matchId", "role"],
+      "properties": {
+        "fileName": { "type": "string", "pattern": "^[^/\\\\]+\\.[dD][eE][mM]$" },
+        "matchId": { "$ref": "#/$defs/sha256" },
+        "role": { "enum": ["train", "dev", "test"] }
+      }
+    },
+    "trainMember": { "$ref": "#/$defs/memberBase", "properties": { "role": { "const": "train" } } },
+    "devMember": { "$ref": "#/$defs/memberBase", "properties": { "role": { "const": "dev" } } },
+    "testMember": { "$ref": "#/$defs/memberBase", "properties": { "role": { "const": "test" } } }
+  }
+}

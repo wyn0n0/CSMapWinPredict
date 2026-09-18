@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-training-manifest-v1.schema.json",
+  "title": "SituationTrainingManifestV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "purpose", "trainable", "splitSha256", "parentManifestSha256", "versions", "schemaFiles", "counts", "files"],
+  "properties": {
+    "schemaVersion": { "const": "situation-training-manifest-v1" },
+    "status": { "enum": ["incomplete", "complete"] },
+    "purpose": { "type": "string", "minLength": 1 },
+    "trainable": { "type": "boolean" },
+    "splitSha256": { "$ref": "#/$defs/sha256" },
+    "parentManifestSha256": { "$ref": "#/$defs/sha256" },
+    "versions": { "$ref": "#/$defs/versions" },
+    "schemaFiles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/schemaFile" } },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["train", "dev", "test"],
+      "properties": {
+        "train": { "$ref": "#/$defs/counts" },
+        "dev": { "$ref": "#/$defs/counts" },
+        "test": { "$ref": "#/$defs/counts" }
+      }
+    },
+    "files": { "type": "array", "items": { "$ref": "#/$defs/file" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "semanticVersion": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)*$" },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["data", "split", "trainingRecord", "scene", "sceneBuilder", "geometry", "facts", "analysisRules", "narrative", "semanticEligibility", "selection", "inputRepresentation", "reviewCandidate", "reviewDecision", "labelStats", "frozenReviewLabel", "frozenReviewManifest", "review"],
+      "properties": {
+        "data": { "const": "situation-training-data-v1" },
+        "split": { "const": "situation-stage4-split-v1" },
+        "trainingRecord": { "const": "situation-training-record-v1" },
+        "scene": { "const": "minimap-scene-v1" },
+        "sceneBuilder": { "const": "situation-scene-builder-v1.3" },
+        "geometry": { "const": "mirage-geometry-v1" },
+        "facts": { "const": "situation-facts-v1" },
+        "analysisRules": { "const": "situation-analysis-rules-v1" },
+        "narrative": { "const": "situation-narrative-v1" },
+        "semanticEligibility": { "const": "mirage-semantics-v4.2" },
+        "selection": { "const": "situation-training-selection-v1" },
+        "inputRepresentation": { "const": "situation-model-input-v1" },
+        "reviewCandidate": { "const": "situation-review-candidate-v1" },
+        "reviewDecision": { "const": "situation-review-decision-v1" },
+        "labelStats": { "const": "situation-label-stats-v1" },
+        "frozenReviewLabel": { "const": "situation-frozen-review-label-v1" },
+        "frozenReviewManifest": { "const": "situation-frozen-review-manifest-v1" },
+        "review": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "schemaFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "path", "sha256"],
+      "properties": {
+        "schemaVersion": { "$ref": "#/$defs/semanticVersion" },
+        "path": { "type": "string", "pattern": "^schemas/situation/[^/]+\\.schema\\.json$" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["matches", "rounds", "samples"],
+      "properties": {
+        "matches": { "type": "integer", "minimum": 0 },
+        "rounds": { "type": "integer", "minimum": 0 },
+        "samples": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "rows", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "rows": { "type": ["integer", "null"], "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

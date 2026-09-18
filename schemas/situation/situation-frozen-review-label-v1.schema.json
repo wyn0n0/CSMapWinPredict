@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-frozen-review-label-v1.schema.json",
+  "title": "SituationFrozenReviewLabelV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sampleId", "narrative", "labelSource", "reviewVersion", "allowedUse", "recommendedSftRepeat"],
+  "properties": {
+    "schemaVersion": { "const": "situation-frozen-review-label-v1" },
+    "sampleId": { "type": "string", "pattern": "^sample-[0-9a-f]{64}$" },
+    "narrative": { "$ref": "situation-narrative-v1.schema.json" },
+    "labelSource": { "enum": ["human-approved", "human-modified"] },
+    "reviewVersion": { "type": "string", "minLength": 1 },
+    "allowedUse": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["sft", "prompt-selection", "checkpoint-selection", "evaluation", "final-evaluation"] } },
+    "recommendedSftRepeat": { "type": ["integer", "null"], "minimum": 1 }
+  }
+}

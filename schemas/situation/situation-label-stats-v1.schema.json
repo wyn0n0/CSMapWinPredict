@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-label-stats-v1.schema.json",
+  "title": "SituationLabelStatsV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "datasetSchemaVersion", "splitSha256", "sections"],
+  "properties": {
+    "schemaVersion": { "const": "situation-label-stats-v1" },
+    "datasetSchemaVersion": { "const": "situation-training-manifest-v1" },
+    "splitSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "metrics"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "value"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1 },
+                "value": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

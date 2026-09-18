@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-training-selection-v1.schema.json",
+  "title": "SituationTrainingSelectionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "algorithmVersion", "maxSamplesPerRound", "eventMappingToleranceSeconds", "deploymentComplete", "corePriority", "eventPriority", "rarePriority", "coverageStrategy", "allowPhysicalSampleDuplication", "fillStrategy", "fillTieBreakers"],
+  "properties": {
+    "schemaVersion": { "const": "situation-training-selection-v1" },
+    "algorithmVersion": { "const": "situation-training-selection-v1" },
+    "maxSamplesPerRound": { "const": 16 },
+    "eventMappingToleranceSeconds": { "const": 1.0 },
+    "deploymentComplete": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimumLiveElapsedSeconds", "minimumMovedPlayerRatio", "minimumNormalizedMovement", "stableSeconds"],
+      "properties": {
+        "minimumLiveElapsedSeconds": { "const": 10.0 },
+        "minimumMovedPlayerRatio": { "const": 0.8 },
+        "minimumNormalizedMovement": { "const": 0.08 },
+        "stableSeconds": { "const": 1.0 }
+      }
+    },
+    "corePriority": { "const": ["live-start", "deployment-complete", "round-tail"] },
+    "eventPriority": { "const": ["first-contact", "first-damage", "first-casualty", "bomb-dropped", "bomb-picked-up", "bomb-planting-or-planted", "bomb-defusing", "clutch-2vN", "clutch-1vN"] },
+    "rarePriority": { "const": ["post-plant", "formation-split", "isolated", "high-contact-risk"] },
+    "coverageStrategy": { "const": "replace-lower-priority-without-duplication" },
+    "allowPhysicalSampleDuplication": { "const": false },
+    "fillStrategy": { "const": "maximize-minimum-tick-distance" },
+    "fillTieBreakers": { "const": ["earlier-tick", "stable-candidate-id"] }
+  }
+}

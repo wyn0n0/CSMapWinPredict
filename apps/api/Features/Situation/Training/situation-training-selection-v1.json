@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "situation-training-selection-v1",
+  "algorithmVersion": "situation-training-selection-v1",
+  "maxSamplesPerRound": 16,
+  "eventMappingToleranceSeconds": 1.0,
+  "deploymentComplete": {
+    "minimumLiveElapsedSeconds": 10.0,
+    "minimumMovedPlayerRatio": 0.8,
+    "minimumNormalizedMovement": 0.08,
+    "stableSeconds": 1.0
+  },
+  "corePriority": [
+    "live-start",
+    "deployment-complete",
+    "round-tail"
+  ],
+  "eventPriority": [
+    "first-contact",
+    "first-damage",
+    "first-casualty",
+    "bomb-dropped",
+    "bomb-picked-up",
+    "bomb-planting-or-planted",
+    "bomb-defusing",
+    "clutch-2vN",
+    "clutch-1vN"
+  ],
+  "rarePriority": [
+    "post-plant",
+    "formation-split",
+    "isolated",
+    "high-contact-risk"
+  ],
+  "coverageStrategy": "replace-lower-priority-without-duplication",
+  "allowPhysicalSampleDuplication": false,
+  "fillStrategy": "maximize-minimum-tick-distance",
+  "fillTieBreakers": [
+    "earlier-tick",
+    "stable-candidate-id"
+  ]
+}

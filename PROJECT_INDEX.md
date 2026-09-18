@@ -1,10 +1,10 @@
 # CS Demo Map 项目索引
 
-> 最后核验：2026-09-15。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
+> 最后核验：2026-09-18。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
 
 ## 项目定位
 
-本项目解析 Counter-Strike 2 Demo，生成窗口化回放时间线，并在 Mirage 雷达界面展示回合状态与实时胜率。局势理解路径现已能把目标 tick 之前的结构化观察转换为匿名、可复算、可稳定哈希的场景、Facts 和模板 Narrative；局势训练数据、正式局势 API 和前端接入尚未开始。胜率模型训练与回放接入已经完成，两条模型路径不得混同。
+本项目解析 Counter-Strike 2 Demo，生成窗口化回放时间线，并在 Mirage 雷达界面展示回合状态与实时胜率。局势理解路径现已能把目标 tick 之前的结构化观察转换为匿名、可复算、可稳定哈希的场景、Facts 和模板 Narrative；阶段四比赛子切分已经冻结，训练/复核工件契约候选已实现并等待用户审核，实际数据导出尚未开始。正式局势 API 和前端接入仍在后续阶段。胜率模型训练与回放接入已经完成，两条模型路径不得混同。
 
 ## 当前权威基线
 
@@ -20,11 +20,13 @@
 - 阶段三冻结规则：`situation-analysis-rules-v1`，配置 SHA-256 `afa19d686b4c5ade2a53b8bdfd0655965d5230d032d39ea0bb8685e7929daa35`；candidate-1/2 作为不可变校准历史保留。
 - 阶段三冻结训练工件：`datasets/situation-stage3-calibration-frozen-20260915-r1/`；正式保留验收工件：`datasets/situation-stage3-acceptance-20260915-r1/`。
 - 局势工件公共设施：`SituationArtifactIO.cs` 与 `SituationFrozenDataset.cs`；阶段一至三的导出与验收路径已统一复用。
+- 阶段四比赛切分：`situation-implementation/situation-stage4-split-v1.json`，71 train / 8 dev / 8 test；SHA-256 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。
+- 阶段四契约候选：`situation-training-record-v1`、`situation-training-selection-v1`、`situation-training-manifest-v1`、label stats、review candidate/decision、冻结 review label/manifest；Schema 文件由版本与 SHA-256 双重绑定，当前改动待用户审核。
 - 程序边界：`apps/api` 只承载 HTTP 宿主和产品模块，`apps/cli` 承载开发工作流，`tests/CsDemoMap.Api.Tests` 承载 .NET 验证门禁；后端源码位于 `apps/api/Features` 的五个功能模块。
 
 ## 活动里程碑
 
-阶段一、阶段二与阶段三冻结 v1 均已完成技术闭环。冻结训练集覆盖 5 场 30 条，唯一一次正式保留验收覆盖 8 场 16 条且 16/16 通过、阻断错误为 0；置信度规格已统一并补齐定向回归。后端已完成按功能整理，Web、开发 CLI 与验证程序集相互分离。正式局势 HTTP API、前端和文本模型接入仍留在后续阶段。
+阶段一、阶段二与阶段三冻结 v1 均已完成技术闭环。阶段四步骤一已冻结；步骤二的训练记录、权重、选择配置、manifest 与独立 review 工件契约候选已实现并通过 56 项门禁，保持未提交以供用户审核。共享 eligibility、候选选择算法、实际导出和人工复核仍未开始；正式局势 HTTP API、前端和文本模型接入继续留在后续阶段。
 
 ## 主要风险与缺口
 
@@ -32,7 +34,7 @@
 - 旧窗口没有局势 sidecar 时必须显式提供匹配的源 Demo；补建不能恢复已经丢失的源文件，登记状态也不会跨进程保留。
 - 上游不可空数值中的零可能是默认值，依赖 `legacy-default-ambiguous` 保守标记。
 - 首次文件读取测试不控制操作系统页缓存，只能解释为新服务、无结果缓存且无显式预读的首次文件访问；物理冷盘性能未测量。
-- 阶段四方案仍是规划资料；实现时必须继续沿用冻结切分、不可覆盖输出目录和训练/保留用途隔离。
+- 阶段四尚未实际导出数据；后续 eligibility、候选选择、导出与人工复核必须沿用冻结 split、逐项版本和 Schema 哈希，不可覆盖输出目录或跨用途复用 dev/test。
 
 ## 专题入口
 

@@ -1,10 +1,10 @@
 # 当前状态
 
-> 最后核验：2026-09-15。
+> 最后核验：2026-09-18。
 
 ## 当前目标
 
-阶段一局势契约、阶段二服务化和阶段三冻结 v1 均已完成。后端已按 Replay、Semantics、Maps、WinPrediction、Situation 整理，开发 CLI 和 .NET 验证门禁已从 Web 产品程序集分离。下一步按冻结 v1 进入阶段四，正式 HTTP API、前端和文本模型接入留在后续阶段。
+阶段一局势契约、阶段二服务化、阶段三冻结 v1 和阶段四比赛子切分均已完成。阶段四步骤二的训练/复核工件契约候选已实现并等待用户审核；审核通过后再抽取并复用 schema v4.2 eligibility。正式 HTTP API、前端和文本模型接入留在后续阶段。
 
 ## 已完成闭环
 
@@ -30,11 +30,15 @@
 - 冻结训练工件 `datasets/situation-stage3-calibration-frozen-20260915-r1/` 含 5 场 30 条固定场景，manifest complete；热态 p95 1.7779 ms，Scene 未命中组合 p95 18.2808 ms。
 - 保留请求承诺 SHA-256 为 `6ff14b6c912bf6fdb9a221fbb91920c88eaa91fb87ad6693c69c1ebeee5b8ff7`。唯一一次正式验收工件 `datasets/situation-stage3-acceptance-20260915-r1/` 覆盖 8 场 16 条，16/16 逐字段通过且阻断错误为 0；热态/组合 p95 为 1.3468/7.5401 ms。
 - 工件公共层已收敛到 `SituationArtifactIO` 与 `SituationFrozenDatasetLoader`：阶段一样例、阶段二验收、阶段三校准/验收和 sidecar 补建共用 SHA-256/原子写入/文件清单/仓库定位，冻结切分只保留一套严格 87/79/8 成员校验。
-- 架构入口已收敛：`apps/api/Program.cs` 只启动 HTTP 服务；导出、诊断和验收命令进入 `apps/cli`；18 个 Verifier 进入 `tests/CsDemoMap.Api.Tests`；`package.json` 保留统一测试入口。
+- 架构入口已收敛：`apps/api/Program.cs` 只启动 HTTP 服务；导出、诊断和验收命令进入 `apps/cli`；19 个 Verifier 进入 `tests/CsDemoMap.Api.Tests`；`package.json` 保留统一测试入口。
+- `situation-stage4-split-v1` 已冻结：CLI 显式接收 Demo 目录、父 79/8 split 和新输出文件，拒绝父哈希/manifest/成员/路径/内容漂移及已有输出；真实 87 场逐文件 SHA-256 通过，结果为 71 train / 8 dev / 8 test，工件 SHA-256 为 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。
+- 阶段四步骤二实现候选已完成：新增强类型 `situation-training-record-v1`、版本化选择配置、数据/标签/复核工件模型和 9 个阶段四 Draft 2020-12 Schema；记录采用严格完整形状、稳定字段顺序和 UTF-8 无 BOM 单行 JSON，未知/缺失/重复/非有限数/非法枚举/非规范数组均失败。
+- 模型边界只投影 `input` 与 `output`；场景移除来源、窗口、请求 tick 和真实 round ID，metadata/provenance 不进入 prompt。摘要身份、完整上游版本、1/n 回合权重、敏感字段扫描、review 分流和 Schema 版本+SHA-256 校验均有自动门禁。
+- `npm run test:situation:stage4:contracts` 当前通过 56 项；Release 构建 0 警告/0 错误，API 38 项、语义 34 项、v4 15 项、阶段四 split 16 项和阶段三五套门禁回归通过。
 
 ## 下一步
 
-1. 以冻结 v1 进入阶段四，严格沿用已冻结的 79/8 比赛级切分，生成结构化训练集并开展人工复核。
+1. 等待用户审核步骤二；通过后进入步骤三，抽取 schema v4.2 与阶段四共用的完成回合/时点 eligibility，并先锁定重构前输出。
 2. 正式 HTTP 路由、错误映射和跨进程补建登记留到阶段七。
 
 ## 短期阻塞

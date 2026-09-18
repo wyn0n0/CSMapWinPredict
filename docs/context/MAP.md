@@ -1,6 +1,6 @@
 # 路径与版本地图
 
-> 最后核验：2026-09-15。后端保持模块化单体；目录表达职责，现有命名空间保持兼容。
+> 最后核验：2026-09-18。后端保持模块化单体；目录表达职责，现有命名空间保持兼容。
 
 ## 程序边界
 
@@ -26,7 +26,8 @@ API 通过 `InternalsVisibleTo` 只向 CLI 和验证程序集开放必要的内�
 | Situation/Scenes | `apps/api/Features/Situation/Scenes/` | Timeline/窗口适配、场景构建、缓存并发和诊断 |
 | Situation/Analysis | `apps/api/Features/Situation/Analysis/` | 冻结规则、Facts、evidence 和模板 Narrative |
 | Situation/Storage | `apps/api/Features/Situation/Storage/` | 工件 IO、冻结数据集、sidecar 补建和登记 |
-| Situation/Workflows | `apps/api/Features/Situation/Workflows/` | 样例导出、阶段二验收、阶段三校准与验收 |
+| Situation/Training | `apps/api/Features/Situation/Training/` | 阶段四训练/复核强类型契约、冻结选择配置、严格 JSON、Schema/manifest/权重门禁 |
+| Situation/Workflows | `apps/api/Features/Situation/Workflows/` | 样例导出、阶段二验收、阶段三校准/验收与阶段四 split |
 
 ## 当前版本与工件
 
@@ -40,5 +41,7 @@ API 通过 `InternalsVisibleTo` 只向 CLI 和验证程序集开放必要的内�
 - 阶段二验收工件：`datasets/situation-stage2-acceptance-20260914-r2/`。
 - 阶段三冻结训练工件：`datasets/situation-stage3-calibration-frozen-20260915-r1/`。
 - 阶段三保留验收工件：`datasets/situation-stage3-acceptance-20260915-r1/`。
+- 阶段四 split：`situation-implementation/situation-stage4-split-v1.json`，SHA-256 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。
+- 阶段四契约：`situation-training-record-v1`、`situation-training-selection-v1`、`situation-training-manifest-v1`、`situation-label-stats-v1`、review candidate/decision、冻结 review label/manifest；Schema 位于 `schemas/situation/`。
 
 模型、数据集和 Demo 是本地对象，均不因源码目录调整而移动、覆盖或进入 Git。

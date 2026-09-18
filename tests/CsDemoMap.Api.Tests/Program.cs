@@ -82,6 +82,18 @@ if (args is ["--verify-situation-stage-three-automatic"])
     return 0;
 }
 
+if (args is ["--verify-situation-stage-four-split"])
+{
+    await SituationDatasetSplitVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
+if (args is ["--verify-situation-stage-four-contracts"])
+{
+    await SituationTrainingContractVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
 if (args is ["--verify-demo-prefix", var demoPath, var stopTick])
 {
     await SemanticPrefixVerifier.VerifyAsync(

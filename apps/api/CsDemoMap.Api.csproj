@@ -14,5 +14,8 @@
     <EmbeddedResource Include="Features\Situation\Analysis\Rules\*.json">
       <LogicalName>CsDemoMap.Api.SituationRules.%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Features\Situation\Training\situation-training-selection-v1.json">
+      <LogicalName>CsDemoMap.Api.SituationTraining.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

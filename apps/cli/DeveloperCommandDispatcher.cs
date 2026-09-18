@@ -60,6 +60,21 @@ internal static class DeveloperCommandDispatcher
             return 0;
         }
 
+        if (args is ["--create-situation-stage-four-split", var demoDirectory, var parentSplit, var stageFourSplit])
+        {
+            var result = await SituationDatasetSplit.CreateAsync(
+                demoDirectory, parentSplit, stageFourSplit, cancellationToken);
+            Console.WriteLine(JsonSerializer.Serialize(new
+            {
+                result.Split.SchemaVersion,
+                result.SplitSha256,
+                result.Split.TrainDemoCount,
+                result.Split.DevDemoCount,
+                result.Split.TestDemoCount
+            }, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
+            return 0;
+        }
+
         if (args is ["--trace-roster", var path, var from, var to])
         {
             await DemoRosterTrace.RunAsync(

@@ -1,6 +1,6 @@
 # 运行与验收手册
 
-> 最后核验：2026-09-15。所有导出命令必须使用不存在的新输出目录。
+> 最后核验：2026-09-18。所有导出命令必须使用不存在的新输出目录。
 
 首次检出后先运行 `dotnet restore` 分别还原 `apps/api`、`apps/cli` 和 `tests/CsDemoMap.Api.Tests`；日常构建和验证使用 `--no-restore -p:NuGetAudit=false`，避免重复访问包源。
 
@@ -86,6 +86,27 @@ dotnet run --project apps/cli/CsDemoMap.Cli.csproj -c Release -- --run-situation
 验收工件 `datasets/situation-stage3-acceptance-20260915-r1/` 为 `complete`，覆盖 8 场 16 条且 16/16 逐字段通过，阻断错误为 0；热态/组合 p95 为 1.3468/7.5401 ms。复核结论位于 `situation-implementation/stage3-acceptance-review-20260915.md`。统一自动门禁只回读并重放既有工件，不再次解析保留 Demo 或创建规则输出。
 
 验收入口要求请求来自 `complete` 的冻结训练校准目录、承诺哈希一致、8 场成员与 79/8 切分完全相等，且嵌入规则必须精确为非 candidate 的 `situation-analysis-rules-v1`。输出从 `incomplete` 开始，回读契约、规范化 JSON、索引和所有文件哈希后才切换为 `complete`。已有目录、损坏承诺、candidate/frozen 混用均返回非零退出码。
+
+## 阶段四比赛子切分
+
+```powershell
+dotnet run --project apps/cli/CsDemoMap.Cli.csproj -c Release -- --create-situation-stage-four-split <demo-directory> <frozen-79-8-split> <new-split-file>
+npm run test:situation:stage4:split
+```
+
+命令不读取父 split 内的绝对 `sourceDirectory`，而是逐一哈希显式 Demo 目录中的 87 个直接子文件，并核对冻结父 split、相邻 complete schema v4.2 manifest、文件名与 match ID。额外/缺失/损坏 Demo、成员重复、路径逃逸、reparse 输入和已有输出均失败。dev 只从父 79 场训练侧按 `SHA-256("situation-stage4-dev-v1|42|" + matchId)` 选择；父 8 场 validation 原样成为 test。
+
+当前冻结文件为 `situation-implementation/situation-stage4-split-v1.json`，包含 71 train / 8 dev / 8 test，SHA-256 为 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。文件不含绝对路径或时间戳；若必须修改，升级版本并使用新的文件与数据目录，禁止原地覆盖。
+
+## 阶段四训练与复核契约
+
+```powershell
+npm run test:situation:stage4:contracts
+```
+
+该门禁当前为 56 项，验证 `situation-training-record-v1` 的严格完整 JSON 形状、稳定字段顺序、UTF-8 无 BOM 单行编码、域分隔身份摘要、白名单模型输入、精确 evidence 集合、敏感属性/字符串扫描和 1/n 回合权重。它同时加载版本化的嵌入选择配置候选，验证稀有覆盖只能替换低优先级样本且不能物理复制，并约束 train 人工标签的 `recommendedSftRepeat=5` 不得进入 dev/test。
+
+阶段四 manifest 必须逐项记录 Scene、Builder、Geometry、Facts、Rules、Narrative、semantic eligibility、selection、input representation 和 review 版本；`SituationTrainingSchemaRegistry` 同时核对 12 个依赖/阶段四 Draft 2020-12 Schema 的版本、仓库相对路径和文件 SHA-256。manifest 回读还会复核所列工件的存在性、字节数、可选行数和 SHA-256。当前仅完成契约，尚未生成 `train/dev/test.jsonl`。
 
 ## 阶段二真实样例与性能
 

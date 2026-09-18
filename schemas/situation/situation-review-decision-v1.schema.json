@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-review-decision-v1.schema.json",
+  "title": "SituationReviewDecisionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "datasetSha256", "candidateSha256", "sampleId", "sampleRevision", "decision", "evaluations", "issueFields", "issueCodes", "note", "finalNarrative", "finalNarrativeSha256", "rejectReasonCode", "blockingIssue", "reviewedAtUtc", "decisionSha256"],
+  "properties": {
+    "schemaVersion": { "const": "situation-review-decision-v1" },
+    "datasetSha256": { "$ref": "#/$defs/sha256" },
+    "candidateSha256": { "$ref": "#/$defs/sha256" },
+    "sampleId": { "type": "string", "pattern": "^sample-[0-9a-f]{64}$" },
+    "sampleRevision": { "type": "integer", "minimum": 0 },
+    "decision": { "enum": ["approved", "modified", "rejected"] },
+    "evaluations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factsCorrect", "focusReasonable", "summaryAccurateUseful", "hallucination"],
+      "properties": {
+        "factsCorrect": { "type": "boolean" },
+        "focusReasonable": { "type": "boolean" },
+        "summaryAccurateUseful": { "type": "boolean" },
+        "hallucination": { "type": "boolean" }
+      }
+    },
+    "issueFields": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^/" } },
+    "issueCodes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" } },
+    "note": { "type": ["string", "null"], "maxLength": 1000 },
+    "finalNarrative": { "anyOf": [{ "$ref": "situation-narrative-v1.schema.json" }, { "type": "null" }] },
+    "finalNarrativeSha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+    "rejectReasonCode": { "type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "blockingIssue": { "type": "boolean" },
+    "reviewedAtUtc": { "type": "string", "format": "date-time" },
+    "decisionSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": { "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" } },
+  "allOf": [
+    {
+      "if": { "properties": { "decision": { "const": "approved" } } },
+      "then": { "properties": { "finalNarrative": { "type": "null" }, "finalNarrativeSha256": { "$ref": "#/$defs/sha256" }, "rejectReasonCode": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "decision": { "const": "modified" } } },
+      "then": { "properties": { "finalNarrative": { "$ref": "situation-narrative-v1.schema.json" }, "finalNarrativeSha256": { "$ref": "#/$defs/sha256" }, "rejectReasonCode": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "decision": { "const": "rejected" } } },
+      "then": { "properties": { "finalNarrative": { "type": "null" }, "finalNarrativeSha256": { "type": "null" }, "rejectReasonCode": { "type": "string", "minLength": 1 } } }
+    }
+  ]
+}
