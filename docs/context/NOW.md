@@ -4,7 +4,7 @@
 
 ## 当前目标
 
-阶段一局势契约、阶段二服务化、阶段三冻结 v1 和阶段四比赛子切分均已完成。阶段四步骤二的训练/复核工件契约候选已实现并等待用户审核；审核通过后再抽取并复用 schema v4.2 eligibility。正式 HTTP API、前端和文本模型接入留在后续阶段。
+阶段一局势契约、阶段二服务化、阶段三冻结 v1 和阶段四步骤一至三均已完成并获批。当前进入步骤四，实现版本化候选检测与每回合最多 16 条的确定性选择。正式 HTTP API、前端和文本模型接入留在后续阶段。
 
 ## 已完成闭环
 
@@ -32,13 +32,16 @@
 - 工件公共层已收敛到 `SituationArtifactIO` 与 `SituationFrozenDatasetLoader`：阶段一样例、阶段二验收、阶段三校准/验收和 sidecar 补建共用 SHA-256/原子写入/文件清单/仓库定位，冻结切分只保留一套严格 87/79/8 成员校验。
 - 架构入口已收敛：`apps/api/Program.cs` 只启动 HTTP 服务；导出、诊断和验收命令进入 `apps/cli`；19 个 Verifier 进入 `tests/CsDemoMap.Api.Tests`；`package.json` 保留统一测试入口。
 - `situation-stage4-split-v1` 已冻结：CLI 显式接收 Demo 目录、父 79/8 split 和新输出文件，拒绝父哈希/manifest/成员/路径/内容漂移及已有输出；真实 87 场逐文件 SHA-256 通过，结果为 71 train / 8 dev / 8 test，工件 SHA-256 为 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。
-- 阶段四步骤二实现候选已完成：新增强类型 `situation-training-record-v1`、版本化选择配置、数据/标签/复核工件模型和 9 个阶段四 Draft 2020-12 Schema；记录采用严格完整形状、稳定字段顺序和 UTF-8 无 BOM 单行 JSON，未知/缺失/重复/非有限数/非法枚举/非规范数组均失败。
+- 阶段四步骤二已获用户批准并固定在本地 checkpoint `34fa03d`：新增强类型 `situation-training-record-v1`、版本化选择配置、数据/标签/复核工件模型和 9 个阶段四 Draft 2020-12 Schema；记录采用严格完整形状、稳定字段顺序和 UTF-8 无 BOM 单行 JSON，未知/缺失/重复/非有限数/非法枚举/非规范数组均失败。
 - 模型边界只投影 `input` 与 `output`；场景移除来源、窗口、请求 tick 和真实 round ID，metadata/provenance 不进入 prompt。摘要身份、完整上游版本、1/n 回合权重、敏感字段扫描、review 分流和 Schema 版本+SHA-256 校验均有自动门禁。
-- `npm run test:situation:stage4:contracts` 当前通过 56 项；Release 构建 0 警告/0 错误，API 38 项、语义 34 项、v4 15 项、阶段四 split 16 项和阶段三五套门禁回归通过。
+- `RoundSampleEligibility` 成为 v4.2 和阶段四唯一的完成回合/时点合格性判断；结果只含 `Eligible/ReasonCode`，原有 `round-unconfirmed`、阵容 reasons、时钟来源和 `alive-snapshot-mismatch` 语义保持不变。
+- `SituationEligibleSceneBuilder` 只为合格 tick 调用 `SituationSceneService.BuildFromTimeline`；赢家、结束原因及目标后 TimelineEvent/装备状态变化不会改变选择、模型输入或冻结 prelabel 哈希。
+- `situation-stage4-eligibility-baseline-v1.json` 绑定获批 checkpoint、真实 v4.2 的 87 场/1,899 完成回合/166,122 行/0 拒绝及完整 samples SHA-256 `5ec3d56b265a1f51ddeb5c228f75cfbfdb966cae8b252afd80ef34aadf8442cc`；小夹具规范化 JSONL SHA-256 保持 `3c0a300bcdb1ee94f508206e04b57294122b48d1948e2f71aea80500b74b7cdf`。
+- `npm run test:situation:stage4:eligibility` 当前通过 46 项；Release 构建 0 警告/0 错误，API 38 项、语义 34 项、v4 15 项、阶段四 contracts 56 项和阶段三五套门禁回归通过。
 
 ## 下一步
 
-1. 等待用户审核步骤二；通过后进入步骤三，抽取 schema v4.2 与阶段四共用的完成回合/时点 eligibility，并先锁定重构前输出。
+1. 实现步骤四的事件/稀有类别检测、1 秒锚点映射、稳定合并、16 条上限和远点填充，并保持新改动未提交供审核。
 2. 正式 HTTP 路由、错误映射和跨进程补建登记留到阶段七。
 
 ## 短期阻塞

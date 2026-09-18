@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "situation-stage4-eligibility-baseline-v1",
+  "checkpointCommit": "34fa03da3b429312d421f2745d29085ceb895dfc",
+  "realArtifact": {
+    "sourceDirectory": "datasets/mirage-v4-20260908-87",
+    "semanticVersion": "mirage-semantics-v4.2",
+    "matches": 87,
+    "completedRounds": 1899,
+    "retainedTicks": 166122,
+    "rejectedTicks": 0,
+    "rejectionReasons": {},
+    "files": {
+      "manifest.json": {
+        "bytes": 72683,
+        "sha256": "f7a1bfa23dd7f7d3d42bc6cd4c005fd5ff28aafdb9fab5b8b6b8ced364aaa252"
+      },
+      "comparison.json": {
+        "bytes": 33438,
+        "sha256": "e3781c8aa0d52937cffb0726dcb80817f80d828de889dc14ecf2a839eb381b49"
+      },
+      "samples.jsonl": {
+        "bytes": 491811329,
+        "sha256": "5ec3d56b265a1f51ddeb5c228f75cfbfdb966cae8b252afd80ef34aadf8442cc"
+      }
+    }
+  },
+  "syntheticFixture": {
+    "name": "V4DataVerifier.CreateTimeline",
+    "matchId": "match",
+    "completedRounds": 1,
+    "retainedTicks": [64, 128],
+    "rejectedTicks": [],
+    "rejectionReasons": {},
+    "rowCount": 2,
+    "sampleWeightSum": 1.0,
+    "normalizedJsonlSha256": "3c0a300bcdb1ee94f508206e04b57294122b48d1948e2f71aea80500b74b7cdf"
+  },
+  "syntheticRejectionFixture": {
+    "completedRounds": 1,
+    "retainedTicks": [],
+    "rejectedTicks": [64, 128, 192, 256],
+    "rejectionReasons": {
+      "round-unconfirmed": 1,
+      "roster-unconfirmed+life-unknown": 1,
+      "fixture-clock-unknown": 1,
+      "alive-snapshot-mismatch": 1
+    }
+  }
+}

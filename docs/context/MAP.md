@@ -19,14 +19,14 @@ API 通过 `InternalsVisibleTo` 只向 CLI 和验证程序集开放必要的内�
 | 模块 | 路径 | 主要入口 |
 | --- | --- | --- |
 | Replay | `apps/api/Features/Replay/` | `DemoParserService`、`DemoImportService`、`DemoWindowSliceBuilder`、回放契约 |
-| Semantics | `apps/api/Features/Semantics/` | `DemoSemanticCollector`、`RoundStateTracker`、`RoundClockResolver`、`RoundRosterTracker` |
+| Semantics | `apps/api/Features/Semantics/` | `DemoSemanticCollector`、`RoundStateTracker`、`RoundClockResolver`、`RoundRosterTracker`、共享 `RoundSampleEligibility` |
 | Maps | `apps/api/Features/Maps/` | `MapFeatureGeometry`；当前仅有 Mirage 模型几何 |
 | WinPrediction | `apps/api/Features/WinPrediction/` | as-of 特征、v3/v4 导出、Python 客户端和时间线预测 |
 | Situation/Contracts | `apps/api/Features/Situation/Contracts/` | 四套 v1 契约、规范化 JSON、跨字段验证和模型白名单 |
 | Situation/Scenes | `apps/api/Features/Situation/Scenes/` | Timeline/窗口适配、场景构建、缓存并发和诊断 |
 | Situation/Analysis | `apps/api/Features/Situation/Analysis/` | 冻结规则、Facts、evidence 和模板 Narrative |
 | Situation/Storage | `apps/api/Features/Situation/Storage/` | 工件 IO、冻结数据集、sidecar 补建和登记 |
-| Situation/Training | `apps/api/Features/Situation/Training/` | 阶段四训练/复核强类型契约、冻结选择配置、严格 JSON、Schema/manifest/权重门禁 |
+| Situation/Training | `apps/api/Features/Situation/Training/` | 阶段四训练/复核强类型契约、冻结选择配置、严格 JSON、Schema/manifest/权重门禁、合格 tick 到 as-of scene 的桥接 |
 | Situation/Workflows | `apps/api/Features/Situation/Workflows/` | 样例导出、阶段二验收、阶段三校准/验收与阶段四 split |
 
 ## 当前版本与工件
@@ -43,5 +43,6 @@ API 通过 `InternalsVisibleTo` 只向 CLI 和验证程序集开放必要的内�
 - 阶段三保留验收工件：`datasets/situation-stage3-acceptance-20260915-r1/`。
 - 阶段四 split：`situation-implementation/situation-stage4-split-v1.json`，SHA-256 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。
 - 阶段四契约：`situation-training-record-v1`、`situation-training-selection-v1`、`situation-training-manifest-v1`、`situation-label-stats-v1`、review candidate/decision、冻结 review label/manifest；Schema 位于 `schemas/situation/`。
+- 阶段四 eligibility 基线：`situation-implementation/situation-stage4-eligibility-baseline-v1.json`，文件 SHA-256 `a084c525323682722657a1ae4d0fb580e87c445cba2fde8540e534b0b8b0341f`；真实大工件仍位于忽略目录，不进入 Git。
 
 模型、数据集和 Demo 是本地对象，均不因源码目录调整而移动、覆盖或进入 Git。

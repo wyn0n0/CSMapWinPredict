@@ -20,3 +20,14 @@
 - review candidate、decision 和冻结标签独立于基础 JSONL；train 人工标签允许 `recommendedSftRepeat=5`，dev/test 明确禁止 SFT 用途。
 - 新增 `npm run test:situation:stage4:contracts`；56 项契约检查通过。Release 构建 0 warning/0 error；API 38、语义 34、v4 15、split 16 和阶段三五套门禁回归通过。
 - 版本安全：修改按独立补丁批次写入，全部保持未暂存、未提交、未推送；未覆盖任何已有冻结工件，用户审核前可逐文件或整体撤回。
+
+## 2026-09-18 — 阶段四步骤三
+
+- 用户已审核步骤二并授权本地提交；步骤一、二固定为 checkpoint `34fa03d`，未推送。步骤三在该提交之上保持未暂存、未提交，仍可整体或逐文件撤回。
+- 新增共享 `RoundSampleEligibility`，统一 Mirage、完成回合、live 半开区间、phase、回合号、时钟、阵容和存活快照门禁；结果只含 `Eligible/ReasonCode`，不携带赢家、结束原因或训练标签。
+- `WinFeatureSampleBuilder` 改用共享 helper，既有 v4.2 拒绝原因和值的优先顺序保持不变；阶段四新增 `SituationEligibleSceneBuilder`，仅对合格 tick 调用既有 `SituationSceneService.BuildFromTimeline`。
+- 新增 `situation-stage4-eligibility-baseline-v1.json`：绑定 checkpoint `34fa03d`；锁定真实 v4.2 的 87 场、1,899 完成回合、166,122 行、0 拒绝，以及 manifest/comparison/samples 文件长度和完整 SHA-256。491,811,329 字节 samples 的 SHA-256 为 `5ec3d56b265a1f51ddeb5c228f75cfbfdb966cae8b252afd80ef34aadf8442cc`。
+- 固定合成夹具重导后仍为 2 行、tick 64/128、每条权重 0.5、总权重 1；规范化 JSONL SHA-256 仍为 `3c0a300bcdb1ee94f508206e04b57294122b48d1948e2f71aea80500b74b7cdf`。另锁定四种旧拒绝原因和 tick 顺序。
+- 未来信息不变性门禁确认：赢家 T/CT、结束原因、目标 tick 后 TimelineEvent/RoundResult/装备状态变化均不改变阶段四选择、模型输入或冻结 prelabel 哈希；不合格 tick 不触发 scene 构建。
+- 验证结果：Release 构建 0 warning/0 error；阶段四 eligibility 46 项、contracts 56 项、API 38 项、语义 34 项、v4 15 项和阶段三五套自动门禁通过；真实 492 MB v4.2 samples 已执行全量哈希核验。
+- 用户已审核通过步骤三；批准内容可固定为本地 checkpoint，未授权推送。

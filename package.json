@@ -22,6 +22,8 @@
     "test:situation:stage4:split": "dotnet run --project tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj -c Release --no-launch-profile --no-build --no-restore -- --verify-situation-stage-four-split",
     "pretest:situation:stage4:contracts": "npm run build:test:dotnet",
     "test:situation:stage4:contracts": "dotnet run --project tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj -c Release --no-launch-profile --no-build --no-restore -- --verify-situation-stage-four-contracts",
+    "pretest:situation:stage4:eligibility": "npm run build:test:dotnet",
+    "test:situation:stage4:eligibility": "dotnet run --project tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj -c Release --no-launch-profile --no-build --no-restore -- --verify-situation-stage-four-eligibility",
     "test:audit": "python -m unittest tools.test_audit_win_v4",
     "test:train": "python -m unittest tools.test_train_win_baseline",
     "test:train:v4": "python -m unittest tools.test_train_win_baseline_v4",

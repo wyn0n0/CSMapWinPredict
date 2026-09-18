@@ -94,6 +94,12 @@ if (args is ["--verify-situation-stage-four-contracts"])
     return 0;
 }
 
+if (args is ["--verify-situation-stage-four-eligibility"])
+{
+    await RoundSampleEligibilityVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
 if (args is ["--verify-demo-prefix", var demoPath, var stopTick])
 {
     await SemanticPrefixVerifier.VerifyAsync(

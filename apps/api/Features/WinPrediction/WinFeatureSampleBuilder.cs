@@ -25,9 +25,9 @@ public sealed class WinFeatureSampleBuilder
         foreach (var attempt in semantic.Attempts.Where(item => item.Disposition == "completed"))
         {
             token.ThrowIfCancellationRequested();
-            var candidates = semantic.Frames.Where(frame => frame.RoundId == attempt.RoundId &&
-                    frame.Tick >= attempt.LiveTick && frame.Tick < attempt.EndTick &&
-                    frame.Phase is "live" or "post-plant")
+            var candidates = semantic.Frames.Where(frame =>
+                    RoundSampleEligibility.EvaluateRoundTick(
+                        timeline.Metadata.MapName, attempt, frame).Eligible)
                 .OrderBy(frame => frame.Tick)
                 .ToArray();
             // Build history within this attempt only: no bomb/equipment carry from a restart.
@@ -71,7 +71,9 @@ public sealed class WinFeatureSampleBuilder
                 if (previous != int.MinValue && sample.Tick - previous < timeline.Metadata.TickRate)
                     continue;
                 previous = sample.Tick;
-                var reason = RejectionReason(sample, correctedByTick[sample.Tick]);
+                var eligibility = RoundSampleEligibility.Evaluate(
+                    timeline.Metadata.MapName, attempt, sample, correctedByTick[sample.Tick]);
+                var reason = eligibility.ReasonCode;
                 var key = $"{sample.Phase}/{attempt.Winner}/{reason ?? "retained"}";
                 byPhaseOutcome[key] = byPhaseOutcome.GetValueOrDefault(key) + 1;
                 if (reason is not null)
@@ -127,13 +129,6 @@ public sealed class WinFeatureSampleBuilder
                 .ToDictionary(group => group.Key, group => group.First().Clock.LiveElapsedSeconds));
         return new(samples, targets, report);
     }
-
-    private static string? RejectionReason(SemanticFrame sample, DemoFrame correctedFrame) =>
-        sample.RoundNumber is null ? "round-unconfirmed"
-        : sample.Roster.Quality == "unusable" ? string.Join('+', sample.Roster.Reasons)
-        : !sample.Clock.ClockKnown ? sample.Clock.ClockSource
-        : correctedFrame.Players.Count != sample.Roster.AliveKnown ? "alive-snapshot-mismatch"
-        : null;
 
     private static JsonObject BuildFeatureNode(
         AsOfTickFeatureBuilder builder,

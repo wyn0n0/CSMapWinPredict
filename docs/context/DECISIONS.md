@@ -20,7 +20,8 @@
 - **阶段四切分不信任路径提示。** CLI 必须显式接收 Demo 目录和父 split，忽略父文件中的绝对 `sourceDirectory`，对真实 87 个 Demo 重算 SHA-256；输出只保留仓库相对引用、文件名与内容哈希。
 - **阶段四训练记录与复核工件分离。** 基础 JSONL 永远保持 `template-prelabel/unreviewed`；批准、修改和拒绝写入独立、带自身哈希的 review decision，冻结标签另建版本，禁止原地改写基础记录。
 - **模型边界采用显式白名单。** `SituationModelInputProjector` 移除来源、Demo、窗口、requested tick 和真实 round ID；prompt 投影只包含 `input/output`。分组引用、split、选择标签、权重、哈希及 provenance 只留在模型不可见的门禁层。
-- **阶段四版本逐项隔离。** split、记录、选择、manifest、标签统计和各 review 工件分别版本化；manifest 逐项记录 Scene/Builder/Geometry/Facts/Rules/Narrative/eligibility/selection/input/review 版本，并绑定 12 个依赖/阶段四 Schema 的文件 SHA-256。步骤二候选在用户审核前保持可撤回。
+- **阶段四版本逐项隔离。** split、记录、选择、manifest、标签统计和各 review 工件分别版本化；manifest 逐项记录 Scene/Builder/Geometry/Facts/Rules/Narrative/eligibility/selection/input/review 版本，并绑定 12 个依赖/阶段四 Schema 的文件 SHA-256。步骤二已获批并固定在 checkpoint `34fa03d`。
+- **v4.2 与阶段四共用单一 outcome-free eligibility。** `RoundSampleEligibility` 集中判断 Mirage、完成回合、半开 live 区间、live/post-plant、回合号、时钟、阵容和存活快照；返回值不含赢家、结束原因或训练标签。v4.2 继续保留既有拒绝原因，阶段四只在合格后通过 `SituationSceneService.BuildFromTimeline` 形成 as-of scene。
 - **覆盖靠替换而非放大。** 每回合最多 16 个唯一 tick，稀有场景替换低优先级普通样本；最终每条写 1/n 有理权重。人工 train 标签只携带 `recommendedSftRepeat=5`，dev/test 明确禁止 SFT 重复。
 - **性能请求只来自训练侧。** 阶段二固定请求包含真实拆除和跨窗口读取；保留比赛仅运行冻结契约回归。首次文件读取定义为新服务、无结果缓存且无显式预读，操作系统页缓存状态另行说明。
 - **阶段边界保持清晰。** 阶段二负责服务化与性能，阶段三负责 Facts 规则和模板叙述。

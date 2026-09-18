@@ -108,6 +108,16 @@ npm run test:situation:stage4:contracts
 
 阶段四 manifest 必须逐项记录 Scene、Builder、Geometry、Facts、Rules、Narrative、semantic eligibility、selection、input representation 和 review 版本；`SituationTrainingSchemaRegistry` 同时核对 12 个依赖/阶段四 Draft 2020-12 Schema 的版本、仓库相对路径和文件 SHA-256。manifest 回读还会复核所列工件的存在性、字节数、可选行数和 SHA-256。当前仅完成契约，尚未生成 `train/dev/test.jsonl`。
 
+## 阶段四 schema v4.2 eligibility
+
+```powershell
+npm run test:situation:stage4:eligibility
+```
+
+该门禁当前为 46 项。它验证共享 helper 只返回合格状态与稳定原因码，v4.2 保持原有拒绝原因顺序，并对固定小夹具重新导出后核对字段、tick、拒绝统计、1/n 权重和规范化 JSONL 哈希。若本地存在 `datasets/mirage-v4-20260908-87/`，还会对 87 场、1,899 完成回合、166,122 行及 manifest/comparison/491,811,329 字节 samples 文件执行长度与 SHA-256 全量核验；目录缺失时只验证不可变基线元数据并明确提示跳过真实大工件。
+
+阶段四构建入口必须先调用 `RoundSampleEligibility`，合格后再由 `SituationEligibleSceneBuilder` 进入 `SituationSceneService.BuildFromTimeline`。不得把完整 Timeline 直接序列化为模型输入；赢家、结束原因和目标 tick 后事件不得进入选择、输入或预标注哈希。
+
 ## 阶段二真实样例与性能
 
 ```powershell
