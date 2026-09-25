@@ -125,7 +125,34 @@ internal sealed class SituationSceneService : IDisposable
         int windowIndex,
         int requestedTick,
         SceneObservationBoundary observationBoundary = SceneObservationBoundary.CompleteTimeline,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        BuildFromTimelineCore(
+            timeline, demoRef, windowIndex, requestedTick, observationBoundary, null, cancellationToken);
+
+    internal SituationSceneBuildResult BuildFromTimeline(
+        DemoTimeline timeline,
+        string demoRef,
+        int windowIndex,
+        int requestedTick,
+        SemanticFrame semanticFrame,
+        CancellationToken cancellationToken = default) =>
+        BuildFromTimelineCore(
+            timeline,
+            demoRef,
+            windowIndex,
+            requestedTick,
+            SceneObservationBoundary.CompleteTimeline,
+            semanticFrame,
+            cancellationToken);
+
+    private SituationSceneBuildResult BuildFromTimelineCore(
+        DemoTimeline timeline,
+        string demoRef,
+        int windowIndex,
+        int requestedTick,
+        SceneObservationBoundary observationBoundary,
+        SemanticFrame? semanticOverride,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(timeline);
@@ -139,7 +166,8 @@ internal sealed class SituationSceneService : IDisposable
                 windowIndex,
                 requestedTick,
                 observationBoundary,
-                cancellationToken);
+                cancellationToken,
+                semanticOverride);
             var inputElapsed = stopwatch.Elapsed;
             var result = Complete(input, cancellationToken);
             LogSuccess(

@@ -4,20 +4,25 @@
   "title": "SituationTrainingManifestV1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "status", "purpose", "trainable", "splitSha256", "parentManifestSha256", "versions", "schemaFiles", "counts", "files"],
+  "required": ["schemaVersion", "status", "mode", "purpose", "trainable", "sampleLimit", "splitSha256", "parentManifestSha256", "selectionConfigSha256", "inputRepresentationConfigSha256", "versions", "schemaFiles", "counts", "files"],
   "properties": {
     "schemaVersion": { "const": "situation-training-manifest-v1" },
     "status": { "enum": ["incomplete", "complete"] },
+    "mode": { "enum": ["pilot", "full"] },
     "purpose": { "type": "string", "minLength": 1 },
     "trainable": { "type": "boolean" },
+    "sampleLimit": { "type": ["integer", "null"], "minimum": 1 },
     "splitSha256": { "$ref": "#/$defs/sha256" },
     "parentManifestSha256": { "$ref": "#/$defs/sha256" },
+    "selectionConfigSha256": { "$ref": "#/$defs/sha256" },
+    "inputRepresentationConfigSha256": { "$ref": "#/$defs/sha256" },
     "versions": { "$ref": "#/$defs/versions" },
     "schemaFiles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/schemaFile" } },
     "counts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["train", "dev", "test"],
+      "minProperties": 1,
+      "maxProperties": 3,
       "properties": {
         "train": { "$ref": "#/$defs/counts" },
         "dev": { "$ref": "#/$defs/counts" },
@@ -26,13 +31,36 @@
     },
     "files": { "type": "array", "items": { "$ref": "#/$defs/file" } }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "incomplete" } }, "required": ["status"] },
+      "then": { "properties": { "trainable": { "const": false } } }
+    },
+    {
+      "if": { "properties": { "mode": { "const": "pilot" } }, "required": ["mode"] },
+      "then": {
+        "properties": {
+          "purpose": { "const": "representation-measurement" },
+          "trainable": { "const": false },
+          "sampleLimit": { "type": "integer", "minimum": 1 },
+          "counts": { "required": ["train"], "maxProperties": 1 }
+        }
+      },
+      "else": {
+        "properties": {
+          "sampleLimit": { "type": "null" },
+          "counts": { "required": ["train", "dev", "test"], "minProperties": 3 }
+        }
+      }
+    }
+  ],
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "semanticVersion": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)*$" },
     "versions": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["data", "split", "trainingRecord", "scene", "sceneBuilder", "geometry", "facts", "analysisRules", "narrative", "semanticEligibility", "selection", "inputRepresentation", "reviewCandidate", "reviewDecision", "labelStats", "frozenReviewLabel", "frozenReviewManifest", "review"],
+      "required": ["data", "split", "trainingRecord", "scene", "sceneBuilder", "geometry", "facts", "analysisRules", "narrative", "semanticEligibility", "selection", "inputRepresentation", "inputRepresentationConfig", "representationMeasurement", "reviewCandidate", "reviewDecision", "labelStats", "frozenReviewLabel", "frozenReviewManifest", "review"],
       "properties": {
         "data": { "const": "situation-training-data-v1" },
         "split": { "const": "situation-stage4-split-v1" },
@@ -45,7 +73,9 @@
         "narrative": { "const": "situation-narrative-v1" },
         "semanticEligibility": { "const": "mirage-semantics-v4.2" },
         "selection": { "const": "situation-training-selection-v1" },
-        "inputRepresentation": { "const": "situation-model-input-v1" },
+        "inputRepresentation": { "const": "compact-v1" },
+        "inputRepresentationConfig": { "const": "situation-prompt-representation-config-v1" },
+        "representationMeasurement": { "const": "situation-representation-measurement-v1" },
         "reviewCandidate": { "const": "situation-review-candidate-v1" },
         "reviewDecision": { "const": "situation-review-decision-v1" },
         "labelStats": { "const": "situation-label-stats-v1" },

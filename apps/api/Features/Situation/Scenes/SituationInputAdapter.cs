@@ -12,7 +12,8 @@ internal sealed class SituationInputAdapter
         int windowIndex,
         int requestedTick,
         SceneObservationBoundary observationBoundary = SceneObservationBoundary.CompleteTimeline,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        SemanticFrame? semanticOverride = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(timeline);
@@ -42,7 +43,9 @@ internal sealed class SituationInputAdapter
             frame.Tick >= coreStartTick && frame.Tick < coreEndTick && frame.Tick <= requestedTick)
             ?? throw new InvalidDataException("No frame exists at or before the requested tick in the core window.");
 
-        var semantic = FindSemanticAtOrBefore(timeline.Semantics, target);
+        if (semanticOverride is not null && semanticOverride.Tick != target.Tick)
+            throw new InvalidDataException("Semantic override must describe the exact target frame.");
+        var semantic = semanticOverride ?? FindSemanticAtOrBefore(timeline.Semantics, target);
         var roundStartTick = FindRoundStartTick(timeline, target, semantic, cancellationToken);
         var desiredHistoryStart = Math.Max(
             roundStartTick,

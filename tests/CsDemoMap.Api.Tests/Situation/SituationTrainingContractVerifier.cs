@@ -234,7 +234,7 @@ internal static class SituationTrainingContractVerifier
     {
         var checks = 0;
         var schemas = await SituationTrainingSchemaRegistry.LoadAsync(repositoryRoot, cancellationToken);
-        Check(schemas.Count == 12 && schemas.All(item => item.Sha256.Length == 64),
+        Check(schemas.Count == 14 && schemas.All(item => item.Sha256.Length == 64),
             "all versioned schemas have SHA-256 references", ref checks);
         Check(schemas.Select(item => item.SchemaVersion).Distinct(StringComparer.Ordinal).Count() == schemas.Count,
             "schema versions are unique", ref checks);
@@ -257,10 +257,14 @@ internal static class SituationTrainingContractVerifier
             var manifest = new SituationTrainingDatasetManifestV1(
                 SituationTrainingContractVersions.DatasetManifest,
                 SituationArtifactStatus.Complete,
+                SituationTrainingExportMode.Full,
                 "stage-four-situation-training-dataset",
                 true,
+                null,
                 SplitSha256,
                 SituationArtifactIO.Sha256("parent-manifest"),
+                SituationArtifactIO.Sha256("selection-config"),
+                SituationArtifactIO.Sha256("input-representation-config"),
                 new(
                     SituationTrainingContractVersions.Data,
                     SituationTrainingContractVersions.Split,
@@ -274,6 +278,8 @@ internal static class SituationTrainingContractVerifier
                     WinFeatureSampleBuilder.SemanticVersion,
                     SituationTrainingContractVersions.Selection,
                     SituationTrainingContractVersions.InputRepresentation,
+                    SituationTrainingContractVersions.PromptRepresentationConfig,
+                    SituationTrainingContractVersions.RepresentationMeasurement,
                     SituationTrainingContractVersions.ReviewCandidate,
                     SituationTrainingContractVersions.ReviewDecision,
                     SituationTrainingContractVersions.LabelStats,
@@ -422,7 +428,7 @@ internal static class SituationTrainingContractVerifier
             "dev/test SFT repetition rejected", ref checks);
     }
 
-    private static SituationTrainingRecordV1 BuildRecord()
+    internal static SituationTrainingRecordV1 BuildRecord()
     {
         var sourceScene = BuildScene();
         var analysis = SituationDeterministicAnalyzer.CreateFrozen().Analyze(sourceScene);

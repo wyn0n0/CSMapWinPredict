@@ -97,15 +97,73 @@ internal sealed class SituationTrainingCandidateSelector
             .Where(frame => string.Equals(frame.RoundId, attempt.RoundId, StringComparison.Ordinal))
             .OrderBy(frame => frame.Tick)
             .ToArray();
+        var liveTick = attempt.LiveTick ?? int.MaxValue;
+        var endTick = attempt.EndTick ?? int.MinValue;
+        var killEventTicks = timeline.Events
+            .Where(item => item.Tick >= liveTick && item.Tick < endTick)
+            .Where(item => string.Equals(item.Type, "kill", StringComparison.Ordinal))
+            .Select(item => item.Tick)
+            .Order()
+            .ToArray();
+        return SelectRoundCore(
+            timeline,
+            demoRef,
+            attempt,
+            roundSemanticFrames,
+            tick => sourceByTick.TryGetValue(tick, out var snapshot) ? snapshot : null,
+            killEventTicks,
+            includePayloads: false,
+            cancellationToken).SelectionResult;
+    }
+
+    /// <summary>
+    /// Selects one completed round from a match-scoped index and returns reusable,
+    /// already validated build products only for ticks that survived selection.
+    /// </summary>
+    internal SituationTrainingRoundSelectionWithPayloads SelectRound(
+        SituationTrainingTimelineIndex index,
+        string demoRef,
+        string roundId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(index);
+        ArgumentException.ThrowIfNullOrWhiteSpace(demoRef);
+        ArgumentException.ThrowIfNullOrWhiteSpace(roundId);
+        cancellationToken.ThrowIfCancellationRequested();
+        var attempt = index.GetCompletedAttempt(roundId);
+        return SelectRoundCore(
+            index.Timeline,
+            demoRef,
+            attempt,
+            index.GetSemanticFrames(roundId),
+            tick => index.TryGetFrame(tick, out var snapshot) ? snapshot : null,
+            index.GetEventTicks(roundId, "kill"),
+            includePayloads: true,
+            cancellationToken);
+    }
+
+    private SituationTrainingRoundSelectionWithPayloads SelectRoundCore(
+        DemoTimeline timeline,
+        string demoRef,
+        RoundAttempt attempt,
+        IReadOnlyList<SemanticFrame> roundSemanticFrames,
+        Func<int, DemoFrame?> resolveSnapshot,
+        IReadOnlyList<int> killEventTicks,
+        bool includePayloads,
+        CancellationToken cancellationToken)
+    {
         var observations = new List<SituationTrainingCandidateObservation>();
         var roundFrames = new List<SituationTrainingRoundFrame>();
         var rejected = new Dictionary<string, int>(StringComparer.Ordinal);
+        var buildProducts = includePayloads
+            ? new Dictionary<int, CandidateBuildProduct>()
+            : null;
 
         foreach (var semantic in roundSemanticFrames)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!sourceByTick.TryGetValue(semantic.Tick, out var snapshot))
-                throw new InvalidDataException($"Timeline frame {semantic.Tick} is missing.");
+            var snapshot = resolveSnapshot(semantic.Tick)
+                ?? throw new InvalidDataException($"Timeline frame {semantic.Tick} is missing.");
             roundFrames.Add(new(semantic, snapshot));
             var eligibility = RoundSampleEligibility.Evaluate(
                 timeline.Metadata.MapName, attempt, semantic, snapshot);
@@ -118,29 +176,36 @@ internal sealed class SituationTrainingCandidateSelector
 
             var windowIndex = semantic.Tick /
                 checked(DemoImportService.WindowSeconds * timeline.Metadata.TickRate);
-            var built = eligibleSceneBuilder.Build(
-                timeline,
-                demoRef,
-                windowIndex,
-                attempt,
-                semantic,
-                snapshot,
-                cancellationToken);
+            SituationEligibleSceneBuildResult built;
+            try
+            {
+                built = eligibleSceneBuilder.Build(
+                    timeline,
+                    demoRef,
+                    windowIndex,
+                    attempt,
+                    semantic,
+                    snapshot,
+                    cancellationToken);
+            }
+            catch (InvalidDataException exception)
+            {
+                throw new InvalidDataException(
+                    $"Training candidate scene failed for round {attempt.RoundId} at tick {semantic.Tick}.",
+                    exception);
+            }
             if (!built.Eligibility.Eligible || built.Scene is null)
                 throw new InvalidOperationException("Eligible scene construction did not return a scene.");
-            var facts = analyzer.Analyze(built.Scene.Scene).Facts.Facts;
-            observations.Add(new(semantic, snapshot, facts));
+            var analysis = analyzer.Analyze(built.Scene.Scene);
+            observations.Add(new(semantic, snapshot, analysis.Facts.Facts));
+            if (buildProducts is not null && !buildProducts.TryAdd(
+                    semantic.Tick,
+                    new CandidateBuildProduct(semantic, built.Scene, analysis)))
+                throw new InvalidDataException(
+                    $"Training candidate round {attempt.RoundId} contains duplicate tick {semantic.Tick}.");
         }
 
-        var liveTick = attempt.LiveTick ?? int.MaxValue;
-        var endTick = attempt.EndTick ?? int.MinValue;
-        var killEventTicks = timeline.Events
-            .Where(item => item.Tick >= liveTick && item.Tick < endTick)
-            .Where(item => string.Equals(item.Type, "kill", StringComparison.Ordinal))
-            .Select(item => item.Tick)
-            .Order()
-            .ToArray();
-        return SelectPrepared(
+        var selection = SelectPrepared(
             timeline.Metadata.MapName,
             timeline.Metadata.TickRate,
             attempt,
@@ -148,6 +213,53 @@ internal sealed class SituationTrainingCandidateSelector
             roundFrames,
             killEventTicks,
             rejected);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (buildProducts is null)
+            return new(selection, Array.AsReadOnly(Array.Empty<SituationTrainingSelectionPayload>()));
+        var payloads = selection.Selection.Samples
+            .Select(sample => CreatePayload(attempt.RoundId, sample, buildProducts[sample.Tick]))
+            .ToArray();
+        return new(selection, Array.AsReadOnly(payloads));
+    }
+
+    private static SituationTrainingSelectionPayload CreatePayload(
+        string roundId,
+        SituationTrainingSelectedTick selected,
+        CandidateBuildProduct product)
+    {
+        if (!string.Equals(product.Semantic.RoundId, roundId, StringComparison.Ordinal) ||
+            product.Semantic.Tick != selected.Tick ||
+            product.Scene.Scene.Tick != selected.Tick ||
+            product.Scene.Sha256 != SituationCanonicalJson.Sha256(product.Scene.Scene) ||
+            product.Analysis.Facts.Sha256 != SituationCanonicalJson.Sha256(product.Analysis.Facts.Facts) ||
+            product.Analysis.Narrative.Sha256 !=
+                SituationCanonicalJson.Sha256(product.Analysis.Narrative.Narrative))
+            throw new InvalidDataException("Selected training payload failed its build-product hash boundary.");
+        SituationContractValidator.Validate(
+            product.Analysis.Facts.Facts,
+            product.Scene.Scene,
+            product.Analysis.Facts.Facts.AnalysisRuleVersion);
+        SituationContractValidator.ValidateTemplate(
+            product.Analysis.Narrative.Narrative,
+            product.Analysis.Facts.Facts);
+        return new(
+            roundId,
+            selected.Tick,
+            product.Semantic.Phase,
+            selected.Phase,
+            Array.AsReadOnly(selected.SelectionTags.ToArray()),
+            selected.SampleWeight,
+            selected.WeightNumerator,
+            selected.WeightDenominator,
+            product.Scene.Scene,
+            product.Scene.CanonicalJson,
+            product.Scene.Sha256,
+            product.Analysis.Facts.Facts,
+            product.Analysis.Facts.CanonicalJson,
+            product.Analysis.Facts.Sha256,
+            product.Analysis.Narrative.Narrative,
+            product.Analysis.Narrative.CanonicalJson,
+            product.Analysis.Narrative.Sha256);
     }
 
     internal SituationTrainingRoundSelectionResult SelectPrepared(
@@ -659,6 +771,11 @@ internal sealed class SituationTrainingCandidateSelector
             RemovedByLimitCount,
             MissingAnchorCount);
     }
+
+    private sealed record CandidateBuildProduct(
+        SemanticFrame Semantic,
+        SituationSceneBuildResult Scene,
+        SituationDeterministicAnalysisResult Analysis);
 }
 
 internal static class SituationTrainingCandidateSelectionExtensions

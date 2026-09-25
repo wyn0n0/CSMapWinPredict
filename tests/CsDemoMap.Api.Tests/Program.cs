@@ -2,6 +2,57 @@ using System.Globalization;
 using CsDemoMap.Api.Services;
 using CsDemoMap.Api.Tests;
 
+if (args is ["--serve-situation-review-synthetic", var syntheticWork])
+{
+    SituationArtifactIO.EnsureNewOutput(syntheticWork);
+    var catalog = new SituationReviewWorkflowVerifier.SyntheticReviewCatalog();
+    await using var store = await SituationReviewWorkStore.OpenAsync(syntheticWork, catalog.Identity,
+        catalog.InitialSelected.Select(s => new ReviewActiveSample(s.ReviewOrdinal, s.Entry.SampleId)).ToArray(), catalog.GetCandidateAsync, CancellationToken.None);
+    var repository = SituationArtifactIO.FindRepositoryRoot(AppContext.BaseDirectory);
+    await SituationReviewConsumerProvenance.CaptureAsync(repository, syntheticWork, store,
+        [typeof(SituationReviewDecisionService).Assembly.Location, typeof(CsDemoMap.Cli.SituationReviewServer).Assembly.Location], CancellationToken.None);
+    await using var server = await CsDemoMap.Cli.SituationReviewServer.StartAsync(new SituationReviewDecisionService(catalog, store),
+        Path.Combine(repository, "apps/cli/SituationReviewUi"), Path.Combine(repository, "apps/web/public/radars/simpleradar/de_mirage.webp"));
+    Console.WriteLine($"SYNTHETIC REVIEW ONLY: {server.Url}");
+    await server.WaitForShutdownAsync();
+    return 0;
+}
+
+if (args is ["--verify-situation-review-automatic"])
+{
+    await SituationReviewWorkStoreVerifier.VerifyAsync(CancellationToken.None);
+    await SituationReviewServerVerifier.VerifyAsync(CancellationToken.None);
+    await SituationReviewWorkflowVerifier.VerifyAsync(CancellationToken.None);
+    await SituationReviewConsumerVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
+if (args is ["--verify-situation-review-candidates-automatic"])
+{
+    SituationReviewPolicyVerifier.Verify();
+    SituationReviewCandidateSelectorVerifier.Verify();
+    await SituationReviewCandidateArtifactVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
+if (args is ["--verify-situation-review-artifacts"])
+{
+    await SituationReviewCandidateArtifactVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
+if (args is ["--verify-situation-review-policy"])
+{
+    SituationReviewPolicyVerifier.Verify();
+    return 0;
+}
+
+if (args is ["--verify-situation-review-selector"])
+{
+    SituationReviewCandidateSelectorVerifier.Verify();
+    return 0;
+}
+
 if (args is ["--verify-win-data-pipeline"])
 {
     await WinDataPipelineVerifier.VerifyAsync(CancellationToken.None);
@@ -103,6 +154,80 @@ if (args is ["--verify-situation-stage-four-eligibility"])
 if (args is ["--verify-situation-stage-four-selection"])
 {
     SituationTrainingCandidateSelectorVerifier.Verify();
+    return 0;
+}
+
+if (args is ["--verify-situation-stage-six-index"])
+{
+    await SituationTrainingTimelineIndexVerifier.VerifyAsync();
+    return 0;
+}
+if (args is ["--verify-situation-stage-six-integration"])
+{
+    await SituationTrainingDatasetExporterVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+if (args is ["--verify-situation-stage-six-real-recovery", var realDemo, var realSplit, var benchmarkRoot, var recoveryRoot])
+{
+    await SituationTrainingDatasetExporterVerifier.VerifyRealRecoveryAsync(
+        realDemo, realSplit, benchmarkRoot, recoveryRoot, CancellationToken.None);
+    return 0;
+}
+if (args is ["--verify-situation-stage-six-index-benchmark", var indexDemo, var indexSplit, var indexOutput])
+{
+    await SituationTrainingDatasetExporterVerifier.VerifyIndexBenchmarkAsync(
+        indexDemo, indexSplit, indexOutput, CancellationToken.None);
+    return 0;
+}
+if (args is ["--verify-situation-training-dataset", var datasetRoot])
+{
+    var result = await SituationTrainingDatasetValidator.VerifyAsync(
+        SituationArtifactIO.FindRepositoryRoot(Environment.CurrentDirectory), datasetRoot, CancellationToken.None);
+    Console.WriteLine($"Full dataset verified: {result.JsonlRows} rows.");
+    return 0;
+}
+if (args is ["--verify-situation-stage-six-automatic"])
+{
+    await SituationTrainingTimelineIndexVerifier.VerifyAsync();
+    await SituationTrainingPartialWriterVerifier.VerifyAsync(CancellationToken.None);
+    await SituationTrainingDatasetValidatorVerifier.VerifyAsync(CancellationToken.None);
+    await SituationTrainingDatasetExporterVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+if (args is ["--verify-situation-stage-six-writer"])
+{
+    await SituationTrainingPartialWriterVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+if (args is ["--verify-situation-stage-six-validator"])
+{
+    await SituationTrainingDatasetValidatorVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+if (args is ["--verify-situation-stage-four-pilot"])
+{
+    SituationTrainingPilotVerifier.Verify();
+    return 0;
+}
+
+if (args is ["--verify-situation-training-pilot", var pilotDirectory])
+{
+    await SituationTrainingPilotVerifier.VerifyArtifactsAsync(
+        pilotDirectory, null, CancellationToken.None);
+    return 0;
+}
+
+if (args is ["--verify-situation-training-pilot", var firstPilotDirectory, var repeatPilotDirectory])
+{
+    await SituationTrainingPilotVerifier.VerifyArtifactsAsync(
+        firstPilotDirectory, repeatPilotDirectory, CancellationToken.None);
+    return 0;
+}
+
+if (args is ["--verify-situation-training-source", var trainingSourceDemo])
+{
+    await SituationTrainingPilotVerifier.VerifySourceAsync(
+        trainingSourceDemo, CancellationToken.None);
     return 0;
 }
 

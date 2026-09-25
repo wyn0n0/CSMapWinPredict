@@ -106,7 +106,7 @@ npm run test:situation:stage4:contracts
 
 该门禁当前为 58 项，验证 `situation-training-record-v1` 的严格完整 JSON 形状、稳定字段顺序、UTF-8 无 BOM 单行编码、域分隔身份摘要、白名单模型输入、精确 evidence 集合、敏感属性/字符串扫描和 1/n 回合权重。它同时加载版本化的嵌入选择配置，验证 round-tail、1vN/2vN、部署、映射容差、post-plant 偏好、类别顺序与 tie-breaker，且稀有覆盖只能替换低优先级样本、不能物理复制；train 人工标签的 `recommendedSftRepeat=5` 不得进入 dev/test。
 
-阶段四 manifest 必须逐项记录 Scene、Builder、Geometry、Facts、Rules、Narrative、semantic eligibility、selection、input representation 和 review 版本；`SituationTrainingSchemaRegistry` 同时核对 12 个依赖/阶段四 Draft 2020-12 Schema 的版本、仓库相对路径和文件 SHA-256。manifest 回读还会复核所列工件的存在性、字节数、可选行数和 SHA-256。当前仅完成契约，尚未生成 `train/dev/test.jsonl`。
+阶段四 manifest 必须逐项记录 Scene、Builder、Geometry、Facts、Rules、Narrative、semantic eligibility、selection、input representation 和 review 版本；`SituationTrainingSchemaRegistry` 同时核对 14 个依赖/阶段四 Draft 2020-12 Schema 的版本、仓库相对路径和文件 SHA-256。manifest 回读还会复核所列工件的存在性、字节数、可选行数和 SHA-256。当前 pilot 与 full 均已有 complete 工件；full 为 `datasets/situation-stage4-full-20260919-r1/`，30,384 条，禁止覆盖或对 complete 执行恢复。
 
 ## 阶段四 schema v4.2 eligibility
 
@@ -126,7 +126,57 @@ npm run test:situation:stage4:selection
 
 该门禁当前为 148 项，覆盖 16 个配置类别、部署连续性、C4/伤害/减员映射、1 秒超限丢弃、同 tick 合并、0/1/15/16/>16 候选、远点填充、1/n 权重、跨回合隔离、输入乱序、四种文化区及同一完整 Timeline 100 次重复。选择器只读取 `TimelineEvent.Type/Tick`；标题、详情、赢家、结束原因及目标后事件变化必须保持选择 SHA-256 不变。
 
-这一步不创建数据集目录，也不读取 test 分布。类别命中率、缺失率、实际行数、体积与耗时必须在后续 500 条 train-only pilot 中记录；当前只可运行上述合成/流程门禁，不能把它解释为真实数据导出完成。
+选择门禁本身不创建数据集目录，也不读取 test 分布。真实类别命中率、缺失率、行数和体积已由以下 500 条 train-only pilot 记录；它仍不是全量 train/dev/test 数据集。
+
+## 阶段四 500 条 train-only 表示探针
+
+```powershell
+dotnet run --project apps/cli/CsDemoMap.Cli.csproj -c Release -- --export-situation-training-data <demo-directory> situation-implementation/situation-stage4-split-v1.json <new-output-directory> --pilot 500
+dotnet run --project tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj -c Release -- --verify-situation-stage-four-pilot
+dotnet run --project tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj -c Release -- --verify-situation-training-pilot <pilot-directory> <repeat-pilot-directory>
+```
+
+输出目录必须完全不存在；命令只解析冻结 split 的 71 场 train，先写 `status=incomplete` manifest，成功回读全部文件后才切换为 `complete`。pilot 只允许 `train.jsonl`、`representation-measurements.jsonl`、`split.json`、`label-stats.json`、`provenance.json` 和 `manifest.json`，禁止空 dev/test 或正式 review candidates。精确样本数固定为 500，单场最多 10 条；当前冻结分配为前三场各 8 条、其余各 7 条。
+
+当前 complete 工件为 `datasets/situation-stage4-pilot-20260919-r10/` 和 `r11/`，均覆盖 71 场、493 回合、500 条。两目录的 6 个文件 SHA-256 全部一致；`train.jsonl` 为 17,188,098 字节，SHA-256 `4b8c1eec7608d6fdd95d3faa2c086d41ad237da60147ae4a3de6333f77e4a5b1`。详细哈希与分布见 `situation-implementation/stage4-pilot-report-20260919.md`。
+
+## 阶段四步骤六：全量与显式恢复
+
+```powershell
+dotnet build apps/cli -c Release --no-restore
+dotnet build tests/CsDemoMap.Api.Tests -c Release --no-restore
+npm run test:situation:stage6
+dotnet apps/cli/bin/Release/net10.0/CsDemoMap.Cli.dll --export-situation-training-data data/mirage situation-implementation/situation-stage4-split-v1.json <new-output-directory> --round-workers 6
+dotnet apps/cli/bin/Release/net10.0/CsDemoMap.Cli.dll --export-situation-training-data data/mirage situation-implementation/situation-stage4-split-v1.json <same-incomplete-directory> --resume --round-workers 6
+dotnet tests/CsDemoMap.Api.Tests/bin/Release/net10.0/CsDemoMap.Api.Tests.dll --verify-situation-training-dataset <complete-directory>
+```
+
+逐条核对构建成功后再运行，不能在构建失败后继续使用旧二进制。无 `--pilot` 即新建 full；恢复只能显式 `--resume`，complete 目录拒绝恢复。输出根、相邻 `.writer-recovery` 和 `.writer.lock` 名称不得复用。CLI 不创建 Web host 或推理进程。
+
+`--train-benchmark` 只处理按 matchRef 固定排序的前五场 train，提交后保留 incomplete；不能用于训练。当前只支持一个 match worker，round workers 范围 1–8。性能与恢复验收见 `situation-implementation/stage4-full-report-20260919.md`。
+
+每场一个事务，最多重跑当前未提交场；恢复重新校验 split/父工件、配置、全部 Schema、实际源码及所有源 Demo 哈希，并验证已提交 spool 和统计。不得编辑 checkpoint 绕过绑定。代码或输入变化时创建新目录，保留旧 incomplete。
+
+发布顺序为稳定 merge、逐文件验证并发布 JSONL、将 writer 工作区移到相邻 `.writer-recovery`、写统计/provenance/split、完整回读、最后原子 complete manifest。整个发布期由相邻 `.writer.lock` 排他句柄保护；工作区和锁不属于 complete 根，保留作诊断。崩溃后的 JSONL 即使已命名为正式文件，只要 manifest 仍 incomplete 就不可消费；恢复按原 checkpoint 验证并继续。不要删除历史诊断目录。
+
+complete 根严格只有 train/dev/test、split、label-stats、provenance、manifest 七个文件，不含 review candidates；步骤七另建复核工件。
+
+`compact-v1` p95 为 41,106 UTF-8 bytes，较 expanded-v1 的 45,602 bytes 小 9.86%，但 500/500 均超过当前候选阈值。该结果只冻结较小、可逆的表示版本；阶段五必须用目标 Qwen tokenizer 对既有 500 条精确复测，超预算时新建表示版本和输出目录，禁止原地改写 complete 工件。
+
+## 阶段四步骤七候选
+
+```powershell
+npm run test:situation:stage4:review-candidates
+dotnet build apps/cli/CsDemoMap.Cli.csproj -c Release --no-restore -p:NuGetAudit=false
+dotnet apps/cli/bin/Release/net10.0/CsDemoMap.Cli.dll --export-situation-review-candidates datasets/situation-stage4-full-20260919-r1 <new-output-directory>
+dotnet apps/cli/bin/Release/net10.0/CsDemoMap.Cli.dll --verify-situation-review-candidates datasets/situation-stage4-full-20260919-r1 datasets/situation-stage4-review-candidates-20260919-r1
+```
+
+逐条确认构建成功再执行。导出只接受已钉死 manifest/provenance/split 哈希的正式 full；新输出目录必须不存在且不能在基础目录内，相邻 `.review-publish.lock` 负责排他发布。失败目录保留 incomplete，不提供原地恢复；修复原因后用新目录重试。complete 根仅有候选 JSONL、review-stats、provenance、manifest 四文件。
+
+正式 r1 与复导 r2 均 complete，四文件一致，报告见 `situation-implementation/stage4-review-candidates-report-20260919.md`。单次导出实测约 79–81 秒，单独回读约 59 秒。验证器绑定当前实际消费者源码；代码或 Schema 变化后须保留旧工件，在对应历史源码下复验，或重新审核并用新目录生成。不可修改旧工件哈希以绕过门禁。
+
+候选仍是模板预标注；人工决定、拒绝及替换 audit 留给步骤八，最终 reviewVersion 留给步骤九。任何短缺阻断 complete，诊断位于候选 `review-stats.json.reviewSelection.quotaShortfalls`，禁止改写基础 label-stats。
 
 ## 阶段二真实样例与性能
 
@@ -165,3 +215,24 @@ npm run test:semantics
 ```
 
 修改默认启动或依赖注入后，再启动 API 并检查 `/api/health`。不要因局势任务默认运行完整数据导出或训练。
+
+
+## 阶段四步骤八：本地人工复核工具（2026-09-19）
+
+技术验收与故障语义见 [步骤八报告](../../situation-implementation/stage4-review-tool-report-20260919.md)。
+
+```powershell
+npm run test:situation:stage4:review
+dotnet run --project apps/cli/CsDemoMap.Cli.csproj -c Release -- --serve-situation-review datasets/situation-stage4-full-20260919-r1 datasets/situation-stage4-review-work-20260919-r1 --candidates datasets/situation-stage4-review-candidates-20260919-r1
+```
+
+默认仅监听 127.0.0.1 的系统空闲端口，终端输出实际 URL。原 work 可恢复；同 work 第二实例拒绝。启动需固定历史来源快照 `datasets/situation-stage4-review-source-snapshot-20260919-r1/`，可通过 `--producer-snapshot` 传入哈希匹配副本。构建前退出正在运行同一二进制的服务，避免 Windows DLL 文件锁。
+
+- revision 冲突：保留草稿，显式重读当前决定再编辑；不得覆盖较新记录。
+- 响应丢失：相同载荷重试沿用 requestId，由事务回执去重。
+- 存储失败：停止写入，按原目录重启恢复；index 可重建，权威决定/提交链损坏则拒绝恢复。
+- blocking：保留问题记录，修复上游并使用新版本工件；不以替换或改评价解除。
+- 拒绝后单独触发后备替换，新样本仍需人工评价；有效目标保持 220/40/40。
+- `--verify-situation-review-consumer <base> <candidates> <snapshot>` 为历史消费回读；旧生产期验证器仍按当前生产源码严格验证，不将其结果混用。
+
+合成 UI 演练目录 `datasets/situation-stage4-review-ui-smoke-20260919-r1/` 不能作为真实人工集。步骤九冻结命令尚未实现。

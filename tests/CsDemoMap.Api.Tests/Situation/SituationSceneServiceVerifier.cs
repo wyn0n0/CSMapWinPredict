@@ -48,6 +48,24 @@ internal static class SituationSceneServiceVerifier
                 timelineResult.Scene.Players.All(player => player.Floor == SituationFloor.Unknown),
             "frozen contract, builder, geometry and unknown-floor semantics are preserved", ref checks);
 
+        var semanticTarget = timeline.Semantics!.Frames.Single(frame => frame.Tick == 1936);
+        var rawRoundMismatch = timeline with
+        {
+            Frames = timeline.Frames.Select(frame => frame.Tick == semanticTarget.Tick
+                ? frame with { Round = frame.Round with { Number = 999, Phase = "post-plant" } }
+                : frame).ToArray()
+        };
+        var semanticOverrideResult = offlineService.BuildFromTimeline(
+            rawRoundMismatch,
+            "semantic-override-fixture",
+            1,
+            semanticTarget.Tick,
+            semanticTarget,
+            cancellationToken);
+        Check(semanticOverrideResult.Scene.Round.Number == semanticTarget.RoundNumber &&
+              semanticOverrideResult.Scene.Round.Phase == SituationRoundPhase.Live,
+            "eligible training entry preserves the authoritative semantic round and phase", ref checks);
+
         var firstT = timelineResult.Scene.Players.Single(player => player.Side == SituationSide.T);
         Check(firstT.Position == new SituationVec3(0.630859, 0.33457, 0) &&
                 firstT.Velocity == new SituationVec3(0.1, -0.1, 0) &&

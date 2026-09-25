@@ -17,5 +17,11 @@
     <EmbeddedResource Include="Features\Situation\Training\situation-training-selection-v1.json">
       <LogicalName>CsDemoMap.Api.SituationTraining.%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Features\Situation\Training\situation-prompt-representation-v1.json">
+      <LogicalName>CsDemoMap.Api.SituationTraining.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Features\Situation\Training\situation-review-selection-v1.json">
+      <LogicalName>CsDemoMap.Api.SituationReview.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

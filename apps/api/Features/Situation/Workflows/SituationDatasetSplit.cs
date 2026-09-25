@@ -14,6 +14,8 @@ internal static class SituationDatasetSplit
     internal const string ParentSemanticVersion = "mirage-semantics-v4.2";
     internal const string FrozenParentSplitSha256 =
         "b176d96c063921f6a1a8718c700fb6d193903693539e4d1b447e37fca4aa43d8";
+    internal const string FrozenStageFourSplitSha256 =
+        "fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f";
 
     private const int SourceDemoCount = 87;
     private const int ParentTrainingDemoCount = 79;
@@ -26,6 +28,33 @@ internal static class SituationDatasetSplit
     {
         WriteIndented = true
     };
+    private static readonly JsonSerializerOptions InputJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNameCaseInsensitive = false,
+        UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow
+    };
+
+    internal static async Task<SituationStageFourSplitResult> LoadApprovedAsync(
+        string path,
+        CancellationToken cancellationToken)
+    {
+        var fullPath = NormalizeExistingFile(path, "Stage-four split");
+        RejectReparsePoint(new FileInfo(fullPath), "Stage-four split");
+        var bytes = await File.ReadAllBytesAsync(fullPath, cancellationToken);
+        if (bytes.AsSpan().StartsWith(Encoding.UTF8.Preamble))
+            throw new InvalidDataException("Stage-four split must be UTF-8 without BOM.");
+        var sha256 = SituationArtifactIO.Sha256(bytes);
+        if (sha256 != FrozenStageFourSplitSha256)
+            throw new InvalidDataException("Stage-four split SHA-256 does not match the approved baseline.");
+        var json = Encoding.UTF8.GetString(bytes);
+        SituationTrainingContractJson.RejectDuplicateProperties(json, "Stage-four split");
+        SituationTrainingContractJson.RequireCompleteShape<SituationStageFourSplitDocument>(
+            json, "Stage-four split");
+        var document = JsonSerializer.Deserialize<SituationStageFourSplitDocument>(bytes, InputJsonOptions)
+            ?? throw new InvalidDataException("Stage-four split is empty.");
+        ValidateDocument(document, document.ParentSplitSha256, document.ParentManifestSha256);
+        return new(document, sha256);
+    }
 
     internal static Task<SituationStageFourSplitResult> CreateAsync(
         string demoDirectory,
@@ -291,7 +320,7 @@ internal static class SituationDatasetSplit
             throw new InvalidDataException("Stage-four split membership is invalid or non-deterministic.");
     }
 
-    private static void ValidateDocument(
+    internal static void ValidateDocument(
         SituationStageFourSplitDocument document,
         string parentSplitSha256,
         string manifestSha256)

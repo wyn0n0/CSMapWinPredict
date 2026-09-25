@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "situation-review-selection-v1",
+  "algorithmVersion": "situation-review-greedy-v1",
+  "stableHashDomain": "situation-review-order-v1",
+  "maxPerRound": 2,
+  "exceptionalMaxPerRound": 3,
+  "isolationBlockingQualityCodes": ["missing-frame", "position-invalid", "position-outside-radar", "roster-incomplete", "stale-frame"],
+  "relevantQualityCodes": ["health-state-conflict", "history-gap", "history-truncated", "missing-frame", "position-invalid", "position-outside-radar", "region-unknown", "roster-incomplete", "stale-frame"],
+  "eventCategories": ["bomb-defusing", "bomb-dropped", "bomb-picked-up", "bomb-planting-or-planted", "first-casualty", "first-contact", "first-damage"],
+  "categoryPriority": ["post-plant", "clutch", "formation-split", "isolated", "high-contact", "c4-transition", "low-quality", "ordinary-live", "low-medium-contact", "none-isolation", "grouped-spread", "high-confidence"],
+  "tieBreaker": ["unmet-category-count-desc", "match-count-asc", "round-count-asc", "stable-sha256-asc", "sample-id-ordinal-asc"],
+  "splits": {
+    "train": {"samples": 220, "matches": 71, "minPerMatch": 2, "maxPerMatch": 4, "quotas": {"post-plant": 40, "clutch": 40, "formation-split": 40, "isolated": 40, "high-contact": 40, "c4-transition": 24, "low-quality": 20, "ordinary-live": 10, "low-medium-contact": 10, "none-isolation": 10, "grouped-spread": 10, "high-confidence": 10}},
+    "dev": {"samples": 40, "matches": 8, "minPerMatch": 5, "maxPerMatch": 5, "quotas": {"post-plant": 8, "clutch": 8, "formation-split": 8, "isolated": 8, "high-contact": 8, "ordinary-live": 2, "low-medium-contact": 2, "none-isolation": 2, "grouped-spread": 2, "high-confidence": 2}},
+    "test": {"samples": 40, "matches": 8, "minPerMatch": 5, "maxPerMatch": 5, "quotas": {"post-plant": 8, "clutch": 8, "formation-split": 8, "isolated": 8, "high-contact": 8, "ordinary-live": 2, "low-medium-contact": 2, "none-isolation": 2, "grouped-spread": 2, "high-confidence": 2}}
+  }
+}

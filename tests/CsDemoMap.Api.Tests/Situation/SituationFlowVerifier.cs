@@ -191,6 +191,18 @@ internal static class SituationFlowVerifier
         Check(pickupScene.Bomb.State == SituationBombState.Carried && pickupScene.Bomb.CarrierSlot is not null,
             "C4 pickup uses the current observation", ref checks);
 
+        var staleDefuserScene = builder.Build(adapter.BuildFromTimeline(
+            ReplaceBomb(timeline, _ => new(
+                "planted", null, "ct-id", "A", "A Site", 0, 0, 0, 20, 5)),
+            "bomb-stale-defuser", 1, 1940));
+        Check(staleDefuserScene.Bomb.State == SituationBombState.Planted &&
+              staleDefuserScene.Bomb.DefuserSlot is null &&
+              staleDefuserScene.Bomb.SecondsToDefuse is null &&
+              staleDefuserScene.DataQuality.Any(item =>
+                  item.Code == SituationDataQualityCodes.LegacyDefaultAmbiguous &&
+                  item.FieldPaths.Contains("/bomb/defuserSlot", StringComparer.Ordinal)),
+            "stale defuser details are masked and reported", ref checks);
+
         var lifecycleTimeline = timeline with
         {
             UtilityTracks = [

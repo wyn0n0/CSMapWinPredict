@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\api\CsDemoMap.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="SituationReviewUi\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

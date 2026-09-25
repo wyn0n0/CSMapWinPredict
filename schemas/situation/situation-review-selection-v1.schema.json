@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-review-selection-v1.schema.json",
+  "title": "ReviewSelectionPolicy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "algorithmVersion", "stableHashDomain", "maxPerRound", "exceptionalMaxPerRound", "isolationBlockingQualityCodes", "relevantQualityCodes", "eventCategories", "categoryPriority", "tieBreaker", "splits"],
+  "properties": {
+    "schemaVersion": {"const": "situation-review-selection-v1"},
+    "algorithmVersion": {"const": "situation-review-greedy-v1"},
+    "stableHashDomain": {"const": "situation-review-order-v1"},
+    "maxPerRound": {"const": 2},
+    "exceptionalMaxPerRound": {"const": 3},
+    "isolationBlockingQualityCodes": {"$ref": "#/$defs/names"},
+    "relevantQualityCodes": {"$ref": "#/$defs/names"},
+    "eventCategories": {"$ref": "#/$defs/names"},
+    "categoryPriority": {"$ref": "#/$defs/names"},
+    "tieBreaker": {"$ref": "#/$defs/names"},
+    "splits": {
+      "type": "object", "additionalProperties": false, "required": ["train", "dev", "test"],
+      "properties": {"train": {"$ref": "#/$defs/split"}, "dev": {"$ref": "#/$defs/split"}, "test": {"$ref": "#/$defs/split"}}
+    }
+  },
+  "$defs": {
+    "names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "split": {
+      "type": "object", "additionalProperties": false, "required": ["samples", "matches", "minPerMatch", "maxPerMatch", "quotas"],
+      "properties": {
+        "samples": {"type": "integer", "minimum": 1}, "matches": {"type": "integer", "minimum": 1},
+        "minPerMatch": {"type": "integer", "minimum": 1}, "maxPerMatch": {"type": "integer", "minimum": 1},
+        "quotas": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "integer", "minimum": 1}}
+      }
+    }
+  }
+}

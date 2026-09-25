@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-review-candidate-manifest-v1.schema.json",
+  "title": "SituationReviewCandidateManifestV1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "status", "baseManifestSha256", "policySha256", "selected", "backups", "sourceIndex", "roundExceptions", "quotaShortfalls", "files"],
+  "properties": {
+    "schemaVersion": {"const": "situation-review-candidate-manifest-v1"}, "status": {"enum": ["incomplete", "complete"]},
+    "baseManifestSha256": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/sha"},
+    "policySha256": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/sha"},
+    "selected": {"type": "array", "maxItems": 300, "items": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/selected"}},
+    "backups": {"type": "object", "propertyNames": {"pattern": "^(train|dev|test)/[a-z][a-z0-9-]*$"}, "additionalProperties": {"type": "array", "uniqueItems": true, "items": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/sampleId"}}},
+    "sourceIndex": {"type": "array", "items": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/poolEntry"}},
+    "roundExceptions": {"type": "array", "items": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/roundException"}},
+    "quotaShortfalls": {"type": "array", "items": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/shortfall"}},
+    "files": {"type": "array", "items": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/file"}}
+  },
+  "allOf": [{"if": {"properties": {"status": {"const": "complete"}}}, "then": {"properties": {"selected": {"minItems": 300}, "files": {"minItems": 3, "maxItems": 3}, "quotaShortfalls": {"maxItems": 0}}}}]
+}

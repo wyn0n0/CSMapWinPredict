@@ -59,6 +59,7 @@ internal sealed class SituationEligibleSceneBuilder
             demoRef,
             windowIndex,
             frame.Tick,
+            frame,
             cancellationToken: cancellationToken);
         return new(eligibility, scene);
     }

@@ -1,6 +1,6 @@
 # 当前设计决策
 
-> 最后核验：2026-09-18。
+> 最后核验：2026-09-19。
 
 - **保持模块化单体。** 后端仍部署为一个 API，但源码按 Replay、Semantics、Maps、WinPrediction 和 Situation 划分；目录先表达职责，现有命名空间保持兼容。
 - **运行入口与开发入口分离。** `apps/api/Program.cs` 只负责 HTTP 宿主；数据导出、诊断和验收工作流由 `apps/cli` 提供。
@@ -19,15 +19,28 @@
 - **阶段四显式冻结 71/8/8。** 原 8 场 validation 不重抽并直接成为 test；dev 只从父 79 场按 `SHA-256("situation-stage4-dev-v1|42|" + matchId)` 的 ordinal 顺序取 8 场，其余 71 场为 train。冻结文件保存三组完整成员与父 split/manifest 哈希，后续不得从 seed 或文件枚举重新拆分。
 - **阶段四切分不信任路径提示。** CLI 必须显式接收 Demo 目录和父 split，忽略父文件中的绝对 `sourceDirectory`，对真实 87 个 Demo 重算 SHA-256；输出只保留仓库相对引用、文件名与内容哈希。
 - **阶段四训练记录与复核工件分离。** 基础 JSONL 永远保持 `template-prelabel/unreviewed`；批准、修改和拒绝写入独立、带自身哈希的 review decision，冻结标签另建版本，禁止原地改写基础记录。
+- **步骤七策略先于全池审计冻结。** `situation-review-selection-v1` 固定 220/40/40、比赛与回合上限、多标签配额及稳定 tie-breaker；普通 live、低/中接触、none isolation、grouped/spread、高置信度各类最低 train 10、dev/test 2。test 不参与后续策略调参。短缺写新候选 review-stats，不回写基础统计；搜索未解决不得冒称已证明组合不可行。
+- **历史生产者与当前消费者分别绑定。** 步骤七钉死正式基础 manifest/provenance/split 和数据哈希，复用已通过的完整语义证据并重算所有入选记录。历史来源中 API csproj 和 CLI dispatcher 的必需集成差异由独立当前 consumerFiles 记录；其他历史来源及旧 Schema 必须保持匹配。新 review Schema 不改旧基础 Schema 注册表。
+- **候选发布拥有独占句柄。** 新目录写入前以相邻 `.review-publish.lock` 的 CreateNew/FileShare.None 获取所有权，覆盖全部发布过程，避免两次导出同时通过存在检查。完整回读后才原子 complete；同类后备必须取冻结顺序中首个满足约束且不降低覆盖者，人工审计持久化由后续步骤实现。
+- **步骤六单场事务、最终载荷复用。** pilot/full 共用 record builder，直接消费 selector 的已验证最终 payload；每 Demo 只解析一次并建立一份 Timeline 索引，round worker 只读使用。当前保持一个 match worker，以确保恢复最多重跑当前未提交场。
+- **complete 是最后的原子发布标记。** 稳定 merge 与回读后发布 JSONL，writer 工作区保留到相邻 `.writer-recovery`，外部 `.writer.lock` 句柄覆盖整个发布过程；六个非 manifest 文件全部复验后才切换 complete。耗时放外部报告，决定性工件不加入时钟。review candidates 明确归步骤七。
 - **模型边界采用显式白名单。** `SituationModelInputProjector` 移除来源、Demo、窗口、requested tick 和真实 round ID；prompt 投影只包含 `input/output`。分组引用、split、选择标签、权重、哈希及 provenance 只留在模型不可见的门禁层。
-- **阶段四版本逐项隔离。** split、记录、选择、manifest、标签统计和各 review 工件分别版本化；manifest 逐项记录 Scene/Builder/Geometry/Facts/Rules/Narrative/eligibility/selection/input/review 版本，并绑定 12 个依赖/阶段四 Schema 的文件 SHA-256。步骤二已获批并固定在 checkpoint `34fa03d`。
+- **阶段四版本逐项隔离。** split、记录、选择、manifest、标签统计、prompt 表示、表示测量和各 review 工件分别版本化；manifest 逐项记录 Scene/Builder/Geometry/Facts/Rules/Narrative/eligibility/selection/input/review 版本，并绑定 14 个依赖/阶段四 Schema 的文件 SHA-256。步骤二已获批并固定在 checkpoint `34fa03d`。
 - **v4.2 与阶段四共用单一 outcome-free eligibility。** `RoundSampleEligibility` 集中判断 Mirage、完成回合、半开 live 区间、live/post-plant、回合号、时钟、阵容和存活快照；返回值不含赢家、结束原因或训练标签。v4.2 继续保留既有拒绝原因，阶段四只在合格后通过 `SituationSceneService.BuildFromTimeline` 形成 as-of scene。
 - **候选选择是配置驱动且 outcome-free。** 选择核心只接收同回合结构化快照、冻结 Facts 与事件类型/tick；部署、tail、1vN/2vN、映射容差、类别优先级、post-plant 偏好、上限和 tie-breaker 全部由 `situation-training-selection-v1` 绑定。事件标题/详情、赢家和结束原因不进入接口或结果。
 - **先覆盖锚点，再做确定性远点填充。** 核心、事件、稀有类别按配置顺序加入，同 tick 合并全部 ordinal 标签；空位最大化与已选 tick 的最小距离，完全并列取更早 tick 后再用域分隔候选摘要。最终 tick 排序，每回合唯一且不超过 16 条，每条权重固定为 1/n。
 - **覆盖靠替换而非放大。** 每回合最多 16 个唯一 tick，稀有场景替换低优先级普通样本；最终每条写 1/n 有理权重。人工 train 标签只携带 `recommendedSftRepeat=5`，dev/test 明确禁止 SFT 重复。
+- **pilot 冻结 `compact-v1`，但不宣称已满足序列预算。** 500 条 train-only 实测中 compact p95 为 41,106 UTF-8 bytes，比 expanded 小 9.86%，且可从冻结短键精确还原；完整 JSONL 始终保留。500/500 均超过候选阈值，因此阶段五仍必须用目标 Qwen tokenizer 复测，超预算时升级表示版本并新建数据目录。
 - **性能请求只来自训练侧。** 阶段二固定请求包含真实拆除和跨窗口读取；保留比赛仅运行冻结契约回归。首次文件读取定义为新服务、无结果缓存且无显式预读，操作系统页缓存状态另行说明。
 - **阶段边界保持清晰。** 阶段二负责服务化与性能，阶段三负责 Facts 规则和模板叙述。
 - **阶段三规则只从嵌入资源加载。** 运行时不接受任意路径或热切换；candidate-1/2 历史保留，用户批准后的不可变 `situation-analysis-rules-v1` SHA-256 为 `afa19d686b4c5ade2a53b8bdfd0655965d5230d032d39ea0bb8685e7929daa35`。
 - **质量影响按规则实际字段收敛。** candidate-2 不让装备、速度或金钱的 `legacy-default-ambiguous` 降低 Facts 置信度；楼层、装备和道具缺失不机械污染未使用这些输入的结论。
 - **保留请求与规则输出分离。** 冻结前只按阶段、当前数据质量和稳定哈希固定 8 场各 2 个 tick；请求承诺 SHA-256 写入训练清单，验收入口在冻结资源缺失时先失败。获批后仅正式生成一次 16 条输出，后续规则修订不得把同一保留集重新描述为盲测。
 - **Narrative 只复述绑定 evidence。** 模板重点使用 evidence 原文，孤立结论只公开阵营级信息，不在摘要中输出槽位；内部 margin 可使用匿名 slot。
+
+
+### 阶段四步骤八：独立复核工作区（2026-09-19）
+
+用户指定主线 GPT-6 Astra/high、子智能体 GPT-6 Astra/low。复核使用 CLI 独立宿主和静态页；显式 `--candidates` 绑定独立候选，默认127.0.0.1:0。旧decision v1不扩字段，requestId和恢复信息进入事务信封；decisions权威、index可重建。拒绝与后备替换分开，blocking持续阻断。
+
+旧生产期provenance不随消费者升级重写。历史基础/候选/来源快照按固定哈希验证；新增消费者源码和运行程序集按会话另记来源。编译/CLI集成变化不要求重导87场，语义源码/Schema/工件变化仍拒绝。具体边界与证据见 `situation-implementation/stage4-review-tool-report-20260919.md`。

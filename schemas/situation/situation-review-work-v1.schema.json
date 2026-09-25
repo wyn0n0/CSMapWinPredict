@@ -1,0 +1,409 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-review-work-v1.schema.json",
+  "title": "Local review workspace and transaction records",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/workspace"
+    },
+    {
+      "$ref": "#/$defs/transaction"
+    },
+    {
+      "$ref": "#/$defs/commit"
+    },
+    {
+      "$ref": "#/$defs/consumer"
+    }
+  ],
+  "$defs": {
+    "sourceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "datasetSha256",
+        "candidateManifestSha256",
+        "candidateFileSha256",
+        "splitSha256",
+        "policySha256",
+        "schemaFiles",
+        "reviewDraft"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "situation-review-workspace-v1"
+        },
+        "datasetSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "candidateManifestSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "candidateFileSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "splitSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "policySha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "schemaFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceFile"
+          }
+        },
+        "reviewDraft": {
+          "type": "string"
+        }
+      }
+    },
+    "active": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewOrdinal",
+        "sampleId"
+      ],
+      "properties": {
+        "reviewOrdinal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sampleId": {
+          "type": "string",
+          "pattern": "^sample-[0-9a-f]{64}$"
+        }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "initial"
+      ],
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/identity"
+        },
+        "initial": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/active"
+          }
+        }
+      }
+    },
+    "replacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oldSampleId",
+        "newSampleId",
+        "reviewOrdinal",
+        "rejectedDecisionSha256",
+        "priorityCategory",
+        "workspaceRevision",
+        "candidateSha256",
+        "replacedAtUtc"
+      ],
+      "properties": {
+        "oldSampleId": {
+          "type": "string",
+          "pattern": "^sample-[0-9a-f]{64}$"
+        },
+        "newSampleId": {
+          "type": "string",
+          "pattern": "^sample-[0-9a-f]{64}$"
+        },
+        "reviewOrdinal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rejectedDecisionSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorityCategory": {
+          "type": "string"
+        },
+        "workspaceRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "candidateSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "replacedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "requestSha256",
+        "sampleId",
+        "sampleRevision",
+        "decisionSha256",
+        "workspaceRevision",
+        "newSampleId"
+      ],
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requestSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sampleId": {
+          "type": "string",
+          "pattern": "^sample-[0-9a-f]{64}$"
+        },
+        "sampleRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "decisionSha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "workspaceRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "newSampleId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^sample-[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "transaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "previousSha256",
+        "previousDecisionSha256",
+        "decision",
+        "replacement",
+        "receipt"
+      ],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "previousSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "previousDecisionSha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "$ref": "situation-review-decision-v1.schema.json"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "replacement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/replacement"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "decision": {
+              "type": "object"
+            },
+            "replacement": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "decision": {
+              "type": "null"
+            },
+            "replacement": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    "commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "transactionSha256"
+      ],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "transactionSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessionId",
+        "startedAtUtc",
+        "startingWorkspaceRevision",
+        "datasetSha256",
+        "candidateManifestSha256",
+        "files",
+        "binaries",
+        "previousSha256"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "startedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "startingWorkspaceRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "datasetSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "candidateManifestSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceFile"
+          }
+        },
+        "binaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceFile"
+          }
+        },
+        "previousSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "consumer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "sessions"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "situation-review-consumer-provenance-v1"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "session",
+              "sha256"
+            ],
+            "properties": {
+              "session": {
+                "$ref": "#/$defs/session"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

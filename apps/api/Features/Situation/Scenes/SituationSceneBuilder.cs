@@ -328,16 +328,32 @@ internal sealed class SituationSceneBuilder
         ICollection<SituationDataQuality> quality)
     {
         var state = ParseBombState(source.State);
-        var carrier = ResolveSlot(source.CarrierSourcePlayerId, slotsBySourceId);
-        var defuser = ResolveSlot(source.DefuserSourcePlayerId, slotsBySourceId);
-        if (source.CarrierSourcePlayerId is not null && carrier is null)
+        var allowsCarrier = state is SituationBombState.Carried or SituationBombState.Planting;
+        var allowsDefuser = state == SituationBombState.Defusing;
+        var allowsSite = state is SituationBombState.Planted or SituationBombState.Defusing or
+            SituationBombState.Defused or SituationBombState.Exploded;
+        var allowsExplosionTimer = state is SituationBombState.Planted or SituationBombState.Defusing;
+        var allowsPosition = state != SituationBombState.Unknown;
+        var carrierSource = allowsCarrier ? source.CarrierSourcePlayerId : null;
+        var defuserSource = allowsDefuser ? source.DefuserSourcePlayerId : null;
+        var carrier = ResolveSlot(carrierSource, slotsBySourceId);
+        var defuser = ResolveSlot(defuserSource, slotsBySourceId);
+        if (carrierSource is not null && carrier is null)
             quality.Add(Quality(SituationDataQualityCodes.RosterIncomplete, "/bomb/carrierSlot"));
-        if (source.DefuserSourcePlayerId is not null && defuser is null)
+        if (defuserSource is not null && defuser is null)
             quality.Add(Quality(SituationDataQualityCodes.RosterIncomplete, "/bomb/defuserSlot"));
-        var position = source.X is { } x && source.Y is { } y && source.Z is { } z
+        AddIncompatibleQuality(!allowsCarrier && source.CarrierSourcePlayerId is not null, "/bomb/carrierSlot");
+        AddIncompatibleQuality(!allowsDefuser && source.DefuserSourcePlayerId is not null, "/bomb/defuserSlot");
+        AddIncompatibleQuality(!allowsSite && source.Site is not null, "/bomb/site");
+        AddIncompatibleQuality(!allowsExplosionTimer && source.SecondsToExplosion is not null,
+            "/bomb/secondsToExplosion");
+        AddIncompatibleQuality(!allowsDefuser && source.SecondsToDefuse is not null, "/bomb/secondsToDefuse");
+        AddIncompatibleQuality(!allowsPosition && (source.X is not null || source.Y is not null ||
+            source.Z is not null || source.Region is not null), "/bomb/position");
+        var position = allowsPosition && source.X is { } x && source.Y is { } y && source.Z is { } z
             ? NormalizePosition(x, y, z, geometry, quality, "/bomb/position")
             : null;
-        var region = NormalizeRegion(source.Region);
+        var region = allowsPosition ? NormalizeRegion(source.Region) : null;
         var regionSource = state switch
         {
             SituationBombState.Carried or SituationBombState.Planting when region is not null =>
@@ -348,8 +364,15 @@ internal sealed class SituationSceneBuilder
             _ => SituationRegionSource.Unknown
         };
         return new(
-            state, carrier, defuser, ParseSite(source.Site), position, region, regionSource,
-            NonNegativeOrNull(source.SecondsToExplosion), NonNegativeOrNull(source.SecondsToDefuse));
+            state, carrier, defuser, allowsSite ? ParseSite(source.Site) : null, position, region, regionSource,
+            allowsExplosionTimer ? NonNegativeOrNull(source.SecondsToExplosion) : null,
+            allowsDefuser ? NonNegativeOrNull(source.SecondsToDefuse) : null);
+
+        void AddIncompatibleQuality(bool incompatible, string path)
+        {
+            if (incompatible)
+                quality.Add(Quality(SituationDataQualityCodes.LegacyDefaultAmbiguous, path));
+        }
     }
 
     private static IReadOnlyList<SituationUtility> BuildUtilities(

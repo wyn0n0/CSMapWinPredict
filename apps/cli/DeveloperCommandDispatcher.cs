@@ -9,6 +9,67 @@ internal static class DeveloperCommandDispatcher
 {
     public static async Task<int> RunAsync(string[] args, CancellationToken cancellationToken)
     {
+        if (args.Length >= 1 && args[0] == "--serve-situation-review")
+        {
+            if (args.Length < 5) throw new ArgumentException("Review requires dataset, work and candidates.");
+            string? candidates = null;
+            string? snapshot = null;
+            var port = 0;
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 3; i < args.Length; i++)
+            {
+                var option = args[i];
+                if (!seen.Add(option) || ++i >= args.Length) throw new ArgumentException("Invalid review option.");
+                switch (option)
+                {
+                    case "--candidates": candidates = args[i]; break;
+                    case "--producer-snapshot": snapshot = args[i]; break;
+                    case "--port": port = int.Parse(args[i], CultureInfo.InvariantCulture); break;
+                    default: throw new ArgumentException("Invalid review option.");
+                }
+            }
+            if (candidates is null || port is < 0 or > 65535) throw new ArgumentException("Invalid review options.");
+            var repository = SituationArtifactIO.FindRepositoryRoot(args[1]);
+            snapshot ??= Path.Combine(repository, "datasets/situation-stage4-review-source-snapshot-20260919-r1");
+            SituationReviewArtifactLoader.ValidateWorkLocation(args[2], args[1], candidates, snapshot);
+            var catalog = await SituationReviewArtifactLoader.OpenAsync(args[1], candidates, snapshot, cancellationToken);
+            await using var store = await SituationReviewWorkStore.OpenAsync(args[2], catalog.Identity,
+                catalog.InitialSelected.Select(s => new ReviewActiveSample(s.ReviewOrdinal, s.Entry.SampleId)).ToArray(),
+                catalog.GetCandidateAsync, cancellationToken);
+            await SituationReviewConsumerProvenance.CaptureAsync(repository, args[2], store,
+                [typeof(DeveloperCommandDispatcher).Assembly.Location, typeof(SituationReviewArtifactLoader).Assembly.Location], cancellationToken);
+            SituationReviewReplacementService.VerifyRecoveredState(catalog, store.Snapshot);
+            var backend = new SituationReviewDecisionService(catalog, store);
+            await using var server = await SituationReviewServer.StartAsync(backend,
+                Path.Combine(AppContext.BaseDirectory, "SituationReviewUi"),
+                Path.Combine(repository, "apps/web/public/radars/simpleradar/de_mirage.webp"), port, cancellationToken);
+            Console.WriteLine($"Situation review ready: {server.Url}");
+            Console.WriteLine("Template prelabels only. Human review is required; this workspace is not frozen.");
+            await server.WaitForShutdownAsync(cancellationToken);
+            return 0;
+        }
+
+        if (args is ["--verify-situation-review-consumer", var reviewBase, var reviewCandidates, var historicalSnapshot])
+        {
+            var catalog = await SituationReviewArtifactLoader.OpenAsync(reviewBase, reviewCandidates, historicalSnapshot, cancellationToken);
+            Console.WriteLine($"Review consumer verified: {catalog.InitialSelected.Count} rows; historical sources preserved.");
+            return 0;
+        }
+
+        if (args is ["--export-situation-review-candidates", var reviewDataset, var reviewOutput])
+        {
+            await SituationReviewCandidateExporter.ExportAsync(reviewDataset, reviewOutput, cancellationToken);
+            Console.WriteLine("Review candidate export complete: train=220 dev=40 test=40.");
+            return 0;
+        }
+
+        if (args is ["--verify-situation-review-candidates", var candidateDataset, var candidateDirectory])
+        {
+            var result = await SituationReviewCandidateValidator.VerifyAsync(candidateDataset, candidateDirectory, cancellationToken);
+            Console.WriteLine($"Review candidates verified: {result.Manifest.Selected.Count} rows.");
+            return 0;
+        }
+
         if (args is ["--inspect-demo", var demoPath])
         {
             await InspectDemoAsync(demoPath, cancellationToken);
@@ -72,6 +133,49 @@ internal static class DeveloperCommandDispatcher
                 result.Split.DevDemoCount,
                 result.Split.TestDemoCount
             }, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
+            return 0;
+        }
+
+        if (args is ["--export-situation-training-data", var trainingDemoDirectory, var trainingSplit,
+                    var trainingOutput, "--pilot", var pilotLimit])
+        {
+            var manifest = await SituationTrainingPilotExporter.ExportAsync(
+                trainingDemoDirectory,
+                trainingSplit,
+                trainingOutput,
+                int.Parse(pilotLimit, CultureInfo.InvariantCulture),
+                cancellationToken);
+            Console.WriteLine(JsonSerializer.Serialize(new
+            {
+                manifest.SchemaVersion,
+                manifest.Status,
+                manifest.Mode,
+                manifest.Purpose,
+                manifest.Trainable,
+                manifest.SampleLimit,
+                Counts = manifest.Counts["train"],
+                manifest.SplitSha256,
+                manifest.SelectionConfigSha256,
+                manifest.InputRepresentationConfigSha256
+            }, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
+            return 0;
+        }
+
+        if (args.Length >= 4 && args[0] == "--export-situation-training-data")
+        {
+            var resume = false;
+            var roundWorkers = 4;
+            int? benchmark = null;
+            for (var index = 4; index < args.Length; index++)
+            {
+                if (args[index] == "--resume") resume = true;
+                else if (args[index] == "--round-workers" && ++index < args.Length)
+                    roundWorkers = int.Parse(args[index], CultureInfo.InvariantCulture);
+                else if (args[index] == "--train-benchmark") benchmark = 5;
+                else throw new ArgumentException("Unknown full training export option.");
+            }
+            await SituationTrainingDatasetExporter.ExportAsync(args[1], args[2], args[3], cancellationToken,
+                new(roundWorkers, resume, benchmark));
             return 0;
         }
 

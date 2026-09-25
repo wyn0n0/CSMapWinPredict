@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>局势人工复核 · 本地工作区</title><link rel="stylesheet" href="/review-ui/styles.css"><script type="module" src="/review-ui/app.js"></script></head>
+<body>
+<header><div class="eyebrow">MIRAGE / LOCAL REVIEW</div><h1>局势人工复核</h1><p>当前文本为模板预标注 · 空间优势不是胜率 · 不得根据后续结果评价摘要</p><details><summary>工作区身份</summary><dl id="identity"></dl></details><div id="progress" class="progress"></div></header>
+<div id="blocking" class="banner danger" hidden>工作区存在持续阻断问题：不能继续批准或替换。可查看样本和记录拒绝报告；修复须返回上游并生成新工件。</div>
+<nav aria-label="样本导航"><label>Split <select id="split"><option value="">全部</option><option>train</option><option>dev</option><option>test</option></select></label><label>类别 <select id="category"><option value="">全部</option></select></label><label>决定 <select id="decisionFilter"><option value="">全部</option><option value="unreviewed">未复核</option><option value="approved">已批准</option><option value="modified">已修改</option><option value="rejected">已拒绝</option></select></label><label><input id="unreviewed" type="checkbox"> 仅未复核</label><button id="previous">← 上一条</button><button id="next">下一条 →</button><label class="jump">跳转 <input id="jump" placeholder="ordinal 或完整 sampleId"><button id="go">前往</button></label><button id="refresh">重读服务端</button></nav>
+<p id="status" role="status" aria-live="polite">正在连接本地复核服务…</p><p id="selection"></p>
+<div id="conflict" class="banner danger" hidden>服务端记录有冲突，或提交后刷新未完成；当前禁止覆盖。需要保留草稿时请先复制，再点击“重读服务端”载入当前权威决定。</div>
+<main id="workspace" hidden>
+<section class="scene"><h2>当前时点</h2><div class="radar-frame"><canvas id="radar" width="1024" height="1024" aria-label="匿名 Mirage 雷达"></canvas></div><p id="radarNote" class="muted">T 金色 · CT 蓝色 · 线为历史轨迹 · 箭头为方向 · C4 红色</p><div id="clock"></div><details><summary>匿名玩家、道具与效果</summary><pre id="sceneDetails"></pre></details></section>
+<section class="facts"><h2>结构化事实</h2><dl id="facts"></dl><h3>数据质量</h3><pre id="quality"></pre><h3>Evidence</h3><p class="muted">点击摘要要点可定位对应证据。unknown 保持未知。</p><div id="evidence"></div></section>
+<section class="review"><h2>候选与编辑</h2><div class="comparison"><article><h3>模板候选（只读）</h3><div id="candidate"></div></article><article><h3>编辑后预览</h3><div id="preview"></div></article></div><label for="editor">Narrative JSON（2–4 要点、文本上限 240 字、引用仅限当前 evidence）</label><textarea id="editor" rows="18" spellcheck="false"></textarea><button id="resetNarrative">恢复候选文本</button><div id="validation" role="status"></div>
+<fieldset id="evaluations"><legend>四项必填评价</legend></fieldset>
+<fieldset id="issues"><legend>报告问题（阻断项将持续保留）</legend></fieldset>
+<label for="issueFields">问题字段（JSON Pointer，每行一个，如 /facts/alive）</label><textarea id="issueFields" rows="2" spellcheck="false"></textarea>
+<label for="note">备注（拒绝必填；不要填写真实身份）</label><textarea id="note" rows="3" maxlength="1000"></textarea>
+<label for="rejectReason">拒绝 reason code</label><select id="rejectReason"><option value="">请选择</option><option value="narrative-unhelpful">摘要无帮助 / narrative-unhelpful</option><option value="focus-unreasonable">重点不合理 / focus-unreasonable</option><option value="hallucination">存在幻觉 / hallucination</option><option value="facts-incorrect">事实错误 / facts-incorrect</option><option value="identity-leak">身份泄漏 / identity-leak</option><option value="future-information">未来信息 / future-information</option><option value="unknown-evidence">无效引用 / unknown-evidence</option><option value="other">其他 / other</option></select>
+<div class="actions"><button id="approve">批准原文 [A]</button><button id="modify">修改后批准 [M]</button><button id="reject" class="warning">保存拒绝 / 阻断报告 [R]</button></div><p class="muted">拒绝仅保存评价与报告，不保存无效编辑文本。快捷键只在非输入区域生效；保存后保持当前样本。</p><button id="replace" class="warning" hidden>为已拒绝样本选择后备替换…</button><details><summary>已保存决定及哈希</summary><pre id="saved"></pre></details>
+</section></main><footer>服务端持久记录是唯一权威。刷新或离开前请保存；未保存草稿仅保留在当前页面内存。</footer>
+</body></html>

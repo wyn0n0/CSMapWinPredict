@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-review-candidate-stats-v1.schema.json",
+  "title": "SituationReviewCandidateStatisticsV1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "baseManifestSha256", "policySha256", "splits", "reviewSelection"],
+  "properties": {
+    "schemaVersion": {"const": "situation-review-candidate-stats-v1"},
+    "baseManifestSha256": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/sha"},
+    "policySha256": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/sha"},
+    "splits": {"type": "object", "additionalProperties": false, "required": ["train", "dev", "test"], "properties": {"train": {"$ref": "#/$defs/split"}, "dev": {"$ref": "#/$defs/split"}, "test": {"$ref": "#/$defs/split"}}},
+    "reviewSelection": {
+      "type": "object", "additionalProperties": false, "required": ["quotaShortfalls", "roundExceptions"],
+      "properties": {
+        "quotaShortfalls": {"type": "array", "items": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/shortfall"}},
+        "roundExceptions": {"type": "array", "items": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/roundException"}}
+      }
+    }
+  },
+  "$defs": {"split": {
+    "type": "object", "additionalProperties": false,
+    "required": ["samples", "matches", "rounds", "matchCounts", "categoryCounts", "availableCategoryCounts"],
+    "properties": {
+      "samples": {"type": "integer", "minimum": 0}, "matches": {"type": "integer", "minimum": 0}, "rounds": {"type": "integer", "minimum": 0},
+      "matchCounts": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/counts"},
+      "categoryCounts": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/counts"},
+      "availableCategoryCounts": {"$ref": "situation-review-artifact-common-v1.schema.json#/$defs/counts"}
+    }
+  }}
+}

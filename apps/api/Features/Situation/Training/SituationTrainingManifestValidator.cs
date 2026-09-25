@@ -10,11 +10,29 @@ internal static class SituationTrainingManifestValidator
         Require(manifest.SchemaVersion == SituationTrainingContractVersions.DatasetManifest,
             "manifest schemaVersion mismatch", errors);
         Require(Enum.IsDefined(manifest.Status), "manifest status is invalid", errors);
+        Require(Enum.IsDefined(manifest.Mode), "manifest mode is invalid", errors);
         Require(!string.IsNullOrWhiteSpace(manifest.Purpose), "manifest purpose is empty", errors);
-        Require(manifest.Trainable == (manifest.Status == SituationArtifactStatus.Complete),
-            "manifest trainable flag does not match status", errors);
+        Require(manifest.Status != SituationArtifactStatus.Incomplete || !manifest.Trainable,
+            "incomplete manifest cannot be trainable", errors);
+        if (manifest.Mode == SituationTrainingExportMode.Pilot)
+        {
+            Require(manifest.Purpose == "representation-measurement",
+                "pilot purpose is invalid", errors);
+            Require(!manifest.Trainable, "pilot manifest cannot be trainable", errors);
+            Require(manifest.SampleLimit is > 0, "pilot sampleLimit is invalid", errors);
+        }
+        else
+        {
+            Require(manifest.SampleLimit is null, "full manifest cannot have a sampleLimit", errors);
+            Require(manifest.Status != SituationArtifactStatus.Complete || manifest.Trainable,
+                "complete full manifest must be trainable", errors);
+        }
         Require(IsSha256(manifest.SplitSha256), "manifest splitSha256 is invalid", errors);
         Require(IsSha256(manifest.ParentManifestSha256), "manifest parentManifestSha256 is invalid", errors);
+        Require(IsSha256(manifest.SelectionConfigSha256),
+            "manifest selectionConfigSha256 is invalid", errors);
+        Require(IsSha256(manifest.InputRepresentationConfigSha256),
+            "manifest inputRepresentationConfigSha256 is invalid", errors);
 
         if (manifest.Versions is null)
         {
@@ -40,6 +58,12 @@ internal static class SituationTrainingManifestValidator
                 "selection version mismatch", errors);
             Require(versions.InputRepresentation == SituationTrainingContractVersions.InputRepresentation,
                 "input representation version mismatch", errors);
+            Require(versions.InputRepresentationConfig ==
+                    SituationTrainingContractVersions.PromptRepresentationConfig,
+                "input representation config version mismatch", errors);
+            Require(versions.RepresentationMeasurement ==
+                    SituationTrainingContractVersions.RepresentationMeasurement,
+                "representation measurement version mismatch", errors);
             Require(versions.ReviewCandidate == SituationTrainingContractVersions.ReviewCandidate,
                 "review candidate version mismatch", errors);
             Require(versions.ReviewDecision == SituationTrainingContractVersions.ReviewDecision,
@@ -55,8 +79,8 @@ internal static class SituationTrainingManifestValidator
         }
 
         ValidateSchemaFiles(manifest.SchemaFiles, errors);
-        ValidateCounts(manifest.Counts, errors);
-        ValidateFiles(manifest.Files, errors);
+        ValidateCounts(manifest, errors);
+        ValidateFiles(manifest, errors);
         Throw(errors);
     }
 
@@ -119,29 +143,42 @@ internal static class SituationTrainingManifestValidator
     }
 
     private static void ValidateCounts(
-        IReadOnlyDictionary<string, SituationDatasetCountsV1>? counts,
+        SituationTrainingDatasetManifestV1 manifest,
         ICollection<string> errors)
     {
+        var counts = manifest.Counts;
         if (counts is null)
         {
             errors.Add("manifest counts are missing");
             return;
         }
-        var expected = new[] { "dev", "test", "train" };
+        var expected = manifest.Mode == SituationTrainingExportMode.Pilot
+            ? new[] { "train" }
+            : new[] { "dev", "test", "train" };
         Require(counts.Keys.Order(StringComparer.Ordinal).SequenceEqual(expected, StringComparer.Ordinal),
-            "manifest counts must contain exactly train, dev, and test", errors);
+            manifest.Mode == SituationTrainingExportMode.Pilot
+                ? "pilot manifest counts must contain only train"
+                : "full manifest counts must contain exactly train, dev, and test", errors);
         foreach (var count in counts.Values)
         {
             Require(count.Matches >= 0 && count.Rounds >= 0 && count.Samples >= 0,
                 "manifest count is negative", errors);
             Require(count.Samples >= count.Rounds, "manifest has fewer samples than rounds", errors);
         }
+        if (manifest.Mode == SituationTrainingExportMode.Pilot &&
+            counts.TryGetValue("train", out var train) && manifest.SampleLimit is { } limit)
+        {
+            Require(train.Samples <= limit, "pilot sample count exceeds sampleLimit", errors);
+            Require(manifest.Status != SituationArtifactStatus.Complete || train.Samples == limit,
+                "complete pilot sample count differs from sampleLimit", errors);
+        }
     }
 
     private static void ValidateFiles(
-        IReadOnlyList<SituationArtifactFileV1>? files,
+        SituationTrainingDatasetManifestV1 manifest,
         ICollection<string> errors)
     {
+        var files = manifest.Files;
         if (files is null)
         {
             errors.Add("manifest files are missing");
@@ -157,6 +194,22 @@ internal static class SituationTrainingManifestValidator
             Require(file.Bytes >= 0, "manifest file byte length is negative", errors);
             Require(file.Rows is null or >= 0, "manifest file row count is negative", errors);
             Require(IsSha256(file.Sha256), "manifest file SHA-256 is invalid", errors);
+        }
+        if (manifest.Mode == SituationTrainingExportMode.Pilot)
+        {
+            Require(files.All(file => file.Path is not "dev.jsonl" and not "test.jsonl" &&
+                                      !file.Path.Contains("review", StringComparison.OrdinalIgnoreCase)),
+                "pilot manifest contains dev, test, or review artifacts", errors);
+            if (manifest.Status == SituationArtifactStatus.Complete)
+            {
+                var expected = new[]
+                {
+                    "label-stats.json", "provenance.json", "representation-measurements.jsonl",
+                    "split.json", "train.jsonl"
+                };
+                Require(files.Select(file => file.Path).SequenceEqual(expected, StringComparer.Ordinal),
+                    "complete pilot file set is invalid", errors);
+            }
         }
     }
 

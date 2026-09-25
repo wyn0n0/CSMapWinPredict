@@ -1,10 +1,10 @@
 # 当前状态
 
-> 最后核验：2026-09-18。
+> 最后核验：2026-09-19。
 
 ## 当前目标
 
-阶段一局势契约、阶段二服务化、阶段三冻结 v1 和阶段四步骤一至三均已完成并获批，步骤三 checkpoint 为 `b370b8a`。步骤四的版本化候选检测与每回合最多 16 条确定性选择已实现，保持未提交等待用户审核。正式 HTTP API、前端和文本模型接入留在后续阶段。
+阶段一至三与阶段四步骤一至五已获批，步骤四 checkpoint 为 `b3c3bcb`。步骤六正式 `datasets/situation-stage4-full-20260919-r1/` 保持 complete：71/8/8 场、1,899 回合、30,384 条。用户授权的步骤七现已通过技术验收：`datasets/situation-stage4-review-candidates-20260919-r1/` 为 complete，220/40/40 条、覆盖全部 87 场、配额无短缺，与 r2 四文件逐字节一致。报告见 `situation-implementation/stage4-review-candidates-report-20260919.md`；等待用户审核候选。全部差异未暂存、未提交、未推送；步骤八工具已按主线 GPT-6 Astra / high、子智能体 GPT-6 Astra / low 完成技术验收；真实人工工作区现场为 revision 3、两条 approved。报告见 `situation-implementation/stage4-review-tool-report-20260919.md`。
 
 ## 已完成闭环
 
@@ -42,12 +42,20 @@
 - 所有选择阈值、类别顺序、1 秒映射容差、post-plant 偏好、16 条上限和 tie-breaker 均由嵌入 `situation-training-selection-v1` 与 Schema 约束；同 tick 合并并 ordinal 排序标签，剩余名额使用最大最小 tick 距离填充。
 - 每回合输出 `min(16, uniqueEligibleTicks)`，每条保存精确 `1/n` 分子/分母与数值权重；类别统计覆盖候选、入选、合并、上限移除、缺失锚点及 eligibility 拒绝原因。
 - `npm run test:situation:stage4:selection` 当前通过 148 项，包含同一完整 Timeline 重复 100 次、跨文化/输入乱序、0/1/15/16/>16、事件超时、跨回合隔离和 outcome/event-text/future 不变性；阶段四 contracts 当前为 58 项。
+- `SituationTrainingPilotExporter` 只接受冻结 71 场 train 和精确 `--pilot 500`；按稳定摘要顺序 round-robin 分配前三场各 8 条、其余各 7 条，再以事件/稀有标签全局贪心覆盖。pilot 只写 train、split、表示测量、统计、provenance 和 manifest，不创建 dev/test/review 文件。
+- 训练记录由同一 eligibility、场景、Facts、模板 Narrative 和选择链构建；真实数据暴露的旧 C4 carrier/defuser 残留被按当前 bomb state 掩码，训练场景则显式沿用目标 tick 的 v4.2 semantic phase/round，避免原始 frame 回合号覆盖权威语义。第 65–71 场真实来源重放全部通过。
+- prompt 表示配置 `situation-prompt-representation-config-v1` 同时冻结 expanded/compact 包装和短键，配置 SHA-256 为 `5e0f7b57d127c81b004b5524d2f5b8e6af1193bc8d30b57e56a78d706d7a6a87`；compact 可精确还原模型输入 JSON，完整训练行不压缩。
+- `datasets/situation-stage4-pilot-20260919-r10/` 与 `r11/` 均为 complete：71 场、493 回合、500 条，`train.jsonl` 17,188,098 字节、SHA-256 `4b8c1eec7608d6fdd95d3faa2c086d41ad237da60147ae4a3de6333f77e4a5b1`；双目录 6 个文件哈希全部一致，20 项工件门禁通过。
+- compact p95 为 41,106 UTF-8 bytes，比 expanded 的 45,602 bytes 小 9.86%，但两者均有 500/500 超过候选阈值；因此只冻结 compact-v1 为当前较小、可逆表示，不把它解释为序列预算通过。精确 Qwen tokenizer 复测仍是阶段五硬门禁。
 
 ## 下一步
 
-1. 等待用户审核步骤四；通过后进入步骤五，使用同一选择/场景/Facts/预标注链路运行两次 500 条 train-only 表示探针。
-2. 正式 HTTP 路由、错误映射和跨进程补建登记留到阶段七。
+步骤七已按 [并行方案](../../situation-implementation/step7-multi-agent-execution.md) 完成：主线 `gpt-6-astra / medium`、子智能体 `gpt-6-astra / low`。实现、覆盖、哈希和验收见 [步骤七报告](../../situation-implementation/stage4-review-candidates-report-20260919.md)。
+
+1. 步骤八工具技术验收通过，见 [验收报告与启动命令](../../situation-implementation/stage4-review-tool-report-20260919.md)。真实 work 为 `datasets/situation-stage4-review-work-20260919-r1/`，revision 3、两条 approved；随后实施步骤九 freezer。拒绝/替换 audit、原子恢复和 blocking 已实现；最终标签和 reviewVersion 未冻结。基础与候选保持不可变，不自动提交或推送。
+2. 阶段五取得目标 Qwen tokenizer 后，必须对冻结 500 条重新测量精确 token 数；超预算时升级表示版本并生成新目录。
+3. 正式 HTTP 路由、错误映射和跨进程补建登记留到阶段七。
 
 ## 短期阻塞
 
-Mirage 楼层与区域邻接仍没有经过验证的定义，冻结 v1 保守保持 floor unknown 且不推断区域邻接。保留集已正式观察；任何后续规则修订仍必须只在训练侧选择。
+Mirage 楼层与区域邻接仍没有经过验证的定义，冻结 v1 保守保持 floor unknown 且不推断区域邻接。保留集已正式观察；任何后续规则修订仍必须只在训练侧选择。`compact-v1` 的字节长度明显超过候选阈值，尚不能据此承诺阶段六序列预算。

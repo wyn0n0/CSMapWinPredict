@@ -4,11 +4,14 @@
   "title": "SituationLabelStatsV1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "datasetSchemaVersion", "splitSha256", "sections"],
+  "required": ["schemaVersion", "datasetSchemaVersion", "splitSha256", "inputRepresentationVersion", "inputRepresentationConfigSha256", "exactTokenizerMeasured", "sections"],
   "properties": {
     "schemaVersion": { "const": "situation-label-stats-v1" },
     "datasetSchemaVersion": { "const": "situation-training-manifest-v1" },
     "splitSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "inputRepresentationVersion": { "enum": ["expanded-v1", "compact-v1"] },
+    "inputRepresentationConfigSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "exactTokenizerMeasured": { "type": "boolean" },
     "sections": {
       "type": "array",
       "items": {

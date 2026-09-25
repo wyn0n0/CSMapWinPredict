@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-review-artifact-common-v1.schema.json",
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sampleId": {"type": "string", "pattern": "^sample-[0-9a-f]{64}$"},
+    "matchRef": {"type": "string", "pattern": "^match-[0-9a-f]{64}$"},
+    "roundRef": {"type": "string", "pattern": "^round-[0-9a-f]{64}$"},
+    "split": {"enum": ["train", "dev", "test"]},
+    "names": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "poolEntry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sampleId", "split", "matchRef", "roundRef", "tick", "sourceSceneSha256", "modelInputSha256", "factsSha256", "prelabelSha256", "recordSha256", "lineNumber", "categories", "eventCategories"],
+      "properties": {
+        "sampleId": {"$ref": "#/$defs/sampleId"}, "split": {"$ref": "#/$defs/split"},
+        "matchRef": {"$ref": "#/$defs/matchRef"}, "roundRef": {"$ref": "#/$defs/roundRef"},
+        "tick": {"type": "integer", "minimum": 0}, "lineNumber": {"type": "integer", "minimum": 1},
+        "sourceSceneSha256": {"$ref": "#/$defs/sha"}, "modelInputSha256": {"$ref": "#/$defs/sha"},
+        "factsSha256": {"$ref": "#/$defs/sha"}, "prelabelSha256": {"$ref": "#/$defs/sha"}, "recordSha256": {"$ref": "#/$defs/sha"},
+        "categories": {"$ref": "#/$defs/names"}, "eventCategories": {"$ref": "#/$defs/names"}
+      }
+    },
+    "selected": {
+      "type": "object", "additionalProperties": false, "required": ["reviewOrdinal", "entry"],
+      "properties": {"reviewOrdinal": {"type": "integer", "minimum": 1}, "entry": {"$ref": "#/$defs/poolEntry"}}
+    },
+    "shortfall": {
+      "type": "object", "additionalProperties": false,
+      "required": ["split", "category", "target", "available", "selected", "reasonCode", "alternativeCategories"],
+      "properties": {
+        "split": {"$ref": "#/$defs/split"}, "category": {"type": "string", "minLength": 1},
+        "target": {"type": "integer", "minimum": 1}, "available": {"type": "integer", "minimum": 0}, "selected": {"type": "integer", "minimum": 0},
+        "reasonCode": {"enum": ["raw-pool-insufficient", "constraint-combination-infeasible", "greedy-search-exhausted", "match-membership-mismatch"]},
+        "alternativeCategories": {"$ref": "#/$defs/names"}
+      }
+    },
+    "roundException": {
+      "type": "object", "additionalProperties": false,
+      "required": ["split", "matchRef", "roundRef", "sampleIds", "distinctEventCategories"],
+      "properties": {
+        "split": {"$ref": "#/$defs/split"}, "matchRef": {"$ref": "#/$defs/matchRef"}, "roundRef": {"$ref": "#/$defs/roundRef"},
+        "sampleIds": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/sampleId"}},
+        "distinctEventCategories": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "file": {
+      "type": "object", "additionalProperties": false, "required": ["path", "bytes", "rows", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1}, "bytes": {"type": "integer", "minimum": 0},
+        "rows": {"type": ["integer", "null"], "minimum": 0}, "sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "sourceFile": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha"}}
+    }
+  }
+}

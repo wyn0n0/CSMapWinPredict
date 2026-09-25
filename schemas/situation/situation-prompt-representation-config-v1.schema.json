@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-prompt-representation-config-v1.schema.json",
+  "title": "SituationPromptRepresentationConfigV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "selectedVersion", "candidateMaxUtf8Bytes", "candidateMaxUnicodeCharacters", "percentileMethod", "expanded", "compact", "shortKeys"],
+  "properties": {
+    "schemaVersion": { "const": "situation-prompt-representation-config-v1" },
+    "selectedVersion": { "enum": ["expanded-v1", "compact-v1"] },
+    "candidateMaxUtf8Bytes": { "type": "integer", "minimum": 1 },
+    "candidateMaxUnicodeCharacters": { "type": "integer", "minimum": 1 },
+    "percentileMethod": { "const": "nearest-rank" },
+    "expanded": { "$ref": "#/$defs/template" },
+    "compact": { "$ref": "#/$defs/template" },
+    "shortKeys": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9]*$" },
+      "additionalProperties": { "type": "string", "pattern": "^[a-z][a-z0-9]?$" }
+    }
+  },
+  "$defs": {
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "systemText", "inputPrefix", "outputPrefix"],
+      "properties": {
+        "version": { "enum": ["expanded-v1", "compact-v1"] },
+        "systemText": { "type": "string", "minLength": 1 },
+        "inputPrefix": { "type": "string", "minLength": 1 },
+        "outputPrefix": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

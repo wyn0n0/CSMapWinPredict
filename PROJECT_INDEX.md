@@ -1,10 +1,10 @@
 # CS Demo Map 项目索引
 
-> 最后核验：2026-09-18。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
+> 最后核验：2026-09-19。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
 
 ## 项目定位
 
-本项目解析 Counter-Strike 2 Demo，生成窗口化回放时间线，并在 Mirage 雷达界面展示回合状态与实时胜率。局势理解路径现已能把目标 tick 之前的结构化观察转换为匿名、可复算、可稳定哈希的场景、Facts 和模板 Narrative；阶段四比赛子切分、训练/复核契约和 schema v4.2 共用 eligibility 均已获批，候选检测与每回合最多 16 条选择的步骤四实现正在等待用户审核，实际数据导出尚未开始。正式局势 API 和前端接入仍在后续阶段。胜率模型训练与回放接入已经完成，两条模型路径不得混同。
+本项目解析 Counter-Strike 2 Demo，生成窗口化回放时间线，并在 Mirage 雷达界面展示回合状态与实时胜率。局势理解路径现已能把目标 tick 之前的结构化观察转换为匿名、可复算、可稳定哈希的场景、Facts 和模板 Narrative；阶段四步骤一至五已获批，步骤六 87 场基础数据与步骤七 300 条候选均 complete 并通过技术验收，候选待用户审核。步骤八本地复核工具已通过技术验收；300 条人工复核、局势 API 和产品前端接入仍在后续阶段。胜率模型训练与回放接入已经完成，两条模型路径不得混同。
 
 ## 当前权威基线
 
@@ -23,12 +23,15 @@
 - 阶段四比赛切分：`situation-implementation/situation-stage4-split-v1.json`，71 train / 8 dev / 8 test；SHA-256 `fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f`。
 - 阶段四契约：`situation-training-record-v1`、`situation-training-selection-v1`、`situation-training-manifest-v1`、label stats、review candidate/decision、冻结 review label/manifest；Schema 文件由版本与 SHA-256 双重绑定，已随本地 checkpoint `34fa03d` 获批。
 - 阶段四 eligibility 基线：`situation-implementation/situation-stage4-eligibility-baseline-v1.json`，绑定 checkpoint `34fa03d`、真实 v4.2 的 87 场/1,899 回合/166,122 行及三个完整文件哈希；步骤三已固定在本地 checkpoint `b370b8a`。
-- 阶段四候选选择：`SituationTrainingCandidateSelector` 使用版本化配置完成 16 类核心/事件/稀有锚点、1 秒映射、每回合 16 条上限、确定性远点填充与精确 1/n 权重；当前改动未提交供审核。
+- 阶段四候选选择：`SituationTrainingCandidateSelector` 使用版本化配置完成 16 类核心/事件/稀有锚点、1 秒映射、每回合 16 条上限、确定性远点填充与精确 1/n 权重；已固定在步骤四 checkpoint。
+- 阶段四步骤四 checkpoint：`b3c3bcb`，未推送。
+- 阶段四输入表示：`compact-v1`；配置 SHA-256 `5e0f7b57d127c81b004b5524d2f5b8e6af1193bc8d30b57e56a78d706d7a6a87`。compact 可逆且保留关键事实，但精确 tokenizer 预算尚未验证。
+- 阶段四 pilot：`datasets/situation-stage4-pilot-20260919-r10/` 与 `r11/`，各含 71 场、493 回合、500 条；`train.jsonl` SHA-256 `4b8c1eec7608d6fdd95d3faa2c086d41ad237da60147ae4a3de6333f77e4a5b1`，全部决定性文件哈希一致。
 - 程序边界：`apps/api` 只承载 HTTP 宿主和产品模块，`apps/cli` 承载开发工作流，`tests/CsDemoMap.Api.Tests` 承载 .NET 验证门禁；后端源码位于 `apps/api/Features` 的五个功能模块。
 
 ## 活动里程碑
 
-阶段一、阶段二与阶段三冻结 v1 均已完成技术闭环。阶段四步骤一、二固定在 checkpoint `34fa03d`，步骤三固定在 `b370b8a`。步骤四已实现 16 类确定性候选选择、短缺/合并/裁剪统计和 1/n 权重，通过合成与完整 Timeline 门禁并保持未提交等待审核。500 条表示探针、实际导出和人工复核仍未开始；正式局势 HTTP API、前端和文本模型接入继续留在后续阶段。
+阶段一至三与阶段四步骤一至五已获批；步骤四 checkpoint 为 `b3c3bcb`。步骤六 `datasets/situation-stage4-full-20260919-r1/` 已 complete：71/8/8 场、1,899 回合、30,384 条。步骤七 `datasets/situation-stage4-review-candidates-20260919-r1/` 已 complete：220/40/40 条，全部比赛及配额覆盖通过，与 r2 四文件逐字节一致。步骤五至七差异仍未暂存、未提交、未推送。步骤八本地页面、原子保存与恢复已技术验收；真实人工工作区为 revision 3、两条 approved，300 条人工复核尚未完成。正式局势 HTTP API、前端和文本模型继续留在后续阶段。
 
 ## 主要风险与缺口
 
@@ -36,12 +39,15 @@
 - 旧窗口没有局势 sidecar 时必须显式提供匹配的源 Demo；补建不能恢复已经丢失的源文件，登记状态也不会跨进程保留。
 - 上游不可空数值中的零可能是默认值，依赖 `legacy-default-ambiguous` 保守标记。
 - 首次文件读取测试不控制操作系统页缓存，只能解释为新服务、无结果缓存且无显式预读的首次文件访问；物理冷盘性能未测量。
-- 阶段四尚未实际导出数据；后续候选选择、导出与人工复核必须沿用冻结 split、共享 eligibility、逐项版本和 Schema 哈希，不可覆盖输出目录或跨用途复用 dev/test。
-- 步骤四目前只完成选择核心；全量类别分布、短缺率、每场解析耗时与理论 30,384 条上限必须由后续 500 条 train-only pilot 实测，不能把合成覆盖当作真实分布结论。
+- 步骤六 full 工件只含模板预标注，尚不是人工真值；后续复核必须沿用冻结 split、共享 eligibility、逐项版本和 Schema 哈希，不可覆盖输出目录或跨用途复用 dev/test。恢复严格绑定实际源码，源码变化后须新建目录。
+- 500 条 pilot 显示 `compact-v1` p95 为 41,106 UTF-8 bytes，500/500 超过候选阈值；阶段五必须用目标 Qwen tokenizer 精确复测，必要时升级表示版本，不能把短键约 9.86% 的 p95 降幅解释为已满足训练序列预算。
 
 ## 专题入口
 
 - 当前状态：[docs/context/NOW.md](docs/context/NOW.md)
+- 步骤八复核工具验收与运行：[situation-implementation/stage4-review-tool-report-20260919.md](situation-implementation/stage4-review-tool-report-20260919.md)
+- 步骤七候选验收与哈希：[situation-implementation/stage4-review-candidates-report-20260919.md](situation-implementation/stage4-review-candidates-report-20260919.md)
+- 步骤六完整验收与哈希：[situation-implementation/stage4-full-report-20260919.md](situation-implementation/stage4-full-report-20260919.md)
 - 路径与版本：[docs/context/MAP.md](docs/context/MAP.md)
 - 运行与验收：[docs/context/RUNBOOK.md](docs/context/RUNBOOK.md)
 - 设计决策：[docs/context/DECISIONS.md](docs/context/DECISIONS.md)

@@ -9,7 +9,9 @@ internal static class SituationTrainingContractVersions
     internal const string Split = "situation-stage4-split-v1";
     internal const string TrainingRecord = "situation-training-record-v1";
     internal const string Selection = "situation-training-selection-v1";
-    internal const string InputRepresentation = "situation-model-input-v1";
+    internal const string InputRepresentation = "compact-v1";
+    internal const string PromptRepresentationConfig = "situation-prompt-representation-config-v1";
+    internal const string RepresentationMeasurement = "situation-representation-measurement-v1";
     internal const string DatasetManifest = "situation-training-manifest-v1";
     internal const string LabelStats = "situation-label-stats-v1";
     internal const string ReviewCandidate = "situation-review-candidate-v1";
@@ -70,6 +72,15 @@ internal enum SituationArtifactStatus
     Incomplete,
     [JsonStringEnumMemberName("complete")]
     Complete
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<SituationTrainingExportMode>))]
+internal enum SituationTrainingExportMode
+{
+    [JsonStringEnumMemberName("pilot")]
+    Pilot,
+    [JsonStringEnumMemberName("full")]
+    Full
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<SituationReviewDecisionKind>))]
@@ -201,6 +212,28 @@ internal sealed record SituationTrainingSelectionLoadResult(
     string Sha256,
     string ResourceName);
 
+internal sealed record SituationPromptTemplateV1(
+    string Version,
+    string SystemText,
+    string InputPrefix,
+    string OutputPrefix);
+
+internal sealed record SituationPromptRepresentationConfigV1(
+    string SchemaVersion,
+    string SelectedVersion,
+    int CandidateMaxUtf8Bytes,
+    int CandidateMaxUnicodeCharacters,
+    string PercentileMethod,
+    SituationPromptTemplateV1 Expanded,
+    SituationPromptTemplateV1 Compact,
+    IReadOnlyDictionary<string, string> ShortKeys);
+
+internal sealed record SituationPromptRepresentationLoadResult(
+    SituationPromptRepresentationConfigV1 Config,
+    string CanonicalJson,
+    string Sha256,
+    string ResourceName);
+
 internal sealed record SituationTrainingArtifactVersionsV1(
     [property: JsonRequired] string Data,
     [property: JsonRequired] string Split,
@@ -214,6 +247,8 @@ internal sealed record SituationTrainingArtifactVersionsV1(
     [property: JsonRequired] string SemanticEligibility,
     [property: JsonRequired] string Selection,
     [property: JsonRequired] string InputRepresentation,
+    [property: JsonRequired] string InputRepresentationConfig,
+    [property: JsonRequired] string RepresentationMeasurement,
     [property: JsonRequired] string ReviewCandidate,
     [property: JsonRequired] string ReviewDecision,
     [property: JsonRequired] string LabelStats,
@@ -240,10 +275,14 @@ internal sealed record SituationDatasetCountsV1(
 internal sealed record SituationTrainingDatasetManifestV1(
     [property: JsonRequired] string SchemaVersion,
     [property: JsonRequired] SituationArtifactStatus Status,
+    [property: JsonRequired] SituationTrainingExportMode Mode,
     [property: JsonRequired] string Purpose,
     [property: JsonRequired] bool Trainable,
+    [property: JsonRequired] int? SampleLimit,
     [property: JsonRequired] string SplitSha256,
     [property: JsonRequired] string ParentManifestSha256,
+    [property: JsonRequired] string SelectionConfigSha256,
+    [property: JsonRequired] string InputRepresentationConfigSha256,
     [property: JsonRequired] SituationTrainingArtifactVersionsV1 Versions,
     [property: JsonRequired] IReadOnlyList<SituationSchemaFileReferenceV1> SchemaFiles,
     [property: JsonRequired] IReadOnlyDictionary<string, SituationDatasetCountsV1> Counts,
@@ -259,7 +298,33 @@ internal sealed record SituationLabelStatsV1(
     string SchemaVersion,
     string DatasetSchemaVersion,
     string SplitSha256,
+    string InputRepresentationVersion,
+    string InputRepresentationConfigSha256,
+    bool ExactTokenizerMeasured,
     IReadOnlyList<SituationLabelStatSectionV1> Sections);
+
+internal sealed record SituationRepresentationDimensionsV1(
+    int Utf8Bytes,
+    int UnicodeCharacters,
+    int MaxLineLength,
+    int MaxNestedArrayLength,
+    bool ExceedsCandidateLimit);
+
+internal sealed record SituationRepresentationMeasurementV1(
+    string SchemaVersion,
+    string SampleId,
+    SituationRepresentationDimensionsV1 StructuredRecord,
+    SituationRepresentationDimensionsV1 ModelInput,
+    SituationRepresentationDimensionsV1 ExpandedPrompt,
+    SituationRepresentationDimensionsV1 CompactPrompt,
+    int SceneUtf8Bytes,
+    int FactsUtf8Bytes,
+    int EvidenceUtf8Bytes,
+    int LabelUtf8Bytes);
+
+internal sealed record SituationProvenanceSourceFileV1(
+    string Path,
+    string Sha256);
 
 internal sealed record SituationReviewCandidateV1(
     string SchemaVersion,
@@ -324,4 +389,10 @@ internal sealed record SituationProvenanceDemoMappingV1(
 
 internal sealed record SituationTrainingProvenanceV1(
     string SchemaVersion,
+    string SplitSha256,
+    string AnalysisRulesSha256,
+    string SelectionConfigSha256,
+    string InputRepresentationConfigSha256,
+    string? SourceRevision,
+    IReadOnlyList<SituationProvenanceSourceFileV1> SourceFiles,
     IReadOnlyList<SituationProvenanceDemoMappingV1> DemoMappings);

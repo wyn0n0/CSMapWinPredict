@@ -10,5 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\apps\api\CsDemoMap.Api.csproj" />
+    <ProjectReference Include="..\..\apps\cli\CsDemoMap.Cli.csproj" />
   </ItemGroup>
 </Project>

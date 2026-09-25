@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-representation-measurement-v1.schema.json",
+  "title": "SituationRepresentationMeasurementV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sampleId", "structuredRecord", "modelInput", "expandedPrompt", "compactPrompt", "sceneUtf8Bytes", "factsUtf8Bytes", "evidenceUtf8Bytes", "labelUtf8Bytes"],
+  "properties": {
+    "schemaVersion": { "const": "situation-representation-measurement-v1" },
+    "sampleId": { "type": "string", "pattern": "^sample-[0-9a-f]{64}$" },
+    "structuredRecord": { "$ref": "#/$defs/dimensions" },
+    "modelInput": { "$ref": "#/$defs/dimensions" },
+    "expandedPrompt": { "$ref": "#/$defs/dimensions" },
+    "compactPrompt": { "$ref": "#/$defs/dimensions" },
+    "sceneUtf8Bytes": { "type": "integer", "minimum": 0 },
+    "factsUtf8Bytes": { "type": "integer", "minimum": 0 },
+    "evidenceUtf8Bytes": { "type": "integer", "minimum": 0 },
+    "labelUtf8Bytes": { "type": "integer", "minimum": 0 }
+  },
+  "$defs": {
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["utf8Bytes", "unicodeCharacters", "maxLineLength", "maxNestedArrayLength", "exceedsCandidateLimit"],
+      "properties": {
+        "utf8Bytes": { "type": "integer", "minimum": 0 },
+        "unicodeCharacters": { "type": "integer", "minimum": 0 },
+        "maxLineLength": { "type": "integer", "minimum": 0 },
+        "maxNestedArrayLength": { "type": "integer", "minimum": 0 },
+        "exceedsCandidateLimit": { "type": "boolean" }
+      }
+    }
+  }
+}
