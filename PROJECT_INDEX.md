@@ -7,9 +7,10 @@
 通过 20 场 / 6,960 场景抽样重放；历史冻结 v1 和已有复核数据保留。
 实现入口、测试结果、资产限制与回退见 [射线修复报告](docs/contact-raycast-report-20260926.md)。
 
-步骤八现已接入三维射线：300 条候选 Facts/证据/摘要均使用 v2-raycast-1，保留原 v1 抽样时点及类别。
-当前工作区 `datasets/situation-stage4-review-raycast-work-20260926-r1`，旧候选与人工记录保留。
-实现、验证和启动命令见 [射线复核报告](situation-implementation/stage4-review-raycast-report-20260926.md)。
+步骤八当前试用 v4-position-prediction-1：局部移动探测加 1 秒恒速位置预测，复用身体/地面/射线检查，保留原 v1 时点及类别。
+当前工作区 `datasets/situation-stage4-review-position-prediction-work-20260926-r1`，人工目标 50 条（36/7/7），启动为 0/50；旧 v3 的 3 条批准另行保留。
+20 场 / 6,960 场景中 35 条含预测证据，新增 7 条中风险；同轮 p95 2.4720 ms，对照 v3 2.3485 ms。准确率待人工确认。
+详见 [1 秒预测报告](situation-implementation/stage4-position-prediction-report-20260926.md)；前序 checkpoint `f6be0cc` 与 [局部探测报告](situation-implementation/stage4-local-peek-report-20260926.md) 保留。
 
 ## 项目定位
 

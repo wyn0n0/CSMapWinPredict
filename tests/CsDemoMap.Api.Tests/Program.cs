@@ -5,7 +5,14 @@ using CsDemoMap.Api.Tests;
 if (args is ["--verify-situation-raycast"])
 {
     SituationVisibilityVerifier.Verify();
+    SituationPositionPredictionVerifier.Verify();
     await SituationRaycastReviewVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
+if (args is ["--verify-situation-review-scope"])
+{
+    await SituationReviewScopeVerifier.VerifyAsync(CancellationToken.None);
     return 0;
 }
 

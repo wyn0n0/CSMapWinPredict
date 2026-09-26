@@ -85,7 +85,11 @@ function renderDetail() {
   $('workspace').hidden = false;
   $('ruleVersion').hidden = false;
     $('ruleVersion').textContent = `当前候选规则：${facts.analysisRuleVersion} · 几何：${scene.geometryVersion}。` +
-      (candidate.schemaVersion === 'situation-review-candidate-v2-raycast'
+      (candidate.schemaVersion === 'situation-review-candidate-v4-position-prediction'
+        ? '已启用 1 秒短时位置预测（0.25/0.5/0.75/1 秒）与局部移动探测：保持当前速度的假设经移动路径和射线检查后最多判为中风险。未读取未来帧；不模拟转向、急停或跳跃。筛选类别沿用 v1，历史地图匹配尚未认证。'
+        : candidate.schemaVersion === 'situation-review-candidate-v3-local-peek'
+        ? '已启用局部移动探测：短距离单方移动后可能暴露时最多判为中风险，不代表已交火。筛选类别沿用 v1；不预测移动意图，历史地图匹配尚未认证。'
+        : candidate.schemaVersion === 'situation-review-candidate-v2-raycast'
         ? '事实、证据与摘要已用三维射线重算；筛选类别沿用原 v1 抽样。静态地图、近似身体高度，历史地图匹配尚未认证。'
         : '复核页展示该工件原始事实，不会自动套用其他版本的规则。');
   $('clock').replaceChildren(); const clock = make('dl'); showPairs(clock, [['target tick', scene.tick], ['tickRate', scene.tickRate], ['phase', scene.round.phase], ['elapsed / remaining 秒', `${value(scene.round.elapsedSeconds)} / ${value(scene.round.remainingSeconds)}`], ['clockSource', scene.round.clockSource], ['C4', scene.bomb], ['teams', scene.teams]]); $('clock').append(clock);

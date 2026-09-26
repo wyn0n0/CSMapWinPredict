@@ -24,8 +24,16 @@ internal sealed class SituationDeterministicAnalyzer
         new(SituationAnalysisRuleLoader.LoadFrozen());
 
     public static SituationDeterministicAnalyzer CreateRaycast(string? meshPath = null)
+        => CreateWithMesh(SituationAnalysisRuleLoader.LoadRaycast(), meshPath);
+
+    public static SituationDeterministicAnalyzer CreateLocalPeek(string? meshPath = null)
+        => CreateWithMesh(SituationAnalysisRuleLoader.LoadLocalPeek(), meshPath);
+
+    public static SituationDeterministicAnalyzer CreatePositionPrediction(string? meshPath = null)
+        => CreateWithMesh(SituationAnalysisRuleLoader.LoadPositionPrediction(), meshPath);
+
+    private static SituationDeterministicAnalyzer CreateWithMesh(SituationAnalysisRuleLoadResult load, string? meshPath)
     {
-        var load = SituationAnalysisRuleLoader.LoadRaycast();
         var rules = load.Rules.Visibility!;
         meshPath ??= Path.Combine(AppContext.BaseDirectory, "Geometry", "de_mirage.mesh");
         // Missing assets are unknown; a present but corrupt/mismatched asset fails explicitly.

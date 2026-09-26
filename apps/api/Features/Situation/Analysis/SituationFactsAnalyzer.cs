@@ -415,6 +415,7 @@ internal sealed class SituationFactsAnalyzer
             var visible = new List<(PlayerPair Pair, SituationContactRisk Risk)>();
             var unknownMax = 0;
             var blocked = 0;
+            var blockedPairs = new List<PlayerPair>();
             foreach (var candidate in pairs)
             {
                 var cues = GetContactCues(context, candidate);
@@ -423,7 +424,7 @@ internal sealed class SituationFactsAnalyzer
                 var status = visibility?.Query(candidate.T.Player.Position!, candidate.CT.Player.Position!)
                     ?? SituationVisibility.Unknown;
                 if (status == SituationVisibility.Clear) visible.Add((candidate, possible));
-                else if (status == SituationVisibility.Blocked) blocked++;
+                else if (status == SituationVisibility.Blocked) { blocked++; blockedPairs.Add(candidate); }
                 else unknownMax = Math.Max(unknownMax, RiskRank(possible));
             }
             decisions["contact-occluded-pairs"] = blocked.ToString(CultureInfo.InvariantCulture);
@@ -440,6 +441,107 @@ internal sealed class SituationFactsAnalyzer
             }
             if (best.Pair is null)
             {
+                if (context.Rules.Visibility.LocalPeek is { } peek && blockedPairs.Count > 0)
+                {
+                    var moves = new Dictionary<SituationVec3, IReadOnlyList<SituationVec3>?>();
+                    var movementChecks = new Dictionary<(SituationVec3, SituationVec3), bool>();
+                    var movementQuery = visibility as ISituationLocalMoveQuery;
+                    var incomplete = false;
+                    var probes = 0;
+                    if (context.Rules.Visibility.PositionPrediction is { } prediction)
+                    {
+                        var projections = new Dictionary<(int, double), SituationVec3?>();
+                        var predictionProbes = 0;
+                        foreach (var seconds in prediction.SampleSeconds)
+                        foreach (var candidate in blockedPairs)
+                        {
+                            var a = Predicted(candidate.T.PlayerIndex, seconds);
+                            var b = Predicted(candidate.CT.PlayerIndex, seconds);
+                            if (a is null || b is null ||
+                                (a == candidate.T.Player.Position && b == candidate.CT.Player.Position) ||
+                                Distance(a,b) > context.Rules.Contact.MediumDistance) continue;
+                            predictionProbes++;
+                            if (visibility!.Query(a,b) != SituationVisibility.Clear ||
+                                !Reachable(candidate.T.Player.Position!,a) || !Reachable(candidate.CT.Player.Position!,b)) continue;
+                            decisions["contact-position-prediction"] = Number(seconds);
+                            decisions["contact-position-prediction-probes"] = predictionProbes.ToString(CultureInfo.InvariantCulture);
+                            decisions["contact-risk"] = "medium";
+                            evidence.Add("contact-risk", [$"/players/{candidate.T.PlayerIndex}/position", $"/players/{candidate.T.PlayerIndex}/velocity",
+                                $"/players/{candidate.CT.PlayerIndex}/position", $"/players/{candidate.CT.PlayerIndex}/velocity"],
+                                "contact.position-prediction", $"双方当前被地图遮挡；若保持当前速度，{Number(seconds)} 秒后的同步预测位置存在无遮挡射线，且短距离移动通过身体和地面检查，潜在接触风险为中。位置为推测，转向、急停、烟雾与穿透射击未建模。");
+                            return new(SituationContactRisk.Medium, true, null);
+                        }
+                        decisions["contact-position-prediction-probes"] = predictionProbes.ToString(CultureInfo.InvariantCulture);
+
+                        SituationVec3? Predicted(int index, double seconds)
+                        {
+                            if (!projections.TryGetValue((index,seconds), out var result))
+                                projections[(index,seconds)] = result = SituationPositionPrediction.Project(
+                                    context.Scene, index, seconds, prediction, prediction.MaxSpeed * prediction.SampleSeconds[^1]);
+                            return result;
+                        }
+                    }
+                    foreach (var candidate in blockedPairs)
+                    {
+                        var a = candidate.T.Player.Position!;
+                        var b = candidate.CT.Player.Position!;
+                        if (Exposes(a,b) || Exposes(b,a))
+                        {
+                            decisions["contact-local-peek"] = "possible";
+                            decisions["contact-local-peek-probes"] = probes.ToString(CultureInfo.InvariantCulture);
+                            decisions["contact-risk"] = "medium";
+                            evidence.Add("contact-risk", [$"/players/{candidate.T.PlayerIndex}/position", $"/players/{candidate.CT.PlayerIndex}/position"],
+                                "contact.local-peek", $"双方当前被地图遮挡；单方在 {Number(peek.Distance)} 个地图单位内的局部移动探测发现可能暴露的射线通路，潜在接触风险为中。未预测移动意图或接触时间，未验证连续转弯、烟雾与穿透射击。");
+                            // A hypothetical position must not become the present local battle center.
+                            return new(SituationContactRisk.Medium, true, null);
+                        }
+                    }
+                    decisions["contact-local-peek-probes"] = probes.ToString(CultureInfo.InvariantCulture);
+                    if (incomplete)
+                    {
+                        evidence.Add("contact-risk", ["/players"], "contact.local-peek",
+                            "双方当前被遮挡，但局部移动探测缺少可靠地面支撑或几何信息，潜在接触风险未知。");
+                        decisions["contact-risk"] = "unknown";
+                        return new(SituationContactRisk.Unknown, false, null);
+                    }
+                    evidence.Add("contact-risk", ["/players"], "contact.local-peek",
+                        "当前直接射线被遮挡，有限局部移动探测未发现暴露通路，当前规则下接触风险为低；不排除未采样方向、双方同时移动或连续转弯后的接触。");
+                    decisions["contact-risk"] = "low";
+                    return new(SituationContactRisk.Low, true, null);
+
+                    bool Exposes(SituationVec3 origin, SituationVec3 target)
+                    {
+                        if (!moves.TryGetValue(origin, out var positions))
+                        {
+                            positions = movementQuery?.LocalTargets(origin);
+                            moves.Add(origin, positions);
+                        }
+                        if (positions is null) { incomplete = true; return false; }
+                        foreach (var position in positions)
+                        {
+                            probes++;
+                            var status = visibility!.Query(position, target);
+                            if (status == SituationVisibility.Clear)
+                            {
+                                if (Reachable(origin, position)) return true;
+                            }
+                            if (status == SituationVisibility.Unknown) incomplete = true;
+                        }
+                        return false;
+                    }
+
+                    bool Reachable(SituationVec3 origin, SituationVec3 target)
+                    {
+                        if (!moves.TryGetValue(origin, out var positions))
+                            moves[origin] = positions = movementQuery?.LocalTargets(origin);
+                        if (positions is null) return false;
+                        if (origin == target) return true;
+                        if (!movementChecks.TryGetValue((origin,target), out var canMove))
+                            movementChecks[(origin,target)] = canMove = movementQuery!.CanMoveLocal(origin,target,
+                                context.Rules.Visibility.PositionPrediction is { } prediction ? prediction.MaxSpeed * prediction.SampleSeconds[^1] : null);
+                        return canMove;
+                    }
+                }
                 evidence.Add("contact-risk", ["/players"], "contact.raycast-proximity",
                     $"近距离候选中 {Number(blocked)} 对被静态地图遮挡，未发现满足中高风险条件的无遮挡组合，当前直接接触风险为低；未评估绕角接触与穿透射击。");
                 decisions["contact-risk"] = "low";
@@ -739,12 +841,18 @@ internal sealed class SituationFactsAnalyzer
             confidence = SituationConfidence.Medium;
         else
             confidence = SituationConfidence.High;
+        if ((decisions.ContainsKey("contact-local-peek") || decisions.ContainsKey("contact-position-prediction")) && confidence == SituationConfidence.High)
+            confidence = SituationConfidence.Medium;
         var text = confidence switch
         {
             SituationConfidence.High => "输入完整且关键判定远离阈值边界，规则置信度为高。",
             SituationConfidence.Medium => "输入存在局部质量或阈值边界影响，规则置信度为中。",
             _ => "输入缺失、质量错误或多个规则无法确认，规则置信度为低。"
         };
+        if (confidence == SituationConfidence.Medium && decisions.ContainsKey("contact-local-peek"))
+            text = "局部移动探测仅支持可能暴露的假设，规则置信度为中。";
+        if (confidence == SituationConfidence.Medium && decisions.ContainsKey("contact-position-prediction"))
+            text = "短时位置预测依赖保持当前速度的假设，规则置信度为中。";
         evidence.Add("confidence", ["/dataQuality", "/players", "/teams"],
             "confidence.input-margin", text);
         decisions["confidence"] = confidence.ToString().ToLowerInvariant();

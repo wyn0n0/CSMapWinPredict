@@ -58,6 +58,10 @@ internal static class SituationAnalysisRuleLoader
     public static SituationAnalysisRuleLoadResult LoadFrozen() => LoadEmbedded(FrozenFileName);
 
     public static SituationAnalysisRuleLoadResult LoadRaycast() => LoadEmbedded("situation-analysis-rules-v2-raycast-1.json");
+    internal const string LocalPeekVersion = "situation-analysis-rules-v3-local-peek-1";
+    public static SituationAnalysisRuleLoadResult LoadLocalPeek() => LoadEmbedded(LocalPeekVersion + ".json");
+    internal const string PositionPredictionVersion = "situation-analysis-rules-v4-position-prediction-1";
+    public static SituationAnalysisRuleLoadResult LoadPositionPrediction() => LoadEmbedded(PositionPredictionVersion + ".json");
 
     internal static SituationAnalysisRuleLoadResult LoadEmbeddedForVerification(string fileName)
     {
@@ -136,7 +140,32 @@ internal static class SituationAnalysisRuleLoader
                 "visibility endpoint tolerance is invalid", errors);
             Require(rules.AnalysisRuleVersion != FrozenAnalysisRuleVersion,
                 "frozen v1 cannot enable visibility", errors);
+            if (visibility.LocalPeek is { } peek)
+            {
+                Require(rules.AnalysisRuleVersion is LocalPeekVersion or PositionPredictionVersion, "local peek requires a separate rule version", errors);
+                Require(double.IsFinite(peek.Distance) && peek.Distance is >= 16 and <= 96 &&
+                    double.IsFinite(peek.BodyRadius) && peek.BodyRadius is >= 8 and <= 24 &&
+                    double.IsFinite(peek.GroundTolerance) && peek.GroundTolerance is >= 1 and <= 8 &&
+                    double.IsFinite(peek.SupportStep) && peek.SupportStep is >= 8 and <= 16,
+                    "local peek dimensions are invalid", errors);
+            }
         }
+        if (rules.Visibility?.PositionPrediction is { } prediction)
+        {
+            Require(rules.AnalysisRuleVersion == PositionPredictionVersion && rules.Visibility.LocalPeek is not null,
+                "position prediction requires a separate version and local movement checks", errors);
+            Require(prediction.SampleSeconds is { Length: > 0 and <= 4 } &&
+                prediction.SampleSeconds.All(t => double.IsFinite(t) && t is > 0 and <= 1) &&
+                prediction.SampleSeconds.SequenceEqual(prediction.SampleSeconds.Distinct().Order()),
+                "prediction times are invalid", errors);
+            Require(double.IsFinite(prediction.MaxSpeed) && prediction.MaxSpeed is > 0 and <= 320 &&
+                double.IsFinite(prediction.MaxVerticalSpeed) && prediction.MaxVerticalSpeed is >= 0 and <= 4,
+                "prediction speed bounds are invalid", errors);
+        }
+        if (rules.AnalysisRuleVersion == PositionPredictionVersion)
+            Require(rules.Visibility?.PositionPrediction is not null, "position prediction configuration is missing", errors);
+        if (rules.AnalysisRuleVersion is LocalPeekVersion or PositionPredictionVersion)
+            Require(rules.Visibility?.LocalPeek is not null, "local peek configuration is missing", errors);
         if (rules.AnalysisRuleVersion == "situation-analysis-rules-v2-raycast-1")
             Require(rules.Visibility is not null, "raycast rules require visibility", errors);
         if (rules.Isolation is null) errors.Add("isolation is missing");

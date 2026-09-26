@@ -18,7 +18,7 @@ internal static class SituationRaycastCommands
     }
 
     // Replays existing scene inputs from exactly 20 train matches, never dev/test or a full export.
-    internal static async Task SampleAsync(string dataset, string output, CancellationToken token)
+    internal static async Task SampleAsync(string dataset, string output, CancellationToken token, bool localPeek = false, bool positionPrediction = false)
     {
         SituationArtifactIO.EnsureNewOutput(output);
         var meshPath = Path.Combine(AppContext.BaseDirectory,"Geometry","de_mirage.mesh");
@@ -46,11 +46,15 @@ internal static class SituationRaycastCommands
             .ToDictionary(r=>(r.GetProperty("matchRef").GetString()!,r.GetProperty("roundRef").GetString()!),
                 r=>r.GetProperty("semanticRoundId").GetString()!);
         var frozen = SituationDeterministicAnalyzer.CreateFrozen();
-        var current = SituationDeterministicAnalyzer.CreateRaycast(meshPath);
+        var baseline = positionPrediction ? SituationDeterministicAnalyzer.CreateLocalPeek(meshPath) : localPeek ? SituationDeterministicAnalyzer.CreateRaycast(meshPath) : frozen;
+        var current = positionPrediction ? SituationDeterministicAnalyzer.CreatePositionPrediction(meshPath) : localPeek ? SituationDeterministicAnalyzer.CreateLocalPeek(meshPath) : SituationDeterministicAnalyzer.CreateRaycast(meshPath);
         Directory.CreateDirectory(output);
         await File.WriteAllTextAsync(Path.Combine(output,"status.json"),"{\"status\":\"incomplete\"}",token);
         var transitions = new SortedDictionary<string,int>(StringComparer.Ordinal);
         var durations = new List<double>();
+        var baselineDurations = new List<double>();
+        var peekFound = 0; var peekUnknown = 0; var probeCount = 0;
+        var predictionFound = 0; var predictionProbeCount = 0;
         var count = 0; var changed = 0; var removedPairs = 0; var repeated = 0;
         await using (var writer = new StreamWriter(new FileStream(Path.Combine(output,"comparison.jsonl"),FileMode.CreateNew)))
         {
@@ -68,6 +72,12 @@ internal static class SituationRaycastCommands
                 var before = frozen.Analyze(scene);
                 if (before.Facts.Sha256 != record.Metadata.FactsSha256 || before.Narrative.Sha256 != record.Metadata.PrelabelSha256)
                     throw new InvalidDataException("Frozen baseline replay changed.");
+                if (localPeek || positionPrediction)
+                {
+                    var baselineClock = Stopwatch.StartNew();
+                    before = baseline.Analyze(scene);
+                    baselineDurations.Add(baselineClock.Elapsed.TotalMilliseconds);
+                }
                 var clock = Stopwatch.StartNew();
                 var after = current.Analyze(scene);
                 durations.Add(clock.Elapsed.TotalMilliseconds);
@@ -83,6 +93,13 @@ internal static class SituationRaycastCommands
                 if (before.Facts.Facts.ContactRisk != after.Facts.Facts.ContactRisk) changed++;
                 if (after.Facts.Diagnostics.Decisions.TryGetValue("contact-occluded-pairs",out var value))
                     removedPairs += int.Parse(value,System.Globalization.CultureInfo.InvariantCulture);
+                if (after.Facts.Diagnostics.Decisions.ContainsKey("contact-local-peek")) peekFound++;
+                if ((localPeek || positionPrediction) && after.Facts.Facts.ContactRisk == SituationContactRisk.Unknown) peekUnknown++;
+                if (after.Facts.Diagnostics.Decisions.ContainsKey("contact-position-prediction")) predictionFound++;
+                if (after.Facts.Diagnostics.Decisions.TryGetValue("contact-position-prediction-probes",out var predictionProbes))
+                    predictionProbeCount += int.Parse(predictionProbes,System.Globalization.CultureInfo.InvariantCulture);
+                if (after.Facts.Diagnostics.Decisions.TryGetValue("contact-local-peek-probes",out var probes))
+                    probeCount += int.Parse(probes,System.Globalization.CultureInfo.InvariantCulture);
                 match.Scenes++; count++;
                 await writer.WriteLineAsync(SituationCanonicalJson.Serialize(new {
                     record.SampleId,record.Metadata.MatchRef,record.Metadata.RoundRef,record.Metadata.Tick,
@@ -96,17 +113,20 @@ internal static class SituationRaycastCommands
         }
         if (selected.Any(m=>m.Scenes==0)) throw new InvalidDataException("A selected match had no samples.");
         durations.Sort();
+        baselineDurations.Sort();
         var report = new {
             status="complete",purpose="20-train-match scene replay; not human accuracy or historical-map compatibility acceptance",
             sourceManifestSha256=await HashFile(Path.Combine(dataset,"manifest.json"),token),
-            baselineRulesSha256=frozen.RuleLoad.Sha256,rulesSha256=current.RuleLoad.Sha256,
+            baselineRulesSha256=baseline.RuleLoad.Sha256,rulesSha256=current.RuleLoad.Sha256,
             asset=current.RuleLoad.Rules.Visibility,selectedMatches=selected,
             scenes=count,changedContactLabels=changed,occludedPairObservations=removedPairs,
             deterministicRepeats=repeated,transitions,
             p50Milliseconds=durations[(int)Math.Ceiling(durations.Count*0.50)-1],
             p95Milliseconds=durations[(int)Math.Ceiling(durations.Count*0.95)-1],
+            baselineP95Milliseconds=baselineDurations.Count == 0 ? (double?)null : baselineDurations[(int)Math.Ceiling(baselineDurations.Count*0.95)-1],
+            peekFound,peekUnknown,probeCount,predictionFound,predictionProbeCount,
             comparisonSha256=await HashFile(Path.Combine(output,"comparison.jsonl"),token),
-            limitations=new[] { "Static world only; ignores navigation, future corner encounters, smoke and penetration.",
+            limitations=new[] { "Static world only; ignores navigation, smoke and penetration. Prediction assumes constant velocity on level ground, up to one second; no future observations are read.",
                 "Fixed body-height samples approximate pose; historical demo map version is not certified.",
                 "Inputs were selected by frozen v1; this is a regression sample, not an unbiased accuracy estimate." }
         };

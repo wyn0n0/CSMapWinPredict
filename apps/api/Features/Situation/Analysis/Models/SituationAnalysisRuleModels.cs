@@ -26,7 +26,15 @@ internal sealed record SituationVisibilityRuleSet(
     string AssetVersion,
     string AssetSha256,
     double[] SampleHeights,
-    double EndpointEpsilon);
+    double EndpointEpsilon,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    SituationLocalPeekRuleSet? LocalPeek = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    SituationPositionPredictionRuleSet? PositionPrediction = null);
+
+internal sealed record SituationPositionPredictionRuleSet(double[] SampleSeconds, double MaxSpeed, double MaxVerticalSpeed);
+
+internal sealed record SituationLocalPeekRuleSet(double Distance, double BodyRadius, double GroundTolerance, double SupportStep);
 
 internal sealed record SituationFormationRuleSet(
     double LinkDistance,

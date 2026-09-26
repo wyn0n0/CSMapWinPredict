@@ -19,12 +19,25 @@ internal static class DeveloperCommandDispatcher
             await SituationRaycastCommands.SampleAsync(raycastDataset, raycastSampleOutput, cancellationToken);
             return 0;
         }
+        if (args is ["--sample-situation-local-peek", var peekDataset, var peekOutput])
+        {
+            await SituationRaycastCommands.SampleAsync(peekDataset, peekOutput, cancellationToken, localPeek: true);
+            return 0;
+        }
+        if (args is ["--sample-situation-position-prediction", var predictionDataset, var predictionOutput])
+        {
+            await SituationRaycastCommands.SampleAsync(predictionDataset, predictionOutput, cancellationToken, positionPrediction: true);
+            return 0;
+        }
         if (args.Length >= 1 && args[0] == "--serve-situation-review")
         {
             if (args.Length < 5) throw new ArgumentException("Review requires dataset, work and candidates.");
             string? candidates = null;
             string? snapshot = null;
             string? raycastCandidates = null;
+            string? peekCandidates = null;
+            string? predictionCandidates = null;
+            int? reviewTarget = null;
             var port = 0;
             var seen = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 3; i < args.Length; i++)
@@ -36,19 +49,26 @@ internal static class DeveloperCommandDispatcher
                     case "--candidates": candidates = args[i]; break;
                     case "--producer-snapshot": snapshot = args[i]; break;
                     case "--raycast-candidates": raycastCandidates = args[i]; break;
+                    case "--local-peek-candidates": peekCandidates = args[i]; break;
+                    case "--position-prediction-candidates": predictionCandidates = args[i]; break;
+                    case "--review-target": reviewTarget = int.Parse(args[i], CultureInfo.InvariantCulture); break;
                     case "--port": port = int.Parse(args[i], CultureInfo.InvariantCulture); break;
                     default: throw new ArgumentException("Invalid review option.");
                 }
             }
             if (candidates is null || port is < 0 or > 65535) throw new ArgumentException("Invalid review options.");
+            if (reviewTarget is not null and not 50) throw new ArgumentException("Supported reduced review target is 50.");
+            if (new[] { raycastCandidates, peekCandidates, predictionCandidates }.Count(x => x is not null) > 1)
+                throw new ArgumentException("Choose one review analysis version.");
             var repository = SituationArtifactIO.FindRepositoryRoot(args[1]);
             snapshot ??= Path.Combine(repository, "datasets/situation-stage4-review-source-snapshot-20260919-r1");
             SituationReviewArtifactLoader.ValidateWorkLocation(args[2], args[1], candidates, snapshot);
             IReviewCatalog catalog = await SituationReviewArtifactLoader.OpenAsync(args[1], candidates, snapshot, cancellationToken);
-            if (raycastCandidates is not null)
+            var derivedCandidates = predictionCandidates ?? peekCandidates ?? raycastCandidates;
+            if (derivedCandidates is not null)
             {
-                SituationReviewArtifactLoader.ValidateWorkLocation(raycastCandidates, args[1], candidates, snapshot, args[2]);
-                catalog = await SituationRaycastReviewCatalog.OpenAsync(catalog, raycastCandidates, repository, cancellationToken);
+                SituationReviewArtifactLoader.ValidateWorkLocation(derivedCandidates, args[1], candidates, snapshot, args[2]);
+                catalog = await SituationRaycastReviewCatalog.OpenAsync(catalog, derivedCandidates, repository, cancellationToken, peekCandidates is not null, predictionCandidates is not null);
             }
             await using var store = await SituationReviewWorkStore.OpenAsync(args[2], catalog.Identity,
                 catalog.InitialSelected.Select(s => new ReviewActiveSample(s.ReviewOrdinal, s.Entry.SampleId)).ToArray(),
@@ -56,7 +76,8 @@ internal static class DeveloperCommandDispatcher
             await SituationReviewConsumerProvenance.CaptureAsync(repository, args[2], store,
                 [typeof(DeveloperCommandDispatcher).Assembly.Location, typeof(SituationReviewArtifactLoader).Assembly.Location], cancellationToken);
             SituationReviewReplacementService.VerifyRecoveredState(catalog, store.Snapshot);
-            var backend = new SituationReviewDecisionService(catalog, store);
+            IReviewBackend backend = new SituationReviewDecisionService(catalog, store);
+            backend = await SituationReviewScope.OpenAsync(backend, store, args[2], reviewTarget, cancellationToken);
             await using var server = await SituationReviewServer.StartAsync(backend,
                 Path.Combine(AppContext.BaseDirectory, "SituationReviewUi"),
                 Path.Combine(repository, "apps/web/public/radars/simpleradar/de_mirage.webp"), port, cancellationToken);

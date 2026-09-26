@@ -125,11 +125,49 @@ internal static class SituationVisibilityVerifier
         Check(real.TriangleCount > 1000,"pinned real asset loads");
         try { SituationCollisionMesh.Load(realPath,new string('0',64)); throw new InvalidOperationException("Invalid hash accepted"); }
         catch (InvalidDataException) { checks++; }
+        var peekLoad = SituationAnalysisRuleLoader.LoadLocalPeek();
+        var ground = Ground(-500,500,-500,500);
+        var cornerMesh = new SituationCollisionMesh(Wall(0,-500,0,-10,200).Concat(ground));
+        var cornerQuery = new SituationVisibilityQuery(cornerMesh, peekLoad.Rules.Visibility!);
+        var cornerScene = Scene(("T1",SituationSide.T,-32,-16),("CT1",SituationSide.CT,32,-16));
+        var cornerAnalyzer = new SituationDeterministicAnalyzer(peekLoad, cornerQuery);
+        var peekResult = cornerAnalyzer.Analyze(cornerScene);
+        Check(new SituationDeterministicAnalyzer(load,new SituationVisibilityQuery(cornerMesh,load.Rules.Visibility!))
+            .Analyze(cornerScene).Facts.Facts.ContactRisk == SituationContactRisk.Low,"v2 remains occluded at corner");
+        Check(peekResult.Facts.Facts.ContactRisk == SituationContactRisk.Medium,"short corner exposure is medium");
+        Check(peekResult.Facts.Facts.Confidence != SituationConfidence.High,"hypothetical exposure not high confidence");
+        Check(!peekResult.Facts.Diagnostics.SpatialComponents.ContainsKey("local"),"peek does not create current battle center");
+        Check(peekResult.Narrative.Narrative.Highlights.Any(h=>h.EvidenceIds.Contains("contact-risk")),"peek included in narrative");
+        Check(cornerQuery.LocalPositions(N(-32,-16,0))!.All(p=>SituationVisibilityQuery.World(p).X < 0),"cannot walk through wall");
+        var longWall = new SituationDeterministicAnalyzer(peekLoad,
+            new SituationVisibilityQuery(new SituationCollisionMesh(Wall(0,-500,500,-10,200).Concat(ground)),peekLoad.Rules.Visibility!));
+        Check(longWall.Analyze(cornerScene).Facts.Facts.ContactRisk == SituationContactRisk.Low,"separate rooms remain low");
+        Check(cornerAnalyzer.Analyze(Scene(("T1",SituationSide.T,-32,-200),("CT1",SituationSide.CT,32,-200))).Facts.Facts.ContactRisk == SituationContactRisk.Low,"far corner not invented");
+        var unsupported = new SituationDeterministicAnalyzer(peekLoad,new SituationVisibilityQuery(wall,peekLoad.Rules.Visibility!));
+        Check(unsupported.Analyze(scene).Facts.Facts.ContactRisk == SituationContactRisk.Unknown,"missing ground is unknown");
+        var ledge = new SituationVisibilityQuery(new SituationCollisionMesh(Wall(0,-500,0,-10,200)
+            .Concat(Ground(-500,500,-500,0))),peekLoad.Rules.Visibility!);
+        Check(ledge.LocalPositions(N(-32,-16,0))!.All(p=>SituationVisibilityQuery.World(p).Y <= 0),"cannot peek from unsupported ledge");
+        var windowMesh = new SituationCollisionMesh(Wall(0,-500,500,-10,28).Concat(Wall(0,-500,500,44,200)).Concat(ground));
+        var windowQuery = new SituationVisibilityQuery(windowMesh,peekLoad.Rules.Visibility!);
+        Check(windowQuery.LocalPositions(N(-32,0,0))!.All(p=>SituationVisibilityQuery.World(p).X < 0),"cannot walk through narrow window");
+        var open = Scene(("T1",SituationSide.T,-80,-16),("CT1",SituationSide.CT,-32,-16));
+        var openResult = cornerAnalyzer.Analyze(open);
+        Check(openResult.Facts.Facts.ContactRisk == SituationContactRisk.High && !openResult.Facts.Diagnostics.Decisions.ContainsKey("contact-local-peek-probes"),"direct contact skips peek work");
+        for (var i=0;i<10;i++) Check(cornerAnalyzer.Analyze(cornerScene).Facts.Sha256==peekResult.Facts.Sha256,"peek deterministic");
+        try {
+            SituationAnalysisRuleLoader.Validate(peekLoad.Rules with { Visibility = peekLoad.Rules.Visibility! with {
+                LocalPeek = peekLoad.Rules.Visibility.LocalPeek! with { Distance = double.NaN } } });
+            throw new InvalidOperationException("Invalid peek range accepted");
+        } catch (InvalidDataException) { checks++; }
         Console.WriteLine($"Situation raycast checks passed: {checks}; triangles: {real.TriangleCount}; frozen rules unchanged.");
     }
 
     private static IEnumerable<CollisionTriangle> Wall(double x,double y0,double y1,double z0,double z1) => [
         new(new(x,y0,z0),new(x,y1,z0),new(x,y1,z1)), new(new(x,y0,z0),new(x,y1,z1),new(x,y0,z1))];
+
+    private static IEnumerable<CollisionTriangle> Ground(double x0,double x1,double y0,double y1) => [
+        new(new(x0,y0,0),new(x1,y0,0),new(x1,y1,0)),new(new(x0,y0,0),new(x1,y1,0),new(x0,y1,0))];
 
     private static SituationVec3 N(double x,double y,double z) => new((x+3230)/5120,(1713-y)/5120,z/5120);
 

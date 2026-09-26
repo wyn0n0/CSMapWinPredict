@@ -60,7 +60,9 @@ internal sealed class SituationTemplateNarrator
     {
         "bomb.state" => facts.Bomb.State != SituationBombState.Unknown,
         "spatial-advantage" => facts.SpatialAdvantage != SituationSpatialAdvantage.Uncertain,
-        "contact-risk" => facts.ContactRisk == SituationContactRisk.High,
+        "contact-risk" => facts.ContactRisk == SituationContactRisk.High ||
+            (facts.AnalysisRuleVersion is SituationAnalysisRuleLoader.LocalPeekVersion or SituationAnalysisRuleLoader.PositionPredictionVersion && facts.ContactRisk == SituationContactRisk.Medium &&
+                facts.Evidence.Any(e => e.Id == "contact-risk" && e.RuleId is "contact.local-peek" or "contact.position-prediction")),
         "pressure.side" => facts.Pressure.Side is not null,
         "contested-regions" => facts.ContestedRegions is { Count: > 0 },
         "isolated-side" => facts.IsolatedSide is not SituationIsolatedSide.None and not SituationIsolatedSide.Unknown,
@@ -108,7 +110,9 @@ internal sealed class SituationTemplateNarrator
         if (facts.ContestedRegions is null)
             values.Add("区域信息不完整，争夺区域无法确认。");
         if (facts.ContactRisk == SituationContactRisk.Unknown)
-            values.Add(facts.AnalysisRuleVersion == "situation-analysis-rules-v2-raycast-1"
+            values.Add(facts.AnalysisRuleVersion is SituationAnalysisRuleLoader.LocalPeekVersion or SituationAnalysisRuleLoader.PositionPredictionVersion
+                ? "敌我位置、地图遮挡或地面支撑信息不足，局部接触风险无法确认。"
+                : facts.AnalysisRuleVersion == "situation-analysis-rules-v2-raycast-1"
                 ? "敌我位置或地图遮挡信息不足，当前直接接触风险无法确认。"
                 : "敌我位置不足，即时接触风险无法确认。");
         if (facts.IsolatedSide == SituationIsolatedSide.Unknown)

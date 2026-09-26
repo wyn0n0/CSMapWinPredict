@@ -10,9 +10,17 @@ internal interface ISituationVisibilityQuery
     SituationVisibility Query(SituationVec3 left, SituationVec3 right);
 }
 
-// Static world occlusion only. No FOV, smoke, penetration or navigation inference.
-internal sealed class SituationVisibilityQuery : ISituationVisibilityQuery
+internal interface ISituationLocalMoveQuery
 {
+    // null: unsupported origin; returned targets still require CanMoveLocal.
+    IReadOnlyList<SituationVec3>? LocalTargets(SituationVec3 origin);
+    bool CanMoveLocal(SituationVec3 origin, SituationVec3 target, double? maxDistance = null);
+}
+
+// Static world occlusion only. No FOV, smoke, penetration or navigation inference.
+internal sealed class SituationVisibilityQuery : ISituationVisibilityQuery, ISituationLocalMoveQuery
+{
+    private static readonly double[] BodyHeights = [16, 36, 64];
     private readonly SituationCollisionMesh? mesh;
     private readonly SituationVisibilityRuleSet rules;
 
@@ -41,12 +49,70 @@ internal sealed class SituationVisibilityQuery : ISituationVisibilityQuery
         return new(map.PositionX + p.X * scale, map.PositionY - p.Y * scale, p.Z * scale);
     }
 
+    internal IReadOnlyList<SituationVec3>? LocalPositions(SituationVec3 origin) =>
+        LocalTargets(origin)?.Where(target => CanMoveLocal(origin, target)).ToArray();
+
+    public IReadOnlyList<SituationVec3>? LocalTargets(SituationVec3 origin)
+    {
+        if (mesh is null || !Valid(origin) || rules.LocalPeek is not { } peek) return null;
+        var start = World(origin);
+        if (!Supported(start) || mesh.IsBlocked(start with { Z = start.Z + 2 }, start with { Z = start.Z + 64 }, rules.EndpointEpsilon))
+            return null; // airborne, wrong floor, insufficient standing clearance or absent geometry
+        var result = new List<SituationVec3>(8);
+        var scale = MapFeatureGeometries.Find("de_mirage")!.Scale * 1024;
+        for (var i = 0; i < 8; i++)
+        {
+            var angle = i * Math.PI / 4;
+            var dx = Math.Cos(angle); var dy = Math.Sin(angle);
+            var point = new SituationVec3(origin.X + peek.Distance * dx / scale,
+                origin.Y - peek.Distance * dy / scale, origin.Z);
+            if (!Valid(point)) continue;
+            result.Add(point);
+        }
+        return result;
+    }
+
+    private bool Supported(CollisionPoint point) => mesh!.IsBlocked(point with { Z = point.Z + 2 },
+        point with { Z = point.Z - rules.LocalPeek!.GroundTolerance }, rules.EndpointEpsilon);
+
+    public bool CanMoveLocal(SituationVec3 origin, SituationVec3 target, double? maxDistance = null)
+    {
+        if (mesh is null || rules.LocalPeek is not { } peek || !Valid(origin) || !Valid(target)) return false;
+        var start = World(origin); var end = World(target); var delta = end-start;
+        var length = Math.Sqrt(delta.X*delta.X + delta.Y*delta.Y);
+        var limit = maxDistance ?? peek.Distance;
+        if (!double.IsFinite(limit) || limit is <= 0 or > 320 || length <= 0 || length > limit + 1e-6 || Math.Abs(delta.Z) > 1e-6) return false;
+        var lateral = new CollisionPoint(-delta.Y/length*peek.BodyRadius, delta.X/length*peek.BodyRadius, 0);
+        // A bounded ray approximation of a standing body, not a capsule sweep.
+        if (mesh.IsBlocked(end with { Z = end.Z + 2 }, end with { Z = end.Z + 64 }, rules.EndpointEpsilon)) return false;
+        foreach (var height in BodyHeights)
+        {
+            var a = start with { Z = start.Z + height };
+            var b = end with { Z = end.Z + height };
+            if (mesh.IsBlocked(a-lateral, a+lateral, rules.EndpointEpsilon) ||
+                mesh.IsBlocked(b-lateral, b+lateral, rules.EndpointEpsilon)) return false;
+            for (var side = -1; side <= 1; side++)
+            {
+                var offset = new CollisionPoint(lateral.X * side, lateral.Y * side, 0);
+                if (mesh.IsBlocked(a+offset, b+offset, rules.EndpointEpsilon)) return false;
+            }
+        }
+        var steps = (int)Math.Ceiling((maxDistance is null ? peek.Distance : length) / peek.SupportStep);
+        for (var step = 1; step <= steps; step++)
+        {
+            var t = (double)step / steps;
+            if (!Supported(new(start.X + (end.X-start.X)*t, start.Y + (end.Y-start.Y)*t, start.Z))) return false;
+        }
+        return Supported(end-lateral) && Supported(end+lateral);
+    }
+
     private static bool Valid(SituationVec3 p) => double.IsFinite(p.X) && double.IsFinite(p.Y) &&
         double.IsFinite(p.Z) && p.X is >= 0 and <= 1 && p.Y is >= 0 and <= 1;
 }
 
 internal readonly record struct CollisionPoint(double X, double Y, double Z)
 {
+    public static CollisionPoint operator +(CollisionPoint a, CollisionPoint b) => new(a.X+b.X, a.Y+b.Y, a.Z+b.Z);
     public static CollisionPoint operator -(CollisionPoint a, CollisionPoint b) => new(a.X-b.X, a.Y-b.Y, a.Z-b.Z);
     internal double Axis(int axis) => axis == 0 ? X : axis == 1 ? Y : Z;
     internal double Dot(CollisionPoint b) => X*b.X + Y*b.Y + Z*b.Z;
