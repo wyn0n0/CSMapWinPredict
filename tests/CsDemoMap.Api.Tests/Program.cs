@@ -2,6 +2,13 @@ using System.Globalization;
 using CsDemoMap.Api.Services;
 using CsDemoMap.Api.Tests;
 
+if (args is ["--verify-situation-raycast"])
+{
+    SituationVisibilityVerifier.Verify();
+    await SituationRaycastReviewVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
 if (args is ["--serve-situation-review-synthetic", var syntheticWork])
 {
     SituationArtifactIO.EnsureNewOutput(syntheticWork);

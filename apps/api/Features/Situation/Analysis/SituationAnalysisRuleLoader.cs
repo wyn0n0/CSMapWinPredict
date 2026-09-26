@@ -57,6 +57,8 @@ internal static class SituationAnalysisRuleLoader
 
     public static SituationAnalysisRuleLoadResult LoadFrozen() => LoadEmbedded(FrozenFileName);
 
+    public static SituationAnalysisRuleLoadResult LoadRaycast() => LoadEmbedded("situation-analysis-rules-v2-raycast-1.json");
+
     internal static SituationAnalysisRuleLoadResult LoadEmbeddedForVerification(string fileName)
     {
         if (!Regex.IsMatch(fileName, "^situation-analysis-rules-v1-candidate-[1-9][0-9]*\\.json$",
@@ -122,6 +124,21 @@ internal static class SituationAnalysisRuleLoader
         else ValidatePressure(rules.Pressure, errors);
         if (rules.Contact is null) errors.Add("contact is missing");
         else ValidateContact(rules.Contact, errors);
+        if (rules.Visibility is { } visibility)
+        {
+            Require(IsSemanticVersion(visibility.AssetVersion), "visibility assetVersion is invalid", errors);
+            Require(Regex.IsMatch(visibility.AssetSha256 ?? "", "^[0-9a-f]{64}$"), "visibility asset hash is invalid", errors);
+            Require(visibility.SampleHeights is { Length: > 0 and <= 5 } &&
+                visibility.SampleHeights.All(h => double.IsFinite(h) && h is >= 16 and <= 72) &&
+                visibility.SampleHeights.SequenceEqual(visibility.SampleHeights.Distinct().Order()),
+                "visibility sample heights are invalid", errors);
+            Require(double.IsFinite(visibility.EndpointEpsilon) && visibility.EndpointEpsilon is > 0 and <= 0.25,
+                "visibility endpoint tolerance is invalid", errors);
+            Require(rules.AnalysisRuleVersion != FrozenAnalysisRuleVersion,
+                "frozen v1 cannot enable visibility", errors);
+        }
+        if (rules.AnalysisRuleVersion == "situation-analysis-rules-v2-raycast-1")
+            Require(rules.Visibility is not null, "raycast rules require visibility", errors);
         if (rules.Isolation is null) errors.Add("isolation is missing");
         else ValidateIsolation(rules.Isolation, errors);
         if (rules.Spatial is null) errors.Add("spatial is missing");

@@ -8,6 +8,16 @@ internal sealed class SituationReviewArtifactLoader : IReviewCatalog
     internal const string CandidateManifestHash = "9e0e1b4f58321041c208f5d6be716242f7340bef362a6ef43f407b929c8325f4";
     internal const string CandidateFileHash = "3588795dbd713cb9ff684b59776539c74c540a89641fb61883efe8d3a42565c7";
     internal const string CandidateProvenanceHash = "e50d52a44b925d5114b12c17fe66414b7fb485348c6ad94c320b19e488faedcc";
+    // These files gained a separately versioned raycast path. Historical bytes remain
+    // pinned in the producer snapshot; every displayed/replacement candidate must still
+    // reproduce its frozen v1 Facts and Narrative hashes in MaterializeAsync.
+    internal static bool UsesHistoricalAnalysisSource(string path) => path is
+        "apps/api/Features/Situation/Training/SituationTrainingContractJson.cs" or
+        "apps/api/Features/Situation/Analysis/Models/SituationAnalysisRuleModels.cs" or
+        "apps/api/Features/Situation/Analysis/SituationAnalysisRuleLoader.cs" or
+        "apps/api/Features/Situation/Analysis/SituationDeterministicAnalyzer.cs" or
+        "apps/api/Features/Situation/Analysis/SituationFactsAnalyzer.cs" or
+        "apps/api/Features/Situation/Analysis/SituationTemplateNarrator.cs";
     private readonly SituationReviewCandidateBase source;
     private readonly Dictionary<string, SituationReviewCandidateV1> cache;
     private readonly Dictionary<string, ReviewPoolEntry> poolById;
@@ -43,7 +53,7 @@ internal sealed class SituationReviewArtifactLoader : IReviewCatalog
         EnsureNoLinks(datasetRoot);
         EnsureNoLinks(candidateRoot);
         EnsureNoLinks(producerSnapshot);
-        // Complete base bytes and unchanged semantic producer files are still verified normally.
+        // Complete base bytes and producer snapshots are pinned; selected semantics are replayed below.
         var source = await OpenHistoricalBaseAsync(datasetRoot, producerSnapshot, cancellationToken);
         await VerifyHistoricalSourcesAsync(source.RepositoryRoot, producerSnapshot, cancellationToken);
         SituationReviewCandidateReader.RequireFiles(candidateRoot,
@@ -102,8 +112,9 @@ internal sealed class SituationReviewArtifactLoader : IReviewCatalog
             var historicalPath = SituationArtifactIO.ResolveRepositoryPath(snapshotRoot, file.Path, "Historical source");
             EnsureNoLinks(historicalPath);
             await SituationReviewCandidateReader.RequireHashAsync(historicalPath, file.Sha256, cancellationToken);
-            // Only these two composition points are allowed to change. New review files have a separate provenance.
-            if (file.Path is "apps/api/CsDemoMap.Api.csproj" or "apps/cli/DeveloperCommandDispatcher.cs") continue;
+            // Composition and the narrowly listed versioned analysis evolution have separate consumer provenance.
+            if (file.Path is "apps/api/CsDemoMap.Api.csproj" or "apps/cli/DeveloperCommandDispatcher.cs" ||
+                UsesHistoricalAnalysisSource(file.Path)) continue;
             var currentPath = SituationArtifactIO.ResolveRepositoryPath(repositoryRoot, file.Path, "Current semantic source");
             EnsureNoLinks(currentPath);
             await SituationReviewCandidateReader.RequireHashAsync(currentPath, file.Sha256, cancellationToken);
@@ -139,7 +150,8 @@ internal sealed class SituationReviewArtifactLoader : IReviewCatalog
             // These two files already differed at the approved step-seven handoff (pinned provenance).
             if (file.Path is "apps/api/CsDemoMap.Api.csproj" or "apps/cli/DeveloperCommandDispatcher.cs") continue;
             // These two step-eight composition changes have exact, independently hash-verified historical copies.
-            var sourceRoot = file.Path is "apps/cli/CsDemoMap.Cli.csproj" or "apps/cli/Program.cs" ? snapshot : repository;
+            var sourceRoot = file.Path is "apps/cli/CsDemoMap.Cli.csproj" or "apps/cli/Program.cs" ||
+                UsesHistoricalAnalysisSource(file.Path) ? snapshot : repository;
             var sourcePath = SituationArtifactIO.ResolveRepositoryPath(sourceRoot, file.Path, "Historical base source");
             EnsureNoLinks(sourcePath);
             await SituationReviewCandidateReader.RequireHashAsync(sourcePath, file.Sha256, ct);

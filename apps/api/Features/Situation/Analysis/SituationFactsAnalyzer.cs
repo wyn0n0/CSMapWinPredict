@@ -5,6 +5,10 @@ namespace CsDemoMap.Api.Services;
 
 internal sealed class SituationFactsAnalyzer
 {
+    private readonly ISituationVisibilityQuery? visibility;
+
+    internal SituationFactsAnalyzer(ISituationVisibilityQuery? visibility = null) => this.visibility = visibility;
+
     public SituationFactsAnalysisResult Analyze(
         MinimapSceneV1 scene,
         SituationAnalysisRuleSet rules)
@@ -377,7 +381,7 @@ internal sealed class SituationFactsAnalyzer
         return Round(Distance(earliest.Position, sitePoint) - Distance(entry.Player.Position, sitePoint));
     }
 
-    private static ContactOutcome AnalyzeContact(
+    private ContactOutcome AnalyzeContact(
         AnalysisContext context,
         SituationEvidenceBuilder evidence,
         ICollection<SituationRuleMargin> margins,
@@ -400,21 +404,55 @@ internal sealed class SituationFactsAnalyzer
             return new(SituationContactRisk.Unknown, false, null);
         }
 
-        var pair = context.AllPairs()
+        var pairs = context.AllPairs()
             .OrderBy(item => item.Distance)
             .ThenBy(item => item.T.Player.Slot, StringComparer.Ordinal)
             .ThenBy(item => item.CT.Player.Slot, StringComparer.Ordinal)
-            .First();
-        var sameRegion = pair.T.Player.Region is not null &&
-            string.Equals(pair.T.Player.Region, pair.CT.Player.Region, StringComparison.Ordinal);
-        var facing = Faces(pair.T.Player, pair.CT.Player, context.Rules.Contact.FacingDotMin,
-                         context.Rules.ComparisonEpsilon) ||
-                     Faces(pair.CT.Player, pair.T.Player, context.Rules.Contact.FacingDotMin,
-                         context.Rules.ComparisonEpsilon);
-        var closingDelta = ClosingDelta(context, pair);
-        var closing = closingDelta is { } delta &&
-            GreaterOrEqual(delta, context.Rules.Contact.MinClosingDelta, context.Rules);
-        var cueCount = (sameRegion ? 1 : 0) + (facing ? 1 : 0) + (closing ? 1 : 0);
+            .ToArray();
+        var pair = pairs[0];
+        if (context.Rules.Visibility is not null)
+        {
+            var visible = new List<(PlayerPair Pair, SituationContactRisk Risk)>();
+            var unknownMax = 0;
+            var blocked = 0;
+            foreach (var candidate in pairs)
+            {
+                var cues = GetContactCues(context, candidate);
+                var possible = ContactRisk(candidate.Distance, cues.Count, context.Rules);
+                if (possible == SituationContactRisk.Low) continue;
+                var status = visibility?.Query(candidate.T.Player.Position!, candidate.CT.Player.Position!)
+                    ?? SituationVisibility.Unknown;
+                if (status == SituationVisibility.Clear) visible.Add((candidate, possible));
+                else if (status == SituationVisibility.Blocked) blocked++;
+                else unknownMax = Math.Max(unknownMax, RiskRank(possible));
+            }
+            decisions["contact-occluded-pairs"] = blocked.ToString(CultureInfo.InvariantCulture);
+            var best = visible.OrderByDescending(item => RiskRank(item.Risk))
+                .ThenBy(item => item.Pair.Distance)
+                .ThenBy(item => item.Pair.T.Player.Slot, StringComparer.Ordinal)
+                .ThenBy(item => item.Pair.CT.Player.Slot, StringComparer.Ordinal).FirstOrDefault();
+            if (unknownMax > (best.Pair is null ? 0 : RiskRank(best.Risk)))
+            {
+                evidence.Add("contact-risk", ["/players"], "contact.raycast-proximity",
+                    "部分近距离敌我组合的地图遮挡信息无法确认，当前直接接触风险未知。");
+                decisions["contact-risk"] = "unknown";
+                return new(SituationContactRisk.Unknown, false, null);
+            }
+            if (best.Pair is null)
+            {
+                evidence.Add("contact-risk", ["/players"], "contact.raycast-proximity",
+                    $"近距离候选中 {Number(blocked)} 对被静态地图遮挡，未发现满足中高风险条件的无遮挡组合，当前直接接触风险为低；未评估绕角接触与穿透射击。");
+                decisions["contact-risk"] = "low";
+                return new(SituationContactRisk.Low, true, null);
+            }
+            pair = best.Pair;
+        }
+        var contactCues = GetContactCues(context, pair);
+        var sameRegion = contactCues.SameRegion;
+        var facing = contactCues.Facing;
+        var closingDelta = contactCues.ClosingDelta;
+        var closing = contactCues.Closing;
+        var cueCount = contactCues.Count;
         AddMargin(margins, "contact-risk", "high-distance", pair.Distance,
             context.Rules.Contact.HighDistance, pair.Distance - context.Rules.Contact.HighDistance,
             "less-or-equal");
@@ -448,9 +486,31 @@ internal sealed class SituationFactsAnalyzer
         var text = cueText.Count == 0
             ? $"最近敌我距离为 {Number(pair.Distance)}，即时接触风险为{RiskZh(risk)}。"
             : $"最近敌我距离为 {Number(pair.Distance)}，并出现{string.Join("、", cueText)}线索，即时接触风险为{RiskZh(risk)}。";
-        evidence.Add("contact-risk", sources, "contact.proximity-cues", text);
+        if (context.Rules.Visibility is not null)
+            text = text.Replace("最近敌我距离", "主导无遮挡敌我组合的平面距离", StringComparison.Ordinal) +
+                " 静态地图射线存在通路；未评估烟雾、视野方向与穿透射击。";
+        evidence.Add("contact-risk", sources,
+            context.Rules.Visibility is null ? "contact.proximity-cues" : "contact.raycast-proximity", text);
         decisions["contact-risk"] = risk.ToString().ToLowerInvariant();
         return new(risk, true, pair);
+    }
+
+    private static int RiskRank(SituationContactRisk risk) => risk switch
+    {
+        SituationContactRisk.High => 2,
+        SituationContactRisk.Medium => 1,
+        _ => 0
+    };
+
+    private static (bool SameRegion, bool Facing, double? ClosingDelta, bool Closing, int Count)
+        GetContactCues(AnalysisContext context, PlayerPair pair)
+    {
+        var same = pair.T.Player.Region is not null && pair.T.Player.Region == pair.CT.Player.Region;
+        var facing = Faces(pair.T.Player, pair.CT.Player, context.Rules.Contact.FacingDotMin, context.Rules.ComparisonEpsilon) ||
+            Faces(pair.CT.Player, pair.T.Player, context.Rules.Contact.FacingDotMin, context.Rules.ComparisonEpsilon);
+        var delta = ClosingDelta(context, pair);
+        var closing = delta is { } value && GreaterOrEqual(value, context.Rules.Contact.MinClosingDelta, context.Rules);
+        return (same, facing, delta, closing, (same ? 1 : 0)+(facing ? 1 : 0)+(closing ? 1 : 0));
     }
 
     private static IsolationOutcome AnalyzeIsolation(

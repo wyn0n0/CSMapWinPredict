@@ -87,8 +87,17 @@ internal static class SituationReviewConsumerVerifier
                 await Fails(() => Verify(copy), "missing historical provenance");
             }
             finally { await File.WriteAllBytesAsync(copiedProvenance, provenanceBytes, cancellationToken); }
-            // Altering the current semantic producer is also rejected; adding consumers was accepted above.
-            var currentSemantic = SituationArtifactIO.ResolveRepositoryPath(syntheticRepository, sourceFile.Path, "Synthetic current source");
+            // Versioned analysis evolution may differ, but its historical snapshot remains immutable.
+            var compatible = provenance.ConsumerFiles.First(file => SituationReviewArtifactLoader.UsesHistoricalAnalysisSource(file.Path));
+            var currentCompatible = SituationArtifactIO.ResolveRepositoryPath(syntheticRepository, compatible.Path, "Synthetic evolved source");
+            await File.AppendAllTextAsync(currentCompatible, "\n// independently versioned analysis path\n", cancellationToken);
+            await SituationReviewArtifactLoader.VerifyHistoricalSourcesAsync(syntheticRepository, copy, cancellationToken);
+            checks++;
+            // Unrelated producer, frozen rule JSON and schema changes are still rejected.
+            var unchanged = provenance.ConsumerFiles.First(file => file.Path.EndsWith(".cs", StringComparison.Ordinal) &&
+                !SituationReviewArtifactLoader.UsesHistoricalAnalysisSource(file.Path) &&
+                file.Path != "apps/cli/DeveloperCommandDispatcher.cs");
+            var currentSemantic = SituationArtifactIO.ResolveRepositoryPath(syntheticRepository, unchanged.Path, "Synthetic current source");
             await File.AppendAllTextAsync(currentSemantic, "\n// semantic producer changed\n", cancellationToken);
             await Fails(() => SituationReviewArtifactLoader.VerifyHistoricalSourcesAsync(syntheticRepository, copy, cancellationToken),
                 "current semantic producer must still match frozen producer");

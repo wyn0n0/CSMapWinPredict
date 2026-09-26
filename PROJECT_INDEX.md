@@ -1,6 +1,15 @@
 # CS Demo Map 项目索引
 
-> 最后核验：2026-09-19。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
+> 最后核验：2026-09-26。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
+
+接触风险修复：修复前 checkpoint `3965b64` / `checkpoint/pre-contact-raycast-20260925`。
+`codex/contact-raycast` 增加三维静态射线规则 `situation-analysis-rules-v2-raycast-1`（不使用导航网格），
+通过 20 场 / 6,960 场景抽样重放；历史冻结 v1 和已有复核数据保留。
+实现入口、测试结果、资产限制与回退见 [射线修复报告](docs/contact-raycast-report-20260926.md)。
+
+步骤八现已接入三维射线：300 条候选 Facts/证据/摘要均使用 v2-raycast-1，保留原 v1 抽样时点及类别。
+当前工作区 `datasets/situation-stage4-review-raycast-work-20260926-r1`，旧候选与人工记录保留。
+实现、验证和启动命令见 [射线复核报告](situation-implementation/stage4-review-raycast-report-20260926.md)。
 
 ## 项目定位
 

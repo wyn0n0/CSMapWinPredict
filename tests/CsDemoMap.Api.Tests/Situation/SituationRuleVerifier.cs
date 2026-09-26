@@ -452,7 +452,7 @@ internal static class SituationRuleVerifier
         Console.WriteLine($"Situation rule checks passed: {checks}; candidate SHA-256: {candidate.Sha256}; previous candidate SHA-256: {previous.Sha256}; frozen SHA-256: {frozen.Sha256}");
     }
 
-    private static MinimapSceneV1 BuildScene(
+    internal static MinimapSceneV1 BuildScene(
         IReadOnlyList<PlayerSpec> specs,
         SituationBombState bombState = SituationBombState.Carried,
         SituationSite? bombSite = null,
@@ -663,7 +663,7 @@ internal static class SituationRuleVerifier
         throw new InvalidOperationException($"Situation rule check failed: {label}.");
     }
 
-    private sealed record PlayerSpec(
+    internal sealed record PlayerSpec(
         string Slot,
         SituationSide Side,
         double? X,

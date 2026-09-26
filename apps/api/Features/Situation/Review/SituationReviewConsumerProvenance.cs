@@ -16,6 +16,8 @@ internal static class SituationReviewConsumerProvenance
         IReadOnlyList<string> binaries, CancellationToken ct)
     {
         var paths = Directory.EnumerateFiles(Path.Combine(repository, "apps/api/Features/Situation/Review"), "*", SearchOption.AllDirectories)
+            .Append(Path.Combine(repository, "apps/api/Features/Situation/Training/SituationTrainingContractJson.cs"))
+            .Concat(Directory.EnumerateFiles(Path.Combine(repository, "apps/api/Features/Situation/Analysis"), "*", SearchOption.AllDirectories))
             .Concat(Directory.EnumerateFiles(Path.Combine(repository, "apps/cli/SituationReview"), "*", SearchOption.AllDirectories))
             .Concat(Directory.EnumerateFiles(Path.Combine(repository, "apps/cli/SituationReviewUi"), "*", SearchOption.AllDirectories))
             .Concat(Directory.EnumerateFiles(Path.Combine(repository, "schemas/situation"), "situation-review-*.schema.json"))

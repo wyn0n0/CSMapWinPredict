@@ -1,5 +1,19 @@
 # Third-party notices
 
+## Mirage collision geometry
+
+The optional local `data/geometry/de_mirage.mesh` is obtained from
+[Awpy Data release 2000917](https://github.com/pnxenopoulos/awpy-data/releases/tag/2000917).
+The archive and extracted file are pinned by SHA-256 in
+`tools/prepare_contact_geometry.py` and `data/geometry/README.md`.
+Game geometry belongs to Valve Corporation; Awpy Data's MIT license for its build
+scripts does not license the game assets. The binary is not committed to this repo.
+The AWMH format is documented by Awpy Data; the local C# BVH/ray implementation
+uses that format without importing a Python runtime or navigation mesh.
+
+Awpy Data produces its geometry using
+[Source 2 Viewer](https://s2v.app) ([ValveResourceFormat](https://github.com/ValveResourceFormat/ValveResourceFormat)).
+
 ## Simple Radar map images
 
 The following files were copied verbatim from `drweissbrot/cs-hud` commit
@@ -22,4 +36,3 @@ material. Do not assume the ISC license grants rights to these images.
 
 Before public or commercial redistribution, independently verify the current
 Simple Radar terms or obtain permission from the rights holder.
-

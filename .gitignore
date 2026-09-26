@@ -8,6 +8,7 @@ obj/
 *.dem
 apps/api/data/imports/
 /datasets/
+/data/geometry/*.mesh
 /models/
 *.jsonl
 *.jsonl.*.tmp

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CsDemoMap.Api.Models;
 
 internal sealed record SituationAnalysisRuleSet(
@@ -16,7 +18,15 @@ internal sealed record SituationAnalysisRuleSet(
     SituationSpatialRuleSet Spatial,
     SituationConfidenceRuleSet Confidence,
     IReadOnlyDictionary<string, IReadOnlyList<string>> QualityImpacts,
-    IReadOnlyList<string> TemplatePriority);
+    IReadOnlyList<string> TemplatePriority,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    SituationVisibilityRuleSet? Visibility = null);
+
+internal sealed record SituationVisibilityRuleSet(
+    string AssetVersion,
+    string AssetSha256,
+    double[] SampleHeights,
+    double EndpointEpsilon);
 
 internal sealed record SituationFormationRuleSet(
     double LinkDistance,

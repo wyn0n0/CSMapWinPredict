@@ -5,14 +5,15 @@ namespace CsDemoMap.Api.Services;
 internal sealed class SituationDeterministicAnalyzer
 {
     private readonly SituationAnalysisRuleLoadResult ruleLoad;
-    private readonly SituationFactsAnalyzer factsAnalyzer = new();
+    private readonly SituationFactsAnalyzer factsAnalyzer;
     private readonly SituationTemplateNarrator narrator;
 
-    public SituationDeterministicAnalyzer(SituationAnalysisRuleLoadResult ruleLoad)
+    public SituationDeterministicAnalyzer(SituationAnalysisRuleLoadResult ruleLoad, ISituationVisibilityQuery? visibility = null)
     {
         ArgumentNullException.ThrowIfNull(ruleLoad);
         SituationAnalysisRuleLoader.Validate(ruleLoad.Rules);
         this.ruleLoad = ruleLoad;
+        factsAnalyzer = new(visibility);
         narrator = new(ruleLoad.Rules);
     }
 
@@ -21,6 +22,16 @@ internal sealed class SituationDeterministicAnalyzer
 
     public static SituationDeterministicAnalyzer CreateFrozen() =>
         new(SituationAnalysisRuleLoader.LoadFrozen());
+
+    public static SituationDeterministicAnalyzer CreateRaycast(string? meshPath = null)
+    {
+        var load = SituationAnalysisRuleLoader.LoadRaycast();
+        var rules = load.Rules.Visibility!;
+        meshPath ??= Path.Combine(AppContext.BaseDirectory, "Geometry", "de_mirage.mesh");
+        // Missing assets are unknown; a present but corrupt/mismatched asset fails explicitly.
+        var mesh = File.Exists(meshPath) ? SituationCollisionMesh.Load(meshPath, rules.AssetSha256) : null;
+        return new(load, new SituationVisibilityQuery(mesh, rules));
+    }
 
     public SituationAnalysisRuleLoadResult RuleLoad => ruleLoad;
 

@@ -108,7 +108,9 @@ internal sealed class SituationTemplateNarrator
         if (facts.ContestedRegions is null)
             values.Add("区域信息不完整，争夺区域无法确认。");
         if (facts.ContactRisk == SituationContactRisk.Unknown)
-            values.Add("敌我位置不足，即时接触风险无法确认。");
+            values.Add(facts.AnalysisRuleVersion == "situation-analysis-rules-v2-raycast-1"
+                ? "敌我位置或地图遮挡信息不足，当前直接接触风险无法确认。"
+                : "敌我位置不足，即时接触风险无法确认。");
         if (facts.IsolatedSide == SituationIsolatedSide.Unknown)
             values.Add("队伍支援距离不足以完整判断孤立情况。");
         if (facts.SpatialAdvantage == SituationSpatialAdvantage.Uncertain)

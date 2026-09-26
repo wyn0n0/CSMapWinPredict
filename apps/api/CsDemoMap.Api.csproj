@@ -11,6 +11,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\data\geometry\de_mirage.mesh" Condition="Exists('..\..\data\geometry\de_mirage.mesh')">
+      <Link>Geometry\de_mirage.mesh</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <EmbeddedResource Include="Features\Situation\Analysis\Rules\*.json">
       <LogicalName>CsDemoMap.Api.SituationRules.%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>

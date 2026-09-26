@@ -5,6 +5,8 @@
     "apps/web"
   ],
   "scripts": {
+    "pretest:situation:raycast": "npm run build:test:dotnet",
+    "test:situation:raycast": "dotnet run --project tests/CsDemoMap.Api.Tests -c Release --no-build --no-restore -- --verify-situation-raycast",
     "pretest:situation:stage4:review": "npm run build:test:dotnet",
     "test:situation:stage4:review": "dotnet run --project tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj -c Release --no-launch-profile --no-build --no-restore -- --verify-situation-review-automatic && node --test tests/situation-review-ui/core.test.mjs",
     "dev": "concurrently -n api,web -c blue,green \"dotnet run --project apps/api/CsDemoMap.Api.csproj --no-restore\" \"npm run dev --workspace @cs-demo-map/web\"",

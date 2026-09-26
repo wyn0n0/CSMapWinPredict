@@ -9,11 +9,22 @@ internal static class DeveloperCommandDispatcher
 {
     public static async Task<int> RunAsync(string[] args, CancellationToken cancellationToken)
     {
+        if (args is ["--analyze-situation-raycast", var raycastScene, var raycastOutput])
+        {
+            await SituationRaycastCommands.AnalyzeAsync(raycastScene, raycastOutput, cancellationToken);
+            return 0;
+        }
+        if (args is ["--sample-situation-raycast", var raycastDataset, var raycastSampleOutput])
+        {
+            await SituationRaycastCommands.SampleAsync(raycastDataset, raycastSampleOutput, cancellationToken);
+            return 0;
+        }
         if (args.Length >= 1 && args[0] == "--serve-situation-review")
         {
             if (args.Length < 5) throw new ArgumentException("Review requires dataset, work and candidates.");
             string? candidates = null;
             string? snapshot = null;
+            string? raycastCandidates = null;
             var port = 0;
             var seen = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 3; i < args.Length; i++)
@@ -24,6 +35,7 @@ internal static class DeveloperCommandDispatcher
                 {
                     case "--candidates": candidates = args[i]; break;
                     case "--producer-snapshot": snapshot = args[i]; break;
+                    case "--raycast-candidates": raycastCandidates = args[i]; break;
                     case "--port": port = int.Parse(args[i], CultureInfo.InvariantCulture); break;
                     default: throw new ArgumentException("Invalid review option.");
                 }
@@ -32,7 +44,12 @@ internal static class DeveloperCommandDispatcher
             var repository = SituationArtifactIO.FindRepositoryRoot(args[1]);
             snapshot ??= Path.Combine(repository, "datasets/situation-stage4-review-source-snapshot-20260919-r1");
             SituationReviewArtifactLoader.ValidateWorkLocation(args[2], args[1], candidates, snapshot);
-            var catalog = await SituationReviewArtifactLoader.OpenAsync(args[1], candidates, snapshot, cancellationToken);
+            IReviewCatalog catalog = await SituationReviewArtifactLoader.OpenAsync(args[1], candidates, snapshot, cancellationToken);
+            if (raycastCandidates is not null)
+            {
+                SituationReviewArtifactLoader.ValidateWorkLocation(raycastCandidates, args[1], candidates, snapshot, args[2]);
+                catalog = await SituationRaycastReviewCatalog.OpenAsync(catalog, raycastCandidates, repository, cancellationToken);
+            }
             await using var store = await SituationReviewWorkStore.OpenAsync(args[2], catalog.Identity,
                 catalog.InitialSelected.Select(s => new ReviewActiveSample(s.ReviewOrdinal, s.Entry.SampleId)).ToArray(),
                 catalog.GetCandidateAsync, cancellationToken);
