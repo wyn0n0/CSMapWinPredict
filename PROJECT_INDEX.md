@@ -3,7 +3,8 @@
 > 最后核验：2026-09-27。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
 
 接触风险修复：修复前 checkpoint `3965b64` / `checkpoint/pre-contact-raycast-20260925`。
-`codex/contact-raycast` 增加三维静态射线规则 `situation-analysis-rules-v2-raycast-1`（不使用导航网格），
+`codex/contact-raycast` 的射线、局部探测、连续斜坡及 v8 阈值实现已于 2026-09-27 快进合入本地 `main`，实现提交 `bc30cd8`；合并前主分支回退标签 `checkpoint/pre-merge-main-20260927` 指向 `3965b64`，未推送。
+新增三维静态射线规则 `situation-analysis-rules-v2-raycast-1`（不使用导航网格），
 通过 20 场 / 6,960 场景抽样重放；历史冻结 v1 和已有复核数据保留。
 实现入口、测试结果、资产限制与回退见 [射线修复报告](docs/contact-raycast-report-20260926.md)。
 

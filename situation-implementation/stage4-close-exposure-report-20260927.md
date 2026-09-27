@@ -1,5 +1,7 @@
 # 150 单位内暴露判为高风险（2026-09-27）
 
+> 合并状态：用户授权后，实现及验收记录已保存为 `bc30cd8`，并于 2026-09-27 从 `codex/contact-raycast` 无冲突快进合入本地 `main`。合并前主分支 `3965b64` 由 `checkpoint/pre-merge-main-20260927` 保存，功能分支保留。未推送，未冻结 reviewVersion，本地数据集和人工决定不纳入 Git。下文“未提交”描述为合并前历史记录。
+
 按用户要求，已验证局部水平暴露距离不超过 150 地图单位（含 150）时，将潜在接触风险从 medium 调整为 high；大于 150 时仍为 medium。独立规则 `situation-analysis-rules-v8-close-exposure-1` 在 v7 上新增 `visibility.localPeek.highExposureDistance: 150`，旧规则默认不启用，旧版本序列化和哈希保持不变。
 
 ## 判定边界
