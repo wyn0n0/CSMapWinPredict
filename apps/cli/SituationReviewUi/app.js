@@ -85,7 +85,13 @@ function renderDetail() {
   $('workspace').hidden = false;
   $('ruleVersion').hidden = false;
     $('ruleVersion').textContent = `当前候选规则：${facts.analysisRuleVersion} · 几何：${scene.geometryVersion}。` +
-      (candidate.schemaVersion === 'situation-review-candidate-v4-position-prediction'
+      (candidate.schemaVersion === 'situation-review-candidate-v8-close-exposure'
+        ? '已启用 600 单位局部探测、连续斜坡与 1 秒预测。已验证水平暴露距离不超过 150 单位时为高风险，超过时为中风险；按 200 单位/秒估算时间。保留成功即返回，距离不保证最短，高风险不代表当前已交火。'
+        : candidate.schemaVersion === 'situation-review-candidate-v7-verified-exposure'
+        ? '已启用 600 单位局部探测、连续斜坡检测与 1 秒预测。局部探测成功时展示已验证暴露距离，按水平速度 200 单位/秒估算时间；保留成功即返回，不搜索最短路径。详见接触风险证据。'
+        : candidate.schemaVersion === 'situation-review-candidate-v5-continuous-slope'
+        ? '已启用连续斜坡贴地检测与 1 秒恒速预测：移动沿坡面调整高度，通过身体和地面检查后最多判为中风险。暂不支持台阶、断崖或跳跃；45° 坡度上限为当前保守配置。未读取未来帧，历史地图匹配尚未认证。'
+        : candidate.schemaVersion === 'situation-review-candidate-v4-position-prediction'
         ? '已启用 1 秒短时位置预测（0.25/0.5/0.75/1 秒）与局部移动探测：保持当前速度的假设经移动路径和射线检查后最多判为中风险。未读取未来帧；不模拟转向、急停或跳跃。筛选类别沿用 v1，历史地图匹配尚未认证。'
         : candidate.schemaVersion === 'situation-review-candidate-v3-local-peek'
         ? '已启用局部移动探测：短距离单方移动后可能暴露时最多判为中风险，不代表已交火。筛选类别沿用 v1；不预测移动意图，历史地图匹配尚未认证。'

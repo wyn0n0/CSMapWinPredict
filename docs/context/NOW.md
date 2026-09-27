@@ -1,11 +1,34 @@
 # 当前状态
 
-> 最后核验：2026-09-26。
+> 最后核验：2026-09-27。
 
-## 步骤八当前：1 秒位置预测（2026-09-26）
+## 步骤八当前：150 单位内暴露为高风险（2026-09-27）
+
+独立 v8-close-exposure-1：已验证局部水平暴露距离 ≤150 单位（含边界）判为 high，超过保持 medium。新增版本化阈值，保留地面/身体/射线验证及首次成功即返回，不增加采样点、不搜索最短路径；预测和直接射线规则不变。
+相同 20 场 / 6,960 场景中 500 条 medium→high（64 或 128 单位），其余标签不变；局部探测计数仍为 201,016。同轮 p95 6.3523 ms 对照 v7 6.5337 ms。666 项定向检查、六版本复核集成、58 项契约、50 条范围门禁和 11 项 UI 检查通过。
+复核工作区 `datasets/situation-stage4-review-close-exposure-work-20260927-r1`，入口 http://127.0.0.1:5179，50 条（36/7/7）已于 2026-09-27 全部人工 approved；现场 revision 51、未复核 0、拒绝 0、blocking issue 为 false、替换 0。每条最终评价均为事实正确、关注点合理、摘要准确有用且无幻觉；用户明确确认全部通过。此结论限于当前 50 条复核范围，未冻结 reviewVersion。下一步为步骤九：冻结器须适配已确认的 50 条范围，不能沿用历史 300 条目标直接冻结。旧 v7 及人工决定保留。运行时 `datasets/close-exposure-runtime-20260927-r1/`。见 [150 单位阈值报告](../../situation-implementation/stage4-close-exposure-report-20260927.md)。未提交或推送。
+
+## 步骤八历史：已验证暴露距离（2026-09-27）
+
+独立 v7-verified-exposure-1 继承 v6 的 600 单位局部探测，成功时记录水平移动距离及按水平速度 200 单位/秒估算的时间。保留成功即返回，不搜索最短路径；1 秒预测和原风险规则不变。旧版本候选和人工决定保留。
+相同 20 场 / 6,960 场景风险标签无变化，844 条局部暴露新增距离；局部探测计数仍为 201,016，同轮 p95 5.5344 ms 对照 5.4851 ms（约 +0.9%，单次测量）。603 项定向检查、五版本复核集成、58 项阶段四契约、50 条范围门禁及 11 项 UI 检查通过。
+新工作区 `datasets/situation-stage4-review-verified-exposure-work-20260927-r1`，入口 http://127.0.0.1:5178，50 条（36/7/7），启动时 0/50；其中 8 条展示局部暴露距离。独立运行时 `datasets/verified-exposure-runtime-20260927-r1/`。实现与复现见 [距离说明报告](../../situation-implementation/stage4-verified-exposure-report-20260927.md)。未提交或推送，人工准确率仍待复核。
+
+## 步骤八历史：连续斜坡（2026-09-26）
+
+新增 600 单位局部探测对照实验（每秒 200 × 3 秒），独立 v6-local-peek-3s-1，保留 1 秒速度预测。559 项检查与相同 20 场 / 6,960 场景重放通过：新增 473 条 medium（209 low、264 unknown），p95 4.5740 ms，对照 v5 2.3423 ms。当前人工复核服务仍保持 v5，未迁移候选或批准。详见 [600 单位实验报告](../../situation-implementation/stage4-local-peek-3s-report-20260926.md)。
+
+实现前 checkpoint `ef387ca` / `checkpoint/pre-continuous-slope-20260926`；6 个旧复核工作区 76 个文件已压缩备份并核对内容哈希，实现后原文件哈希未变。
+新增独立 v5-continuous-slope-1：有界地面射线返回高度/法线，局部探测与 1 秒预测沿连续坡面更新 Z；检查坡度、地面连续性、身体支撑及分段碰撞。45° 上限、0.5 单位连续性容差为保守配置，台阶/断崖/跳跃继续不支持。
+当前工作区 `datasets/situation-stage4-review-continuous-slope-work-20260926-r1`，http://127.0.0.1:5177，50 条（36/7/7），启动为 0/50；旧 v4 工作区 5 条 approved 保留，不跨规则自动迁移。
+20 场 / 6,960 场景中 172 条风险变化，unknown 净减 61（98 条得到明确判定，另有 37 条转 unknown）；p95 2.4866 ms，对照 v4 2.5243 ms。当前 50 条候选仍含 12 条 unknown。
+539 项射线/预测/斜坡检查、四版本复核集成、范围/契约/UI 门禁通过，人工准确率待复核。源码新增实现未提交，未推送；旧 v3/v4 源码已包含在本次 checkpoint。
+详见 [连续斜坡报告与回退](../../situation-implementation/stage4-continuous-slope-report-20260926.md)。
+
+## 步骤八 1 秒位置预测历史基线（2026-09-26）
 
 新增独立 v4-position-prediction-1，在局部探测上以当前速度同步外推 0.25/0.5/0.75/1 秒；预测路径通过身体/地面检查才可提示 medium，缺失或异常速度回退局部探测，不读取未来帧。
-当前工作区 `datasets/situation-stage4-review-position-prediction-work-20260926-r1`，地址 http://127.0.0.1:5177；目标 50 条（36/7/7），启动核验为 0/50。旧 v3 工作区现场已有 3 条 approved，均保留，不跨规则自动迁移。
+旧工作区 `datasets/situation-stage4-review-position-prediction-work-20260926-r1`，目标 50 条（36/7/7），已积累 5 条 approved。旧 v3 工作区另有 3 条 approved，均保留，不跨规则自动迁移；当前入口已切换上述 v5。
 20 场 / 6,960 场景中 35 条有预测证据，新增 3 条 low→medium、4 条 unknown→medium；p95 2.4720 ms，对照 v3 为 2.3485 ms。399 项射线/预测、三版本复核集成、范围/契约/UI 检查通过。
 实现、边界、工件哈希及回退见 [1 秒预测报告](../../situation-implementation/stage4-position-prediction-report-20260926.md)。人工准确率待复核，未全量导出、未自动评价、未提交或推送。
 

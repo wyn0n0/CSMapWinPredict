@@ -29,6 +29,26 @@ internal static class DeveloperCommandDispatcher
             await SituationRaycastCommands.SampleAsync(predictionDataset, predictionOutput, cancellationToken, positionPrediction: true);
             return 0;
         }
+        if (args is ["--sample-situation-continuous-slope", var slopeDataset, var slopeOutput])
+        {
+            await SituationRaycastCommands.SampleAsync(slopeDataset, slopeOutput, cancellationToken, continuousSlope: true);
+            return 0;
+        }
+        if (args is ["--sample-situation-local-peek-3s", var extendedDataset, var extendedOutput])
+        {
+            await SituationRaycastCommands.SampleAsync(extendedDataset, extendedOutput, cancellationToken, extendedLocalPeek: true);
+            return 0;
+        }
+        if (args is ["--sample-situation-verified-exposure", var exposureDataset, var exposureOutput])
+        {
+            await SituationRaycastCommands.SampleAsync(exposureDataset, exposureOutput, cancellationToken, verifiedExposure: true);
+            return 0;
+        }
+        if (args is ["--sample-situation-close-exposure", var closeDataset, var closeOutput])
+        {
+            await SituationRaycastCommands.SampleAsync(closeDataset, closeOutput, cancellationToken, closeExposure: true);
+            return 0;
+        }
         if (args.Length >= 1 && args[0] == "--serve-situation-review")
         {
             if (args.Length < 5) throw new ArgumentException("Review requires dataset, work and candidates.");
@@ -37,6 +57,9 @@ internal static class DeveloperCommandDispatcher
             string? raycastCandidates = null;
             string? peekCandidates = null;
             string? predictionCandidates = null;
+            string? slopeCandidates = null;
+            string? exposureCandidates = null;
+            string? closeCandidates = null;
             int? reviewTarget = null;
             var port = 0;
             var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -51,6 +74,9 @@ internal static class DeveloperCommandDispatcher
                     case "--raycast-candidates": raycastCandidates = args[i]; break;
                     case "--local-peek-candidates": peekCandidates = args[i]; break;
                     case "--position-prediction-candidates": predictionCandidates = args[i]; break;
+                    case "--continuous-slope-candidates": slopeCandidates = args[i]; break;
+                    case "--verified-exposure-candidates": exposureCandidates = args[i]; break;
+                    case "--close-exposure-candidates": closeCandidates = args[i]; break;
                     case "--review-target": reviewTarget = int.Parse(args[i], CultureInfo.InvariantCulture); break;
                     case "--port": port = int.Parse(args[i], CultureInfo.InvariantCulture); break;
                     default: throw new ArgumentException("Invalid review option.");
@@ -58,17 +84,17 @@ internal static class DeveloperCommandDispatcher
             }
             if (candidates is null || port is < 0 or > 65535) throw new ArgumentException("Invalid review options.");
             if (reviewTarget is not null and not 50) throw new ArgumentException("Supported reduced review target is 50.");
-            if (new[] { raycastCandidates, peekCandidates, predictionCandidates }.Count(x => x is not null) > 1)
+            if (new[] { raycastCandidates, peekCandidates, predictionCandidates, slopeCandidates, exposureCandidates, closeCandidates }.Count(x => x is not null) > 1)
                 throw new ArgumentException("Choose one review analysis version.");
             var repository = SituationArtifactIO.FindRepositoryRoot(args[1]);
             snapshot ??= Path.Combine(repository, "datasets/situation-stage4-review-source-snapshot-20260919-r1");
             SituationReviewArtifactLoader.ValidateWorkLocation(args[2], args[1], candidates, snapshot);
             IReviewCatalog catalog = await SituationReviewArtifactLoader.OpenAsync(args[1], candidates, snapshot, cancellationToken);
-            var derivedCandidates = predictionCandidates ?? peekCandidates ?? raycastCandidates;
+            var derivedCandidates = closeCandidates ?? exposureCandidates ?? slopeCandidates ?? predictionCandidates ?? peekCandidates ?? raycastCandidates;
             if (derivedCandidates is not null)
             {
                 SituationReviewArtifactLoader.ValidateWorkLocation(derivedCandidates, args[1], candidates, snapshot, args[2]);
-                catalog = await SituationRaycastReviewCatalog.OpenAsync(catalog, derivedCandidates, repository, cancellationToken, peekCandidates is not null, predictionCandidates is not null);
+                catalog = await SituationRaycastReviewCatalog.OpenAsync(catalog, derivedCandidates, repository, cancellationToken, peekCandidates is not null, predictionCandidates is not null, slopeCandidates is not null, exposureCandidates is not null, closeCandidates is not null);
             }
             await using var store = await SituationReviewWorkStore.OpenAsync(args[2], catalog.Identity,
                 catalog.InitialSelected.Select(s => new ReviewActiveSample(s.ReviewOrdinal, s.Entry.SampleId)).ToArray(),

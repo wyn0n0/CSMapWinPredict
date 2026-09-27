@@ -61,7 +61,7 @@ internal sealed class SituationTemplateNarrator
         "bomb.state" => facts.Bomb.State != SituationBombState.Unknown,
         "spatial-advantage" => facts.SpatialAdvantage != SituationSpatialAdvantage.Uncertain,
         "contact-risk" => facts.ContactRisk == SituationContactRisk.High ||
-            (facts.AnalysisRuleVersion is SituationAnalysisRuleLoader.LocalPeekVersion or SituationAnalysisRuleLoader.PositionPredictionVersion && facts.ContactRisk == SituationContactRisk.Medium &&
+            (facts.AnalysisRuleVersion is SituationAnalysisRuleLoader.LocalPeekVersion or SituationAnalysisRuleLoader.PositionPredictionVersion or SituationAnalysisRuleLoader.ContinuousSlopeVersion or SituationAnalysisRuleLoader.ExtendedLocalPeekVersion or SituationAnalysisRuleLoader.VerifiedExposureVersion or SituationAnalysisRuleLoader.CloseExposureVersion && facts.ContactRisk == SituationContactRisk.Medium &&
                 facts.Evidence.Any(e => e.Id == "contact-risk" && e.RuleId is "contact.local-peek" or "contact.position-prediction")),
         "pressure.side" => facts.Pressure.Side is not null,
         "contested-regions" => facts.ContestedRegions is { Count: > 0 },
@@ -110,7 +110,7 @@ internal sealed class SituationTemplateNarrator
         if (facts.ContestedRegions is null)
             values.Add("区域信息不完整，争夺区域无法确认。");
         if (facts.ContactRisk == SituationContactRisk.Unknown)
-            values.Add(facts.AnalysisRuleVersion is SituationAnalysisRuleLoader.LocalPeekVersion or SituationAnalysisRuleLoader.PositionPredictionVersion
+            values.Add(facts.AnalysisRuleVersion is SituationAnalysisRuleLoader.LocalPeekVersion or SituationAnalysisRuleLoader.PositionPredictionVersion or SituationAnalysisRuleLoader.ContinuousSlopeVersion or SituationAnalysisRuleLoader.ExtendedLocalPeekVersion or SituationAnalysisRuleLoader.VerifiedExposureVersion or SituationAnalysisRuleLoader.CloseExposureVersion
                 ? "敌我位置、地图遮挡或地面支撑信息不足，局部接触风险无法确认。"
                 : facts.AnalysisRuleVersion == "situation-analysis-rules-v2-raycast-1"
                 ? "敌我位置或地图遮挡信息不足，当前直接接触风险无法确认。"

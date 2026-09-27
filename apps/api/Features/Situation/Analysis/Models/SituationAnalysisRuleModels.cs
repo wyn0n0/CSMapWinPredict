@@ -30,11 +30,17 @@ internal sealed record SituationVisibilityRuleSet(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     SituationLocalPeekRuleSet? LocalPeek = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    SituationPositionPredictionRuleSet? PositionPrediction = null);
+    SituationPositionPredictionRuleSet? PositionPrediction = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    SituationContinuousSlopeRuleSet? ContinuousSlope = null);
+
+internal sealed record SituationContinuousSlopeRuleSet(double MaxSlopeDegrees, double SurfaceTolerance);
 
 internal sealed record SituationPositionPredictionRuleSet(double[] SampleSeconds, double MaxSpeed, double MaxVerticalSpeed);
 
-internal sealed record SituationLocalPeekRuleSet(double Distance, double BodyRadius, double GroundTolerance, double SupportStep);
+internal sealed record SituationLocalPeekRuleSet(double Distance, double BodyRadius, double GroundTolerance, double SupportStep,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? ProbeSpacing = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? HighExposureDistance = null);
 
 internal sealed record SituationFormationRuleSet(
     double LinkDistance,

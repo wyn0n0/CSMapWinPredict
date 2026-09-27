@@ -18,7 +18,7 @@ internal static class SituationRaycastCommands
     }
 
     // Replays existing scene inputs from exactly 20 train matches, never dev/test or a full export.
-    internal static async Task SampleAsync(string dataset, string output, CancellationToken token, bool localPeek = false, bool positionPrediction = false)
+    internal static async Task SampleAsync(string dataset, string output, CancellationToken token, bool localPeek = false, bool positionPrediction = false, bool continuousSlope = false, bool extendedLocalPeek = false, bool verifiedExposure = false, bool closeExposure = false)
     {
         SituationArtifactIO.EnsureNewOutput(output);
         var meshPath = Path.Combine(AppContext.BaseDirectory,"Geometry","de_mirage.mesh");
@@ -46,8 +46,8 @@ internal static class SituationRaycastCommands
             .ToDictionary(r=>(r.GetProperty("matchRef").GetString()!,r.GetProperty("roundRef").GetString()!),
                 r=>r.GetProperty("semanticRoundId").GetString()!);
         var frozen = SituationDeterministicAnalyzer.CreateFrozen();
-        var baseline = positionPrediction ? SituationDeterministicAnalyzer.CreateLocalPeek(meshPath) : localPeek ? SituationDeterministicAnalyzer.CreateRaycast(meshPath) : frozen;
-        var current = positionPrediction ? SituationDeterministicAnalyzer.CreatePositionPrediction(meshPath) : localPeek ? SituationDeterministicAnalyzer.CreateLocalPeek(meshPath) : SituationDeterministicAnalyzer.CreateRaycast(meshPath);
+        var baseline = closeExposure ? SituationDeterministicAnalyzer.CreateVerifiedExposure(meshPath) : verifiedExposure ? SituationDeterministicAnalyzer.CreateExtendedLocalPeek(meshPath) : extendedLocalPeek ? SituationDeterministicAnalyzer.CreateContinuousSlope(meshPath) : continuousSlope ? SituationDeterministicAnalyzer.CreatePositionPrediction(meshPath) : positionPrediction ? SituationDeterministicAnalyzer.CreateLocalPeek(meshPath) : localPeek ? SituationDeterministicAnalyzer.CreateRaycast(meshPath) : frozen;
+        var current = closeExposure ? SituationDeterministicAnalyzer.CreateCloseExposure(meshPath) : verifiedExposure ? SituationDeterministicAnalyzer.CreateVerifiedExposure(meshPath) : extendedLocalPeek ? SituationDeterministicAnalyzer.CreateExtendedLocalPeek(meshPath) : continuousSlope ? SituationDeterministicAnalyzer.CreateContinuousSlope(meshPath) : positionPrediction ? SituationDeterministicAnalyzer.CreatePositionPrediction(meshPath) : localPeek ? SituationDeterministicAnalyzer.CreateLocalPeek(meshPath) : SituationDeterministicAnalyzer.CreateRaycast(meshPath);
         Directory.CreateDirectory(output);
         await File.WriteAllTextAsync(Path.Combine(output,"status.json"),"{\"status\":\"incomplete\"}",token);
         var transitions = new SortedDictionary<string,int>(StringComparer.Ordinal);
@@ -55,6 +55,7 @@ internal static class SituationRaycastCommands
         var baselineDurations = new List<double>();
         var peekFound = 0; var peekUnknown = 0; var probeCount = 0;
         var predictionFound = 0; var predictionProbeCount = 0;
+        var verifiedExposureCount = 0;
         var count = 0; var changed = 0; var removedPairs = 0; var repeated = 0;
         await using (var writer = new StreamWriter(new FileStream(Path.Combine(output,"comparison.jsonl"),FileMode.CreateNew)))
         {
@@ -72,7 +73,7 @@ internal static class SituationRaycastCommands
                 var before = frozen.Analyze(scene);
                 if (before.Facts.Sha256 != record.Metadata.FactsSha256 || before.Narrative.Sha256 != record.Metadata.PrelabelSha256)
                     throw new InvalidDataException("Frozen baseline replay changed.");
-                if (localPeek || positionPrediction)
+                if (localPeek || positionPrediction || continuousSlope || extendedLocalPeek || verifiedExposure || closeExposure)
                 {
                     var baselineClock = Stopwatch.StartNew();
                     before = baseline.Analyze(scene);
@@ -81,6 +82,25 @@ internal static class SituationRaycastCommands
                 var clock = Stopwatch.StartNew();
                 var after = current.Analyze(scene);
                 durations.Add(clock.Elapsed.TotalMilliseconds);
+                if (verifiedExposure || closeExposure)
+                {
+                    var expectedRisk = before.Facts.Facts.ContactRisk;
+                    if (closeExposure && before.Facts.Diagnostics.Decisions.TryGetValue("contact-local-peek-distance-units", out var exposureUnits) &&
+                        double.Parse(exposureUnits, System.Globalization.CultureInfo.InvariantCulture) <= 150)
+                        expectedRisk = SituationContactRisk.High;
+                    if (after.Facts.Facts.ContactRisk != expectedRisk)
+                        throw new InvalidDataException("Unexpected exposure risk transition.");
+                    var restored = after.Facts.Facts with { AnalysisRuleVersion = before.Facts.Facts.AnalysisRuleVersion, Evidence = before.Facts.Facts.Evidence, ContactRisk = before.Facts.Facts.ContactRisk };
+                    if (SituationCanonicalJson.Sha256(restored) != before.Facts.Sha256)
+                        throw new InvalidDataException("Exposure annotation changed factual labels.");
+                    foreach (var key in new[] { "contact-local-peek-probes", "contact-position-prediction-probes", "contact-occluded-pairs" })
+                        if (before.Facts.Diagnostics.Decisions.GetValueOrDefault(key) != after.Facts.Diagnostics.Decisions.GetValueOrDefault(key))
+                            throw new InvalidDataException("Exposure annotation changed probe counts.");
+                    var hasDistance = after.Facts.Diagnostics.Decisions.ContainsKey("contact-local-peek-distance-units");
+                    if (hasDistance != after.Facts.Diagnostics.Decisions.ContainsKey("contact-local-peek"))
+                        throw new InvalidDataException("Exposure distance is missing or attached to a non-local result.");
+                    if (hasDistance) verifiedExposureCount++;
+                }
                 if (match.Scenes == 0)
                 {
                     var again = current.Analyze(scene);
@@ -94,7 +114,7 @@ internal static class SituationRaycastCommands
                 if (after.Facts.Diagnostics.Decisions.TryGetValue("contact-occluded-pairs",out var value))
                     removedPairs += int.Parse(value,System.Globalization.CultureInfo.InvariantCulture);
                 if (after.Facts.Diagnostics.Decisions.ContainsKey("contact-local-peek")) peekFound++;
-                if ((localPeek || positionPrediction) && after.Facts.Facts.ContactRisk == SituationContactRisk.Unknown) peekUnknown++;
+                if ((localPeek || positionPrediction || continuousSlope || extendedLocalPeek || verifiedExposure || closeExposure) && after.Facts.Facts.ContactRisk == SituationContactRisk.Unknown) peekUnknown++;
                 if (after.Facts.Diagnostics.Decisions.ContainsKey("contact-position-prediction")) predictionFound++;
                 if (after.Facts.Diagnostics.Decisions.TryGetValue("contact-position-prediction-probes",out var predictionProbes))
                     predictionProbeCount += int.Parse(predictionProbes,System.Globalization.CultureInfo.InvariantCulture);
@@ -125,8 +145,9 @@ internal static class SituationRaycastCommands
             p95Milliseconds=durations[(int)Math.Ceiling(durations.Count*0.95)-1],
             baselineP95Milliseconds=baselineDurations.Count == 0 ? (double?)null : baselineDurations[(int)Math.Ceiling(baselineDurations.Count*0.95)-1],
             peekFound,peekUnknown,probeCount,predictionFound,predictionProbeCount,
+            verifiedExposureCount,
             comparisonSha256=await HashFile(Path.Combine(output,"comparison.jsonl"),token),
-            limitations=new[] { "Static world only; ignores navigation, smoke and penetration. Prediction assumes constant velocity on level ground, up to one second; no future observations are read.",
+            limitations=new[] { "Static world only; ignores navigation, smoke and penetration. Prediction assumes constant horizontal velocity up to one second; optional continuous slope support follows sampled ground, not stairs or jumps. No future observations are read.",
                 "Fixed body-height samples approximate pose; historical demo map version is not certified.",
                 "Inputs were selected by frozen v1; this is a regression sample, not an unbiased accuracy estimate." }
         };

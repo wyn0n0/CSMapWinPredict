@@ -62,6 +62,14 @@ internal static class SituationAnalysisRuleLoader
     public static SituationAnalysisRuleLoadResult LoadLocalPeek() => LoadEmbedded(LocalPeekVersion + ".json");
     internal const string PositionPredictionVersion = "situation-analysis-rules-v4-position-prediction-1";
     public static SituationAnalysisRuleLoadResult LoadPositionPrediction() => LoadEmbedded(PositionPredictionVersion + ".json");
+    internal const string ContinuousSlopeVersion = "situation-analysis-rules-v5-continuous-slope-1";
+    public static SituationAnalysisRuleLoadResult LoadContinuousSlope() => LoadEmbedded(ContinuousSlopeVersion + ".json");
+    internal const string ExtendedLocalPeekVersion = "situation-analysis-rules-v6-local-peek-3s-1";
+    public static SituationAnalysisRuleLoadResult LoadExtendedLocalPeek() => LoadEmbedded(ExtendedLocalPeekVersion + ".json");
+    internal const string VerifiedExposureVersion = "situation-analysis-rules-v7-verified-exposure-1";
+    public static SituationAnalysisRuleLoadResult LoadVerifiedExposure() => LoadEmbedded(VerifiedExposureVersion + ".json");
+    internal const string CloseExposureVersion = "situation-analysis-rules-v8-close-exposure-1";
+    public static SituationAnalysisRuleLoadResult LoadCloseExposure() => LoadEmbedded(CloseExposureVersion + ".json");
 
     internal static SituationAnalysisRuleLoadResult LoadEmbeddedForVerification(string fileName)
     {
@@ -142,17 +150,24 @@ internal static class SituationAnalysisRuleLoader
                 "frozen v1 cannot enable visibility", errors);
             if (visibility.LocalPeek is { } peek)
             {
-                Require(rules.AnalysisRuleVersion is LocalPeekVersion or PositionPredictionVersion, "local peek requires a separate rule version", errors);
-                Require(double.IsFinite(peek.Distance) && peek.Distance is >= 16 and <= 96 &&
+                if (rules.AnalysisRuleVersion == CloseExposureVersion)
+                    Require(peek.HighExposureDistance == 150, "close exposure requires a 150-unit high-risk threshold", errors);
+                else
+                    Require(peek.HighExposureDistance is null, "high exposure threshold requires its own version", errors);
+                Require(rules.AnalysisRuleVersion is LocalPeekVersion or PositionPredictionVersion or ContinuousSlopeVersion or ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion, "local peek requires a separate rule version", errors);
+                Require(double.IsFinite(peek.Distance) && peek.Distance >= 16 && peek.Distance <= (rules.AnalysisRuleVersion is ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion ? 600 : 96) &&
                     double.IsFinite(peek.BodyRadius) && peek.BodyRadius is >= 8 and <= 24 &&
                     double.IsFinite(peek.GroundTolerance) && peek.GroundTolerance is >= 1 and <= 8 &&
                     double.IsFinite(peek.SupportStep) && peek.SupportStep is >= 8 and <= 16,
                     "local peek dimensions are invalid", errors);
+                if (peek.ProbeSpacing is not null || rules.AnalysisRuleVersion is ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion)
+                    Require(rules.AnalysisRuleVersion is ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion && peek.Distance == 600 && peek.ProbeSpacing == 64,
+                        "extended local peek requires its own version and fixed 64..600 range", errors);
             }
         }
         if (rules.Visibility?.PositionPrediction is { } prediction)
         {
-            Require(rules.AnalysisRuleVersion == PositionPredictionVersion && rules.Visibility.LocalPeek is not null,
+            Require(rules.AnalysisRuleVersion is PositionPredictionVersion or ContinuousSlopeVersion or ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion && rules.Visibility.LocalPeek is not null,
                 "position prediction requires a separate version and local movement checks", errors);
             Require(prediction.SampleSeconds is { Length: > 0 and <= 4 } &&
                 prediction.SampleSeconds.All(t => double.IsFinite(t) && t is > 0 and <= 1) &&
@@ -162,9 +177,19 @@ internal static class SituationAnalysisRuleLoader
                 double.IsFinite(prediction.MaxVerticalSpeed) && prediction.MaxVerticalSpeed is >= 0 and <= 4,
                 "prediction speed bounds are invalid", errors);
         }
-        if (rules.AnalysisRuleVersion == PositionPredictionVersion)
+        if (rules.Visibility?.ContinuousSlope is { } slope)
+        {
+            Require(rules.AnalysisRuleVersion is ContinuousSlopeVersion or ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion && rules.Visibility.PositionPrediction is not null,
+                "continuous slope requires a separate version and prediction", errors);
+            Require(double.IsFinite(slope.MaxSlopeDegrees) && slope.MaxSlopeDegrees is > 0 and <= 45 &&
+                double.IsFinite(slope.SurfaceTolerance) && slope.SurfaceTolerance is > 0 and <= 0.5,
+                "continuous slope limits are invalid", errors);
+        }
+        if (rules.AnalysisRuleVersion is ContinuousSlopeVersion or ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion)
+            Require(rules.Visibility?.ContinuousSlope is not null, "continuous slope configuration is missing", errors);
+        if (rules.AnalysisRuleVersion is PositionPredictionVersion or ContinuousSlopeVersion or ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion)
             Require(rules.Visibility?.PositionPrediction is not null, "position prediction configuration is missing", errors);
-        if (rules.AnalysisRuleVersion is LocalPeekVersion or PositionPredictionVersion)
+        if (rules.AnalysisRuleVersion is LocalPeekVersion or PositionPredictionVersion or ContinuousSlopeVersion or ExtendedLocalPeekVersion or VerifiedExposureVersion or CloseExposureVersion)
             Require(rules.Visibility?.LocalPeek is not null, "local peek configuration is missing", errors);
         if (rules.AnalysisRuleVersion == "situation-analysis-rules-v2-raycast-1")
             Require(rules.Visibility is not null, "raycast rules require visibility", errors);

@@ -32,6 +32,18 @@ internal sealed class SituationDeterministicAnalyzer
     public static SituationDeterministicAnalyzer CreatePositionPrediction(string? meshPath = null)
         => CreateWithMesh(SituationAnalysisRuleLoader.LoadPositionPrediction(), meshPath);
 
+    public static SituationDeterministicAnalyzer CreateContinuousSlope(string? meshPath = null)
+        => CreateWithMesh(SituationAnalysisRuleLoader.LoadContinuousSlope(), meshPath);
+
+    public static SituationDeterministicAnalyzer CreateExtendedLocalPeek(string? meshPath = null)
+        => CreateWithMesh(SituationAnalysisRuleLoader.LoadExtendedLocalPeek(), meshPath);
+
+    public static SituationDeterministicAnalyzer CreateVerifiedExposure(string? meshPath = null)
+        => CreateWithMesh(SituationAnalysisRuleLoader.LoadVerifiedExposure(), meshPath);
+
+    public static SituationDeterministicAnalyzer CreateCloseExposure(string? meshPath = null)
+        => CreateWithMesh(SituationAnalysisRuleLoader.LoadCloseExposure(), meshPath);
+
     private static SituationDeterministicAnalyzer CreateWithMesh(SituationAnalysisRuleLoadResult load, string? meshPath)
     {
         var rules = load.Rules.Visibility!;

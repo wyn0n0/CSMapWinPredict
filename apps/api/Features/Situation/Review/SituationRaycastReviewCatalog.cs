@@ -10,6 +10,9 @@ internal sealed class SituationRaycastReviewCatalog : IReviewCatalog
     internal const string CandidateSchema = "situation-review-candidate-v2-raycast";
     internal const string LocalPeekSchema = "situation-review-candidate-v3-local-peek";
     internal const string PositionPredictionSchema = "situation-review-candidate-v4-position-prediction";
+    internal const string ContinuousSlopeSchema = "situation-review-candidate-v5-continuous-slope";
+    internal const string VerifiedExposureSchema = "situation-review-candidate-v7-verified-exposure";
+    internal const string CloseExposureSchema = "situation-review-candidate-v8-close-exposure";
     private readonly IReviewCatalog source;
     private readonly SituationDeterministicAnalyzer analyzer;
     private readonly ConcurrentDictionary<string, SituationReviewCandidateV1> cache = new(StringComparer.Ordinal);
@@ -27,18 +30,18 @@ internal sealed class SituationRaycastReviewCatalog : IReviewCatalog
         : entry;
 
     internal static async Task<SituationRaycastReviewCatalog> OpenAsync(IReviewCatalog source, string output,
-        string repository, CancellationToken ct, bool localPeek = false, bool positionPrediction = false)
+        string repository, CancellationToken ct, bool localPeek = false, bool positionPrediction = false, bool continuousSlope = false, bool verifiedExposure = false, bool closeExposure = false)
     {
         var mesh = Path.Combine(AppContext.BaseDirectory, "Geometry", "de_mirage.mesh");
         if (!File.Exists(mesh)) throw new InvalidDataException("Raycast review requires the pinned collision mesh.");
-        var analyzer = positionPrediction ? SituationDeterministicAnalyzer.CreatePositionPrediction(mesh) :
+        var analyzer = closeExposure ? SituationDeterministicAnalyzer.CreateCloseExposure(mesh) : verifiedExposure ? SituationDeterministicAnalyzer.CreateVerifiedExposure(mesh) : continuousSlope ? SituationDeterministicAnalyzer.CreateContinuousSlope(mesh) : positionPrediction ? SituationDeterministicAnalyzer.CreatePositionPrediction(mesh) :
             localPeek ? SituationDeterministicAnalyzer.CreateLocalPeek(mesh) : SituationDeterministicAnalyzer.CreateRaycast(mesh);
         var result = new SituationRaycastReviewCatalog(source, analyzer);
         var rows = new List<string>();
         foreach (var item in source.InitialSelected.OrderBy(s => s.ReviewOrdinal))
             rows.Add(SituationCanonicalJson.Serialize(await result.GetCandidateAsync(item.Entry.SampleId, item.ReviewOrdinal, ct)));
         var jsonl = string.Join("\n", rows) + "\n";
-        var schemaPath = "schemas/situation/" + (positionPrediction ? PositionPredictionSchema : localPeek ? LocalPeekSchema : CandidateSchema) + ".schema.json";
+        var schemaPath = "schemas/situation/" + (closeExposure ? CloseExposureSchema : verifiedExposure ? VerifiedExposureSchema : continuousSlope ? ContinuousSlopeSchema : positionPrediction ? PositionPredictionSchema : localPeek ? LocalPeekSchema : CandidateSchema) + ".schema.json";
         var schema = new SituationProvenanceSourceFileV1(schemaPath,
             await SituationArtifactIO.FileSha256Async(Path.Combine(repository, schemaPath), ct));
         var manifest = SituationCanonicalJson.Serialize(new {
@@ -71,7 +74,7 @@ internal sealed class SituationRaycastReviewCatalog : IReviewCatalog
             DatasetSha256 = derived, CandidateManifestSha256 = derived,
             CandidateFileSha256 = SituationArtifactIO.Sha256(jsonl),
             SchemaFiles = source.Identity.SchemaFiles.Append(schema).ToArray(),
-            ReviewDraft = positionPrediction ? "situation-narrative-review-v4-position-prediction-draft" :
+            ReviewDraft = closeExposure ? "situation-narrative-review-v8-close-exposure-draft" : verifiedExposure ? "situation-narrative-review-v7-verified-exposure-draft" : continuousSlope ? "situation-narrative-review-v5-continuous-slope-draft" : positionPrediction ? "situation-narrative-review-v4-position-prediction-draft" :
                 localPeek ? "situation-narrative-review-v3-local-peek-draft" : "situation-narrative-review-v2-raycast-draft"
         };
         return result;
@@ -104,7 +107,10 @@ internal sealed class SituationRaycastReviewCatalog : IReviewCatalog
             s.Round, s.Players, s.Teams, s.Bomb, s.Utilities, s.Effects, s.Geometry, s.DataQuality);
         var analysis = analyzer.Analyze(scene);
         var candidate = original with {
-            SchemaVersion = analyzer.RuleLoad.Rules.AnalysisRuleVersion == SituationAnalysisRuleLoader.PositionPredictionVersion ? PositionPredictionSchema :
+            SchemaVersion = analyzer.RuleLoad.Rules.AnalysisRuleVersion == SituationAnalysisRuleLoader.CloseExposureVersion ? CloseExposureSchema :
+                analyzer.RuleLoad.Rules.AnalysisRuleVersion == SituationAnalysisRuleLoader.VerifiedExposureVersion ? VerifiedExposureSchema :
+                analyzer.RuleLoad.Rules.AnalysisRuleVersion == SituationAnalysisRuleLoader.ContinuousSlopeVersion ? ContinuousSlopeSchema :
+                analyzer.RuleLoad.Rules.AnalysisRuleVersion == SituationAnalysisRuleLoader.PositionPredictionVersion ? PositionPredictionSchema :
                 analyzer.RuleLoad.Rules.AnalysisRuleVersion == SituationAnalysisRuleLoader.LocalPeekVersion ? LocalPeekSchema : CandidateSchema,
             Input = original.Input with { Facts = analysis.Facts.Facts,
                 AllowedEvidenceIds = analysis.Facts.Facts.Evidence.Select(e => e.Id).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray() },

@@ -448,6 +448,9 @@ internal sealed class SituationFactsAnalyzer
                     var movementQuery = visibility as ISituationLocalMoveQuery;
                     var incomplete = false;
                     var probes = 0;
+                    // Capture only the existing successful witness; never search for a shorter path.
+                    SituationVec3? exposureOrigin = null;
+                    SituationVec3? exposureTarget = null;
                     if (context.Rules.Visibility.PositionPrediction is { } prediction)
                     {
                         var projections = new Dictionary<(int, double), SituationVec3?>();
@@ -476,8 +479,15 @@ internal sealed class SituationFactsAnalyzer
                         SituationVec3? Predicted(int index, double seconds)
                         {
                             if (!projections.TryGetValue((index,seconds), out var result))
-                                projections[(index,seconds)] = result = SituationPositionPrediction.Project(
-                                    context.Scene, index, seconds, prediction, prediction.MaxSpeed * prediction.SampleSeconds[^1]);
+                            {
+                                var maxDistance=prediction.MaxSpeed*prediction.SampleSeconds[^1];
+                                result = SituationPositionPrediction.Project(context.Scene, index, seconds, prediction, maxDistance,
+                                    context.Rules.Visibility.ContinuousSlope is not null);
+                                if (result is not null && context.Rules.Visibility.ContinuousSlope is not null)
+                                    result=(visibility as ISituationSurfaceMoveQuery)?.ProjectSurface(context.Scene.Players[index].Position!,
+                                        result,maxDistance,context.Scene.Players[index].Velocity);
+                                projections[(index,seconds)] = result;
+                            }
                             return result;
                         }
                     }
@@ -489,11 +499,33 @@ internal sealed class SituationFactsAnalyzer
                         {
                             decisions["contact-local-peek"] = "possible";
                             decisions["contact-local-peek-probes"] = probes.ToString(CultureInfo.InvariantCulture);
-                            decisions["contact-risk"] = "medium";
+                            var exposureRisk = SituationContactRisk.Medium;
+                            string? exposureText = null;
+                            if (context.Rules.AnalysisRuleVersion is SituationAnalysisRuleLoader.VerifiedExposureVersion or SituationAnalysisRuleLoader.CloseExposureVersion)
+                            {
+                                var delta = SituationVisibilityQuery.World(exposureTarget!) - SituationVisibilityQuery.World(exposureOrigin!);
+                                var distance = Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
+                                // Compare the recorded world-unit distance at canonical precision.
+                                if (peek.HighExposureDistance is { } highDistance && Round(distance) <= highDistance)
+                                    exposureRisk = SituationContactRisk.High;
+                                const double estimatedSpeed = 200;
+                                var seconds = distance / estimatedSpeed;
+                                var slot = exposureOrigin == a ? candidate.T.Player.Slot : candidate.CT.Player.Slot;
+                                decisions["contact-local-peek-distance-units"] = Number(distance);
+                                decisions["contact-local-peek-estimated-seconds"] = Number(seconds);
+                                decisions["contact-local-peek-estimated-speed"] = Number(estimatedSpeed);
+                                decisions["contact-local-peek-distance-metric"] = "horizontal";
+                                decisions["contact-local-peek-moving-slot"] = slot;
+                                var riskText = exposureRisk == SituationContactRisk.High ? "高" : "中";
+                                exposureText = $"双方当前被地图遮挡；已验证 {slot} 单方水平移动约 {Number(distance)} 单位后可暴露，按水平速度 200 单位/秒估算约 {Number(seconds)} 秒可达，潜在接触风险为{riskText}。路径通过身体、地面和射线检查；距离为本次成功探测结果，可能存在更短路径，不代表实际移动或交火时间。探测上限 600 单位，未验证连续转弯、烟雾与穿透射击。";
+                            }
+                            decisions["contact-risk"] = exposureRisk == SituationContactRisk.High ? "high" : "medium";
                             evidence.Add("contact-risk", [$"/players/{candidate.T.PlayerIndex}/position", $"/players/{candidate.CT.PlayerIndex}/position"],
-                                "contact.local-peek", $"双方当前被地图遮挡；单方在 {Number(peek.Distance)} 个地图单位内的局部移动探测发现可能暴露的射线通路，潜在接触风险为中。未预测移动意图或接触时间，未验证连续转弯、烟雾与穿透射击。");
+                                "contact.local-peek", exposureText ?? (peek.ProbeSpacing is not null
+                                    ? "双方当前被地图遮挡；按每秒 200 单位估算的 3 秒范围（600 单位）内，单方局部探测发现可能暴露的射线通路，潜在接触风险为中。这是可达范围假设，不是实际移动预测，未验证连续转弯、烟雾与穿透射击。"
+                                    : $"双方当前被地图遮挡；单方在 {Number(peek.Distance)} 个地图单位内的局部移动探测发现可能暴露的射线通路，潜在接触风险为中。未预测移动意图或接触时间，未验证连续转弯、烟雾与穿透射击。"));
                             // A hypothetical position must not become the present local battle center.
-                            return new(SituationContactRisk.Medium, true, null);
+                            return new(exposureRisk, true, null);
                         }
                     }
                     decisions["contact-local-peek-probes"] = probes.ToString(CultureInfo.InvariantCulture);
@@ -523,7 +555,12 @@ internal sealed class SituationFactsAnalyzer
                             var status = visibility!.Query(position, target);
                             if (status == SituationVisibility.Clear)
                             {
-                                if (Reachable(origin, position)) return true;
+                                if (Reachable(origin, position))
+                                {
+                                    exposureOrigin = origin;
+                                    exposureTarget = position;
+                                    return true;
+                                }
                             }
                             if (status == SituationVisibility.Unknown) incomplete = true;
                         }
@@ -532,13 +569,21 @@ internal sealed class SituationFactsAnalyzer
 
                     bool Reachable(SituationVec3 origin, SituationVec3 target)
                     {
+                        if (peek.ProbeSpacing is not null)
+                        {
+                            // The slope movement check validates its origin; do not generate all 80 local targets for a prediction.
+                            if (origin==target) return (visibility as ISituationSurfaceMoveQuery)?.ProjectSurface(origin,target,1) is not null;
+                            if (!movementChecks.TryGetValue((origin,target),out var allowed))
+                                movementChecks[(origin,target)]=allowed=movementQuery?.CanMoveLocal(origin,target,peek.Distance) ?? false;
+                            return allowed;
+                        }
                         if (!moves.TryGetValue(origin, out var positions))
                             moves[origin] = positions = movementQuery?.LocalTargets(origin);
                         if (positions is null) return false;
                         if (origin == target) return true;
                         if (!movementChecks.TryGetValue((origin,target), out var canMove))
                             movementChecks[(origin,target)] = canMove = movementQuery!.CanMoveLocal(origin,target,
-                                context.Rules.Visibility.PositionPrediction is { } prediction ? prediction.MaxSpeed * prediction.SampleSeconds[^1] : null);
+                                context.Rules.Visibility.PositionPrediction is { } prediction ? Math.Max(peek.Distance,prediction.MaxSpeed * prediction.SampleSeconds[^1]) : null);
                         return canMove;
                     }
                 }

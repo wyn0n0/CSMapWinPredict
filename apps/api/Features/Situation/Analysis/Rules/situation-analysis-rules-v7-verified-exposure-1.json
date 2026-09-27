@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "situation-analysis-rule-config-v1",
+  "analysisRuleVersion": "situation-analysis-rules-v7-verified-exposure-1",
+  "map": "de_mirage",
+  "sceneSchemaVersion": "minimap-scene-v1",
+  "sceneBuilderVersion": "situation-scene-builder-v1.3",
+  "geometryVersion": "mirage-geometry-v1",
+  "factsSchemaVersion": "situation-facts-v1",
+  "comparisonEpsilon": 5E-07,
+  "formation": {
+    "linkDistance": 0.1,
+    "groupedCoverageRatio": 0.8,
+    "groupedMaxDiameter": 0.18,
+    "splitMinClusterSize": 2,
+    "splitCoverageRatio": 0.8,
+    "splitMinCentroidDistance": 0.22
+  },
+  "pressure": {
+    "siteRadius": 0.16,
+    "minPlayers": 2,
+    "minHistorySeconds": 1.5,
+    "minApproachDelta": 0.04
+  },
+  "contact": {
+    "highDistance": 0.06,
+    "mediumDistance": 0.12,
+    "cueDistance": 0.2,
+    "facingDotMin": 0.5,
+    "minHistorySeconds": 1.0,
+    "minClosingDelta": 0.03
+  },
+  "isolation": {
+    "allyDistanceMin": 0.18,
+    "enemyCloserMargin": 0.04
+  },
+  "spatial": {
+    "localRadius": 0.14,
+    "alivePerPlayer": 1.0,
+    "aliveMaxContribution": 2.0,
+    "healthPerHundred": 0.35,
+    "healthMaxContribution": 1.0,
+    "localPerPlayer": 0.5,
+    "localMaxContribution": 1.0,
+    "pressureContribution": 0.5,
+    "plantedBombContribution": 0.75,
+    "defusingBombContribution": 0.75,
+    "isolationContribution": 0.5,
+    "requiredComponents": 4,
+    "decisiveScore": 1.0,
+    "evenScore": 0.35
+  },
+  "confidence": {
+    "boundaryBand": 0.02,
+    "lowUnknownCount": 2
+  },
+  "qualityImpacts": {
+    "missing-frame": [
+      "formation",
+      "pressure",
+      "contact",
+      "isolation",
+      "spatial"
+    ],
+    "stale-frame": [
+      "formation",
+      "pressure",
+      "contact",
+      "isolation",
+      "spatial"
+    ],
+    "history-truncated": [
+      "pressure",
+      "contact"
+    ],
+    "history-file-boundary": [
+      "pressure",
+      "contact"
+    ],
+    "history-round-boundary": [
+      "pressure",
+      "contact"
+    ],
+    "history-gap": [
+      "pressure",
+      "contact"
+    ],
+    "roster-incomplete": [
+      "formation",
+      "pressure",
+      "contact",
+      "isolation",
+      "spatial"
+    ],
+    "position-invalid": [
+      "formation",
+      "pressure",
+      "contact",
+      "isolation",
+      "spatial"
+    ],
+    "position-outside-radar": [
+      "formation",
+      "pressure",
+      "contact",
+      "isolation",
+      "spatial"
+    ],
+    "region-unknown": [
+      "contested",
+      "contact"
+    ],
+    "health-state-conflict": [
+      "spatial"
+    ]
+  },
+  "templatePriority": [
+    "bomb.state",
+    "spatial-advantage",
+    "contact-risk",
+    "pressure.side",
+    "contested-regions",
+    "isolated-side",
+    "alive.t",
+    "alive.ct",
+    "total-health.t",
+    "total-health.ct",
+    "formation.t",
+    "formation.ct",
+    "input-quality",
+    "confidence"
+  ],
+  "visibility": {
+    "assetVersion": "awpy-mirage-client-2000917",
+    "assetSha256": "d5e3aabe17583f07ca899236d015ecc46f7e542fa093ada4782944941b41e679",
+    "sampleHeights": [
+      36,
+      52,
+      64
+    ],
+    "endpointEpsilon": 0.05,
+    "continuousSlope": { "maxSlopeDegrees": 45, "surfaceTolerance": 0.5 },
+    "positionPrediction": { "sampleSeconds": [0.25, 0.5, 0.75, 1.0], "maxSpeed": 320, "maxVerticalSpeed": 4 },
+    "localPeek": {
+      "distance": 600, "probeSpacing": 64,
+      "bodyRadius": 16,
+      "groundTolerance": 4,
+      "supportStep": 16
+    }
+  }
+}

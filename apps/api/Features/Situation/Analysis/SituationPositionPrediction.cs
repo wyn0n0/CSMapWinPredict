@@ -7,7 +7,7 @@ namespace CsDemoMap.Api.Services;
 internal static class SituationPositionPrediction
 {
     internal static SituationVec3? Project(MinimapSceneV1 scene, int index, double seconds,
-        SituationPositionPredictionRuleSet rules, double maxDistance)
+        SituationPositionPredictionRuleSet rules, double maxDistance, bool continuousSlope = false)
     {
         var player = scene.Players[index];
         if (player.Position is not { } p || player.Velocity is not { } v ||
@@ -18,7 +18,7 @@ internal static class SituationPositionPrediction
                 path.StartsWith($"/players/{index}/position", StringComparison.Ordinal)))) return null;
         var scale = MapFeatureGeometries.Find("de_mirage")!.Scale * 1024;
         var speed = Math.Sqrt(v.X*v.X + v.Y*v.Y) * scale;
-        if (!double.IsFinite(speed) || speed > rules.MaxSpeed || Math.Abs(v.Z)*scale > rules.MaxVerticalSpeed ||
+        if (!double.IsFinite(speed) || speed > rules.MaxSpeed || Math.Abs(v.Z)*scale > (continuousSlope ? speed+rules.MaxVerticalSpeed : rules.MaxVerticalSpeed) ||
             speed*seconds > maxDistance) return null;
         // Scene velocity already uses radar coordinates, including the inverted Y axis.
         var target = new SituationVec3(p.X + v.X*seconds, p.Y + v.Y*seconds, p.Z);

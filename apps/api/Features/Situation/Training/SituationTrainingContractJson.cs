@@ -317,7 +317,7 @@ internal static class SituationTrainingContractJson
     internal static void Validate(SituationReviewCandidateV1 candidate)
     {
         var errors = new List<string>();
-        Require(candidate.SchemaVersion is SituationTrainingContractVersions.ReviewCandidate or SituationRaycastReviewCatalog.CandidateSchema or SituationRaycastReviewCatalog.LocalPeekSchema or SituationRaycastReviewCatalog.PositionPredictionSchema,
+        Require(candidate.SchemaVersion is SituationTrainingContractVersions.ReviewCandidate or SituationRaycastReviewCatalog.CandidateSchema or SituationRaycastReviewCatalog.LocalPeekSchema or SituationRaycastReviewCatalog.PositionPredictionSchema or SituationRaycastReviewCatalog.ContinuousSlopeSchema or SituationRaycastReviewCatalog.VerifiedExposureSchema or SituationRaycastReviewCatalog.CloseExposureSchema,
             "review candidate schemaVersion mismatch", errors);
         Require(candidate.ReviewOrdinal >= 1, "review candidate ordinal is invalid", errors);
         Require(IsPrefixedSha256(candidate.SampleId, "sample-"), "review candidate sampleId is invalid", errors);
@@ -343,6 +343,9 @@ internal static class SituationTrainingContractJson
                 try
                 {
                     SituationContractValidator.Validate(input.Facts, RestoreValidationScene(input.Scene),
+                        candidate.SchemaVersion == SituationRaycastReviewCatalog.CloseExposureSchema ? SituationAnalysisRuleLoader.CloseExposureVersion :
+                        candidate.SchemaVersion == SituationRaycastReviewCatalog.VerifiedExposureSchema ? SituationAnalysisRuleLoader.VerifiedExposureVersion :
+                        candidate.SchemaVersion == SituationRaycastReviewCatalog.ContinuousSlopeSchema ? SituationAnalysisRuleLoader.ContinuousSlopeVersion :
                         candidate.SchemaVersion == SituationRaycastReviewCatalog.PositionPredictionSchema ? SituationAnalysisRuleLoader.PositionPredictionVersion :
                         candidate.SchemaVersion == SituationRaycastReviewCatalog.LocalPeekSchema ? SituationAnalysisRuleLoader.LocalPeekVersion :
                         candidate.SchemaVersion == SituationRaycastReviewCatalog.CandidateSchema

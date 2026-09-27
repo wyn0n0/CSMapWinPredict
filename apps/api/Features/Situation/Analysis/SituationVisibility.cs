@@ -17,8 +17,13 @@ internal interface ISituationLocalMoveQuery
     bool CanMoveLocal(SituationVec3 origin, SituationVec3 target, double? maxDistance = null);
 }
 
+internal interface ISituationSurfaceMoveQuery
+{
+    SituationVec3? ProjectSurface(SituationVec3 origin, SituationVec3 target, double maxDistance, SituationVec3? velocity = null);
+}
+
 // Static world occlusion only. No FOV, smoke, penetration or navigation inference.
-internal sealed class SituationVisibilityQuery : ISituationVisibilityQuery, ISituationLocalMoveQuery
+internal sealed partial class SituationVisibilityQuery : ISituationVisibilityQuery, ISituationLocalMoveQuery, ISituationSurfaceMoveQuery
 {
     private static readonly double[] BodyHeights = [16, 36, 64];
     private readonly SituationCollisionMesh? mesh;
@@ -55,6 +60,7 @@ internal sealed class SituationVisibilityQuery : ISituationVisibilityQuery, ISit
     public IReadOnlyList<SituationVec3>? LocalTargets(SituationVec3 origin)
     {
         if (mesh is null || !Valid(origin) || rules.LocalPeek is not { } peek) return null;
+        if (rules.ContinuousSlope is not null) return SlopeTargets(origin);
         var start = World(origin);
         if (!Supported(start) || mesh.IsBlocked(start with { Z = start.Z + 2 }, start with { Z = start.Z + 64 }, rules.EndpointEpsilon))
             return null; // airborne, wrong floor, insufficient standing clearance or absent geometry
@@ -78,6 +84,7 @@ internal sealed class SituationVisibilityQuery : ISituationVisibilityQuery, ISit
     public bool CanMoveLocal(SituationVec3 origin, SituationVec3 target, double? maxDistance = null)
     {
         if (mesh is null || rules.LocalPeek is not { } peek || !Valid(origin) || !Valid(target)) return false;
+        if (rules.ContinuousSlope is not null) return CanMoveSlope(origin, target, maxDistance ?? peek.Distance);
         var start = World(origin); var end = World(target); var delta = end-start;
         var length = Math.Sqrt(delta.X*delta.X + delta.Y*delta.Y);
         var limit = maxDistance ?? peek.Distance;
@@ -127,7 +134,7 @@ internal readonly record struct CollisionTriangle(CollisionPoint A, CollisionPoi
 
 // AWMH v1 is documented by awpy-data/scripts/process_geometry.py.
 // Immutable after construction; one BVH is shared by all queries of an analyzer.
-internal sealed class SituationCollisionMesh
+internal sealed partial class SituationCollisionMesh
 {
     private readonly CollisionTriangle[] triangles;
     private readonly Node root;

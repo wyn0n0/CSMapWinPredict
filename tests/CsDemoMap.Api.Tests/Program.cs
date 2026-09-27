@@ -6,6 +6,10 @@ if (args is ["--verify-situation-raycast"])
 {
     SituationVisibilityVerifier.Verify();
     SituationPositionPredictionVerifier.Verify();
+    SituationContinuousSlopeVerifier.Verify();
+    SituationExtendedLocalPeekVerifier.Verify();
+    SituationVerifiedExposureVerifier.Verify();
+    SituationVerifiedExposureVerifier.VerifyCloseExposure();
     await SituationRaycastReviewVerifier.VerifyAsync(CancellationToken.None);
     return 0;
 }

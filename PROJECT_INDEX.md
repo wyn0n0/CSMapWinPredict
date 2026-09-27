@@ -1,16 +1,17 @@
 # CS Demo Map 项目索引
 
-> 最后核验：2026-09-26。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
+> 最后核验：2026-09-27。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
 
 接触风险修复：修复前 checkpoint `3965b64` / `checkpoint/pre-contact-raycast-20260925`。
 `codex/contact-raycast` 增加三维静态射线规则 `situation-analysis-rules-v2-raycast-1`（不使用导航网格），
 通过 20 场 / 6,960 场景抽样重放；历史冻结 v1 和已有复核数据保留。
 实现入口、测试结果、资产限制与回退见 [射线修复报告](docs/contact-raycast-report-20260926.md)。
 
-步骤八当前试用 v4-position-prediction-1：局部移动探测加 1 秒恒速位置预测，复用身体/地面/射线检查，保留原 v1 时点及类别。
-当前工作区 `datasets/situation-stage4-review-position-prediction-work-20260926-r1`，人工目标 50 条（36/7/7），启动为 0/50；旧 v3 的 3 条批准另行保留。
-20 场 / 6,960 场景中 35 条含预测证据，新增 7 条中风险；同轮 p95 2.4720 ms，对照 v3 2.3485 ms。准确率待人工确认。
-详见 [1 秒预测报告](situation-implementation/stage4-position-prediction-report-20260926.md)；前序 checkpoint `f6be0cc` 与 [局部探测报告](situation-implementation/stage4-local-peek-report-20260926.md) 保留。
+步骤八当前试用 v8-close-exposure-1：已验证水平暴露距离 ≤150 单位判为高风险，超过保持中风险；继承 600 单位局部探测、连续斜坡和 1 秒预测，保留成功即返回。20 场 / 6,960 场景中 500 条 medium→high，其余标签及探测计数不变。666 项定向检查与六版本复核集成通过。
+工作区 `datasets/situation-stage4-review-close-exposure-work-20260927-r1`，http://127.0.0.1:5179，50 条（36/7/7）已全部人工 approved，用户于 2026-09-27 确认通过；revision 51，无未复核、拒绝或 blocking issue。reviewVersion 尚未冻结，下一步冻结器需适配用户确认的 50 条范围。旧 v7 / v5 工作区、既有人工决定和 checkpoint `ef387ca` 保留。详见 [150 单位阈值报告](situation-implementation/stage4-close-exposure-report-20260927.md)；[距离说明报告](situation-implementation/stage4-verified-exposure-report-20260927.md) 为 v7 历史。
+历史边界见 [连续斜坡报告](situation-implementation/stage4-continuous-slope-report-20260926.md)、[1 秒预测报告](situation-implementation/stage4-position-prediction-report-20260926.md) 与 [局部探测报告](situation-implementation/stage4-local-peek-report-20260926.md)。
+
+此前 [600 单位局部探测实验](situation-implementation/stage4-local-peek-3s-report-20260926.md)（200 单位/秒 × 3 秒）相对 v5 在 20 场新增 473 条 medium，p95 约 1.95 倍；v7 在此实验规则上增加说明，新旧工作区隔离。
 
 ## 项目定位
 
