@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "situation-lossless-table-v2.schema.json",
+  "$ref": "#/$defs/node",
+  "$defs": {
+    "keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "node": {
+      "oneOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number",
+            "string"
+          ]
+        },
+        {
+          "type": "array",
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "enum": [
+                "o",
+                "a",
+                "t",
+                "c",
+                "r"
+              ]
+            }
+          ],
+          "allOf": [
+            {
+              "if": {
+                "prefixItems": [
+                  {
+                    "const": "o"
+                  }
+                ]
+              },
+              "then": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "prefixItems": [
+                  {
+                    "const": "o"
+                  },
+                  {
+                    "$ref": "#/$defs/keys"
+                  },
+                  {
+                    "$ref": "#/$defs/nodes"
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "prefixItems": [
+                  {
+                    "const": "a"
+                  }
+                ]
+              },
+              "then": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "prefixItems": [
+                  {
+                    "const": "a"
+                  },
+                  {
+                    "$ref": "#/$defs/nodes"
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "prefixItems": [
+                  {
+                    "const": "t"
+                  }
+                ]
+              },
+              "then": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "prefixItems": [
+                  {
+                    "const": "t"
+                  },
+                  {
+                    "$ref": "#/$defs/keys"
+                  },
+                  {
+                    "$ref": "#/$defs/nodes"
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "prefixItems": [
+                  {
+                    "const": "c"
+                  }
+                ]
+              },
+              "then": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "prefixItems": [
+                  {
+                    "const": "c"
+                  },
+                  {
+                    "$ref": "#/$defs/node"
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "prefixItems": [
+                  {
+                    "const": "r"
+                  }
+                ]
+              },
+              "then": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "prefixItems": [
+                  {
+                    "const": "r"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

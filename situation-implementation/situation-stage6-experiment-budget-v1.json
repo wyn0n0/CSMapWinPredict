@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "situation-stage6-experiment-budget-v1",
+  "status": "frozen",
+  "scope": "future first probe and first formal run; allocation only; no execution",
+  "evidenceBindings": [
+    {
+      "logicalPath": "storage:reports/situation-stage6-budget-v8-20261003-r1/runtime.json",
+      "sha256": "aa591f6f62d384e336288e350c61c02ad60f236bc52938600394cd77c9bd5de4"
+    },
+    {
+      "logicalPath": "storage:reports/situation-stage6-budget-v8-20261003-r1/budget-report.json",
+      "sha256": "b3d73c93df8041a4ac9e40aa9492667cc4d51c4dd4c6dacb31f5954ad54c20d6"
+    }
+  ],
+  "futureProbe": {
+    "originalTrainRecords": 512,
+    "epochs": 1,
+    "humanRepeat": false,
+    "optimizerUpdates": 32,
+    "microsteps": 512,
+    "sequenceTokenUpperBound": 1310720,
+    "referenceTrainingTokensPerSecond": 607.6475,
+    "estimatedTrainingSecondsUpperBound": 2157.0400602322893,
+    "planningTrainingSecondsUpperBound": 3235.5600903484337,
+    "checkpointCount": 1,
+    "checkpointPolicy": "one atomic recovery checkpoint at probe epoch end",
+    "estimatedCheckpointBytes": 519045120,
+    "samplingStatus": "manifest and coverage frozen only in TODO_6 step 7"
+  },
+  "firstFormalRun": {
+    "originalTrainRecords": 24418,
+    "originalTrainRounds": 1526,
+    "adapterParameters": 17432576,
+    "expandedEntriesPerEpoch": 24562,
+    "optimizerUpdatesPerEpoch": 1536,
+    "totalOptimizerUpdates": 3072,
+    "tailMicrostepsPerEpoch": 2,
+    "checkpointCount": 12,
+    "trainingTokens": 78210826,
+    "estimatedTrainingSeconds": 128710.84962910239,
+    "planningTrainingSeconds": 193066.2744436536,
+    "estimatedCheckpointBytes": 6228541440,
+    "storageReserveBytes": 25769803776,
+    "referenceTrainingTokensPerSecond": 607.6475,
+    "planningMargin": 1.5,
+    "evaluationOverheadSeconds": null,
+    "evaluationOverheadStatus": "unknown-until-step4-and-baselines",
+    "epochs": 2,
+    "seed": 42,
+    "checkpointEveryOptimizerSteps": 256,
+    "checkpointAtEpochEnd": true,
+    "checkpointRetention": "retain-all-no-cleanup",
+    "devEvaluation": "epoch-end",
+    "maxSelectionCandidates": 2,
+    "expectedMicrosteps": 49124
+  },
+  "limits": {
+    "additionalExperiments": "require recorded reason and a new explicit budget before execution",
+    "evaluationOverhead": "not estimated until step 4 protocol and step 5 baselines; add separately before training",
+    "timing": "planning estimate from accepted short NF4 probe throughput; not sustained-training measurement or wall-clock guarantee",
+    "determinism": "seeded shuffle; GPU kernels and platform changes may remain nondeterministic; record effective settings and RNG in the later trainer",
+    "trainingExecutionReady": false
+  }
+}

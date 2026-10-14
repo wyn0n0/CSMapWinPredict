@@ -1,0 +1,326 @@
+{
+  "schemaVersion": "situation-commentary-protocol-v1",
+  "protocolId": "stage6-commentary-20261005-v1",
+  "status": "policy-fixed-before-output",
+  "scope": "step4-protocol-and-token-budget-only",
+  "model": {
+    "modelId": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "quantization": "nf4",
+    "doubleQuant": true,
+    "computeDtype": "bfloat16",
+    "batchSize": 1,
+    "enableThinking": false,
+    "attentionBackend": "cudnn-sdpa",
+    "oneResidentModel": true
+  },
+  "input": {
+    "representationVersion": "facts-core-scene-table-v1",
+    "maxSequenceLength": 5120,
+    "maxInferenceInputTokens": 4608,
+    "generationReserveTokens": 512,
+    "maxCompletionTokens": 512,
+    "preserveAllFacts": true,
+    "preserveSelectedCore": true,
+    "truncation": false,
+    "tokenBudgetScope": "all frozen train/dev inputs x A-D, plus 50 diagnostic x A-D and repair stress fixtures",
+    "newLabels": "not created in step4; each future label must pass full assistant/EOS sequence <=5120 and completion <=512 before use",
+    "testBudget": "only isolated fixed-policy entry after final candidate freeze; no test input for A-D tuning"
+  },
+  "generation": {
+    "do_sample": false,
+    "num_beams": 1,
+    "max_new_tokens": 512,
+    "temperature": null,
+    "top_p": null,
+    "top_k": null,
+    "min_p": null,
+    "repetition_penalty": 1.0,
+    "use_cache": true,
+    "eos_token_id": [
+      151645,
+      151643
+    ],
+    "pad_token_id": 151643,
+    "requestWallTimeoutSeconds": 60,
+    "modelLoadTimeoutSeconds": 600,
+    "seed": 42,
+    "stop": "first fixed EOS or max_new_tokens; length stop is truncated failure even if JSON looks complete",
+    "effectiveConfig": "persist and check every effective parameter before requests; base generation_config sampling defaults must be overridden"
+  },
+  "baselines": {
+    "B0": {
+      "kind": "deterministic-template",
+      "input": "complete Facts only",
+      "ruleVersion": "situation-analysis-rules-v8-close-exposure-1",
+      "source": "apps/api/Features/Situation/Analysis/SituationTemplateNarrator.cs",
+      "method": "Create",
+      "notModelSuccess": true,
+      "neverUseReviewedLabelAsTemplate": true
+    },
+    "B1": "A",
+    "B2": {
+      "status": "unselected-until-step5-dev-results",
+      "candidates": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "selectionSplit": "dev",
+      "freezeBeforeOptimizer": true
+    },
+    "historicalFactsOnly": {
+      "config": "situation-implementation/situation-facts-prompt-v1.json",
+      "role": "historical reference only; not input-equivalent to A-D"
+    },
+    "loraComparison": "same frozen B2 prompt/plan/rules/input/quantization/decoding; only adapter differs"
+  },
+  "diagnostics": {
+    "seed": 42,
+    "counts": {
+      "train": 20,
+      "dev": 30
+    },
+    "includeAllReviewedDev": true,
+    "expectedReviewedDev": 7,
+    "minimumMatches": {
+      "train": 10,
+      "dev": 8
+    },
+    "onePerRoundForAdditionalRows": true,
+    "categories": [
+      "five-v-five",
+      "clutch",
+      "post-plant",
+      "factor-conflict",
+      "low-quality",
+      "unknown"
+    ],
+    "minimumPerCategory": {
+      "train": 2,
+      "dev": 3
+    },
+    "minimumPerCategoryOverrides": {
+      "train": {"factor-conflict": 1},
+      "dev": {"factor-conflict": 0}
+    },
+    "coverageLimitation": "Input-only inventory before any output found exactly 1 factor-conflict train row and 0 dev rows; include the real train row, disclose absent dev coverage. Never fabricate dev coverage or draw from test. Failed r1 retained.",
+    "selection": "mandatory reviewed dev; rare deficient categories first; missing matches; fill by new match then stable sha256(seed,sampleId); no output/label-text selection",
+    "humanEvaluation": "all 50 actual model outputs require fresh blind review in step5; additional 23 dev pending; original 7 reported separately",
+    "testParticipation": false
+  },
+  "rubric": {
+    "version": "commentary-rubric-v1",
+    "scores": {
+      "focus": [
+        "无重点或重点错误",
+        "列出重要事实",
+        "说明当前核心态势"
+      ],
+      "synthesis": [
+        "只复述或推论错误",
+        "简单比较",
+        "合理联系依据并解释意义"
+      ],
+      "plainness": [
+        "工程术语堆积或难懂",
+        "基本能懂",
+        "普通观众能顺畅理解"
+      ],
+      "uncertainty": [
+        "编造或过度断言",
+        "泛化地说不足",
+        "指明缺失条件及其影响"
+      ]
+    },
+    "separateJudgments": [
+      "factFaithful",
+      "accurateAndUseful",
+      "majorContradiction",
+      "obviousHallucination",
+      "forbiddenContent",
+      "unsupportedNewFact"
+    ],
+    "reasonRequired": true,
+    "blankMeansPending": true,
+    "approvedOldLabelIsNotNewOutputApproval": true,
+    "blind": {
+      "seed": 42,
+      "randomizeGroupOrderPerSample": true,
+      "reviewerCanSeeCurrentFactsCoreAndSupportRules": true,
+      "hideGroupAdapterEpochTimingAndFileOrder": true,
+      "retainPrivateAliasMap": true,
+      "pairwisePreference": [
+        "left",
+        "right",
+        "tie",
+        "both-fail"
+      ]
+    }
+  },
+  "metrics": {
+    "denominator": "every scheduled original request, including empty/timeout/OOM/truncated/error; B0 separate; retries never add/remove denominator",
+    "rawLegal": "runtime completed with EOS AND strict single JSON (no duplicate keys/NaN) AND Narrative Schema AND existing field/content constraints; raw text preserved",
+    "factFaithful": "repaired-or-original output must be legal, supported, noncontradictory and free of unsupported new facts; parse/runtime failures are not faithful; unresolved semantic review blocks selection",
+    "errorUnion": "sample-level union of unknownEvidenceId OR factualContradiction OR unsupportedNewFact; report union and each component; failures additionally counted in faithfulness denominator",
+    "views": [
+      "raw",
+      "after-at-most-one-format-repair"
+    ],
+    "partitions": [
+      "diagnostic-train20",
+      "diagnostic-dev30",
+      "original-reviewed-dev7",
+      "diagnostic-total50-route-screen-only"
+    ],
+    "primary": [
+      "rawLegalRate",
+      "postRepairFaithfulRate",
+      "postRepairAccurateUsefulRate"
+    ],
+    "intervals": {
+      "proportions": "Wilson 95%, show numerator/denominator; descriptive only for correlated small sample",
+      "pairedDifferences": "point percentage-point difference plus match-cluster paired bootstrap 10000 draws seed42, train/dev separate; no significance claim"
+    },
+    "diagnosticsOnly": [
+      "verbatimEvidenceCopyRate",
+      "summaryConcatenationRate",
+      "stringOverlap"
+    ]
+  },
+  "screen": {
+    "scope": "route viability, not B2/checkpoint ranking",
+    "sampleCount": 50,
+    "majorContradictionMax": 0,
+    "rawLegalMin": 48,
+    "pairwiseBetterThanAMin": 30,
+    "plainnessMeanMustIncrease": true,
+    "accurateUsefulRateMustIncrease": true,
+    "trainDevSeparate": true,
+    "unresolvedReviews": "pending, cannot declare passed"
+  },
+  "selection": {
+    "B2": {
+      "split": "diagnostic-dev30",
+      "exclude": "forbidden content or major factual contradiction; unresolved review disallows selection",
+      "ranking": [
+        "postRepairFaithfulRate desc",
+        "postRepairAccurateUsefulRate desc",
+        "rubricTotalMean desc",
+        "rawLegalRate desc"
+      ],
+      "tieBreak": [
+        "fewer repair calls",
+        "simpler fixed order A B C D"
+      ],
+      "diagnosticTrainNeverRanks": true,
+      "recordExactGroupAndReason": true,
+      "freezeAllBindings": true
+    },
+    "checkpoint": {
+      "frequency": "epoch-end only",
+      "epochs": 2,
+      "maxTrainingRuns": 1,
+      "maxCandidates": 2,
+      "maxCheckpointEvaluations": 2,
+      "expectedPilotUpdates": [
+        13,
+        26
+      ],
+      "ranking": [
+        "postRepairFaithfulRate desc",
+        "postRepairAccurateUsefulRate desc",
+        "rawLegalRate desc",
+        "rubricTotalMean desc"
+      ],
+      "tieBreak": "earlier epoch (less exposure)",
+      "onlyDev": true,
+      "keepAllResults": true,
+      "finalCandidateMustMeetMainComparison": true
+    },
+    "mainComparison": {
+      "nonRegressionAllPrimary": true,
+      "minGainPercentagePoints": 8,
+      "atLeastOnePrimaryImproves": true,
+      "sameSamplesDenominatorsPromptRulesQuantization": true,
+      "ceilingProblem": "record before opening test; do not lower gate or replace B2 with weaker baseline"
+    }
+  },
+  "finalTest": {
+    "scope": "all rows of frozen 8-match test partition for automatic checks; only original 7 approved paired test scenes for human review",
+    "history": "observed in earlier rule acceptance/human review; not external blind test",
+    "groups": [
+      "B0",
+      "B1=A",
+      "frozen B2",
+      "single frozen adapter"
+    ],
+    "deduplicateWhenB1EqualsB2": true,
+    "onceAfterSelectionFreeze": true,
+    "thresholds": {
+      "rawLegalMin": 0.98,
+      "postRepairLegalMin": 0.995,
+      "errorUnionMax": 0.02,
+      "humanObviousHallucinationMax": 0.05,
+      "humanAccurateUsefulMin": 0.85,
+      "forbiddenContentMax": 0
+    },
+    "smallN": {
+      "humanN": 7,
+      "oneCasePercentagePoints": 14.285714285714286,
+      "hallucinationAllowed": 0,
+      "accurateUsefulRequired": 6
+    },
+    "failure": "retain report and template fallback; never choose another adapter or retune on test"
+  },
+  "recovery": {
+    "maxInfrastructureResumes": 1,
+    "immutableRequestIds": true,
+    "identicalBindingsRequired": true,
+    "atomicTerminalRecords": true,
+    "completedRequestsNeverRerun": true,
+    "modelFailuresNeverRetry": true,
+    "eligibleInfrastructure": "process/host interruption before durable terminal result; after dispatch with unknown outcome record indeterminate failure in denominator, do not silently retry",
+    "resume": "only not-dispatched IDs; recheck all hashes, preserve prior partial output/logs",
+    "sourceOrConfigDrift": "new run and new frozen protocol; never overwrite existing outputs"
+  },
+  "resources": {
+    "generationCalibrationOriginalRequests": 10,
+    "ADOriginalRequests": 200,
+    "B0CpuRequests": 50,
+    "maxRepairCalls": 210,
+    "maxTotalModelCalls": 420,
+    "maxOutputTokens": 215040,
+    "hardRequestWallSeconds": 25200,
+    "hardModelLoadSeconds": 600,
+    "storageReserveBytes": 5368709120,
+    "expectedTime": "unknown until step5 calibration; hard ceiling is not throughput estimate",
+    "vramAndLatency": "not measured by step4 tokenization; no old 2560 evidence substituted",
+    "training": "no optimizer calls authorized by protocol alone"
+  },
+  "metamorphic": {
+    "status": "recipe frozen; generated outputs pending step5/6",
+    "cases": [
+      {
+        "id": "known-count-change",
+        "change": "change one living player only through a legal synthetic Scene, recompute team totals/Facts/evidence with frozen analyzer; preserve unrelated phase",
+        "expected": "correct new count and number comparison; no invented location or future result"
+      },
+      {
+        "id": "bomb-phase-change",
+        "change": "legal carried -> planted paired synthetic Scene/Facts, update carrier/site and time unknown coherently via frozen builder/analyzer",
+        "expected": "acknowledge post-plant objective; no invented remaining explosion/defuse time"
+      }
+    ],
+    "notMixedWithRealData": true,
+    "notUsedToTuneTest": true
+  },
+  "execution": {
+    "protocolReadyRequires": "complete immutable selection/config/rules/schema/code/tokenizer/source bindings and all budget checks",
+    "modelGenerationExecuted": false,
+    "optimizerUpdates": 0,
+    "generationExecutionReady": false,
+    "trainingExecutionReady": false
+  }
+}

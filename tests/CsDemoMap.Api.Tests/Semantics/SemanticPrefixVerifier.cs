@@ -24,6 +24,18 @@ internal static class SemanticPrefixVerifier
                 throw new InvalidOperationException($"Prefix replay mismatch at {expectedFrames[i].Tick}");
         var fullFeatures = new AsOfTickFeatureBuilder(full);
         var prefixFeatures = new AsOfTickFeatureBuilder(prefix);
+        var spatial = new WinSpatialFeatureBuilder(full.Metadata.MapName, new(861.32, 582.716));
+        var fullSemantic = full.Semantics.Frames.ToDictionary(f => f.Tick);
+        var fullByTick = full.Frames.ToDictionary(f => f.Tick);
+        var prefixByTick = prefix.Frames.ToDictionary(f => f.Tick);
+        foreach (var sample in prefix.Semantics.Frames.Where(f => f.Phase is "live" or "post-plant"))
+        {
+            var fullFrame = fullByTick[sample.Tick];
+            var prefixFrame = prefixByTick[sample.Tick];
+            if (JsonSerializer.Serialize(spatial.Build(fullFrame, fullSemantic[sample.Tick])) !=
+                JsonSerializer.Serialize(spatial.Build(prefixFrame, sample)))
+                throw new InvalidOperationException($"Prefix spatial feature mismatch at {sample.Tick}");
+        }
         foreach (var frame in prefix.Frames.Where(f => f.Round.Phase is "live" or "post-plant"))
             if (JsonSerializer.Serialize(fullFeatures.Build(frame)) != JsonSerializer.Serialize(prefixFeatures.Build(frame)))
                 throw new InvalidOperationException($"Prefix feature mismatch at {frame.Tick}");

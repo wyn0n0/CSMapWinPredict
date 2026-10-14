@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "situation-token-budget-config-v1",
+  "pilot": "situation-stage4-pilot-20260919-r10",
+  "pilotManifestSha256": "439d7e184d92e3565adb93cb7ae7e38914c6773e2bf1e170672178c8c94456e8",
+  "trainSha256": "4b8c1eec7608d6fdd95d3faa2c086d41ad237da60147ae4a3de6333f77e4a5b1",
+  "splitSha256": "fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f",
+  "representationConfigSha256": "5e0f7b57d127c81b004b5524d2f5b8e6af1193bc8d30b57e56a78d706d7a6a87",
+  "budgets": [1024, 768],
+  "percentileMethod": "nearest-rank",
+  "enableThinking": false,
+  "truncation": false,
+  "addSpecialTokensAfterRendering": false,
+  "assistantTarget": "complete canonical Narrative JSON followed by template EOS and newline",
+  "purpose": "representation-measurement-only",
+  "trainable": false
+}

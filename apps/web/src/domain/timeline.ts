@@ -245,6 +245,7 @@ export function winPredictionAt(
   points: WinPredictionPoint[],
   timeSeconds: number,
   phase: string,
+  roundBoundaryTick: number,
   maxAgeSeconds = 1.5,
 ): WinPredictionPoint | null {
   if (phase !== 'live' && phase !== 'post-plant') return null
@@ -261,26 +262,10 @@ export function winPredictionAt(
   if (high < 0) return null
   const from = points[high]
   const age = timeSeconds - from.timeSeconds
-  if (from.phase !== phase || age < 0 || age > maxAgeSeconds) return null
+  if (from.phase !== phase || from.tick < roundBoundaryTick || age < 0 || age > maxAgeSeconds) return null
 
-  const to = points[high + 1]
-  const canInterpolate = to
-    && to.roundId === from.roundId
-    && to.segmentId === from.segmentId
-    && to.phase === from.phase
-    && to.timeSeconds > from.timeSeconds
-    && to.timeSeconds - from.timeSeconds <= maxAgeSeconds
-  if (!canInterpolate) return from
-
-  const amount = Math.min(1, Math.max(0,
-    (timeSeconds - from.timeSeconds) / (to.timeSeconds - from.timeSeconds)))
-  return {
-    ...from,
-    tick: Math.round(from.tick + (to.tick - from.tick) * amount),
-    timeSeconds,
-    tWin: from.tWin + (to.tWin - from.tWin) * amount,
-    ctWin: from.ctWin + (to.ctWin - from.ctWin) * amount,
-  }
+  // Hold the last observed value, including its timestamp; a later sample may contain future events.
+  return from
 }
 
 export function utilityPointAt(points: UtilityPoint[], tick: number): UtilityPoint | null {

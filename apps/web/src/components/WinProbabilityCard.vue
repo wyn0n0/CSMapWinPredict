@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { WinPredictionPoint } from '../domain/timeline'
+import { formatTime, type WinPredictionPoint } from '../domain/timeline'
 
 const props = defineProps<{
   prediction: WinPredictionPoint | null
@@ -11,8 +11,11 @@ const props = defineProps<{
 
 const tPercent = computed(() => Math.round((props.prediction?.tWin ?? 0) * 100))
 const ctPercent = computed(() => 100 - tPercent.value)
+const sampleTimeLabel = computed(() => props.prediction
+  ? `采样于 ${formatTime(props.prediction.timeSeconds)} · ${props.prediction.timeSeconds.toFixed(3)} 秒`
+  : '')
 const accessibleLabel = computed(() => props.prediction
-  ? `第 ${props.prediction.roundNumber} 回合实时胜率，T 方 ${tPercent.value}%，CT 方 ${ctPercent.value}%`
+  ? `第 ${props.prediction.roundNumber} 回合实时胜率，T 方 ${tPercent.value}%，CT 方 ${ctPercent.value}%，${sampleTimeLabel.value}`
   : props.statusLabel)
 </script>
 
@@ -44,6 +47,7 @@ const accessibleLabel = computed(() => props.prediction
         <span>ROUND {{ prediction.roundNumber }}</span>
         <span :title="sourceLabel">{{ sourceLabel }}</span>
       </div>
+      <div class="prediction-meta">{{ sampleTimeLabel }}</div>
     </div>
 
     <div v-else class="prediction-empty" role="status">
@@ -148,7 +152,6 @@ const accessibleLabel = computed(() => props.prediction
 
 .probability-track span {
   min-width: 0;
-  transition: width 180ms linear;
 }
 
 .probability-t { background: var(--t); }

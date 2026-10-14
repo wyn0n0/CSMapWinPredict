@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "situation-representation-candidate-v2",
+  "version": "lossless-table-v2-candidate",
+  "parentRepresentation": "compact-v1",
+  "status": "experimental-not-adopted",
+  "codecVersion": "situation-lossless-table-v2",
+  "payloadSchema": "schemas/situation/situation-lossless-table-v2.schema.json",
+  "systemSuffix": "候选表编码为递归JSON：标量原样；[o,键,值]为对象；[a,值]为数组；[t,键,列,行数]为对象数组；[c,值,次数]为重复数组；[r,首项,整数步长,项数]为整数等差数组。键沿用compact-v1，列也按同规则解码。不得省略未知值、轨迹点、Facts或证据。",
+  "inputPrefix": "<situation-input-lossless-table-v2>",
+  "outputPrefix": "<situation-output>",
+  "numericRounding": false,
+  "fieldDeletion": false,
+  "targetChanged": false,
+  "trainingApproved": false
+}

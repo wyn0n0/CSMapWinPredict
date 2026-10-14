@@ -2,6 +2,18 @@ using System.Globalization;
 using CsDemoMap.Api.Services;
 using CsDemoMap.Api.Tests;
 
+if (args is ["--verify-situation-stage6-source"])
+{
+    await SituationStage6CorpusSourceTests.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
+if (args is ["--verify-situation-review-freezer"])
+{
+    await SituationReviewFreezerVerifier.VerifyAsync(CancellationToken.None);
+    return 0;
+}
+
 if (args is ["--verify-situation-raycast"])
 {
     SituationVisibilityVerifier.Verify();
@@ -81,6 +93,7 @@ if (args is ["--verify-semantics"])
 {
     SemanticsVerifier.Verify();
     await V4DataVerifier.VerifyAsync();
+    await WinSpatialVerifier.VerifyAsync();
     return 0;
 }
 

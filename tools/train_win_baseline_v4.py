@@ -10,22 +10,20 @@ import os
 import platform
 import shutil
 import tempfile
+from importlib.metadata import version
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import joblib
-import lightgbm
 import numpy as np
 import pandas as pd
 import sklearn
-from lightgbm import LGBMClassifier
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, brier_score_loss, log_loss, roc_auc_score
 from sklearn.model_selection import GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -35,6 +33,11 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tools.win_model_bundle import CalibratedWinModel, _logit
+from tools.win_experiment import load_frozen_experiment
+from tools.win_evaluation import (
+    SMALL_FEATURES, calibration_bins, ece, evaluation_report, export_coverage, metrics,
+    per_match_metrics, plot_reliability, reference_predictions, slices,
+)
 
 
 SCHEMA_VERSION = 4
@@ -102,6 +105,19 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--folds", type=int, default=5)
+    parser.add_argument("--evaluate-predictions", type=Path,
+                        help="Evaluate saved predictions without retraining the existing models")
+    parser.add_argument("--probability-column", action="append",
+                        help="Saved prediction column to evaluate; repeat for paired comparisons")
+    parser.add_argument("--reference-column", help="Paired comparison reference; defaults to the first saved prediction column")
+    parser.add_argument("--bootstrap-resamples", type=int, default=2000)
+    parser.add_argument("--experiment", type=Path, help="Frozen new-data experiment.json")
+    parser.add_argument("--experiment-sha256", help="Expected hash printed when the experiment was frozen")
+    parser.add_argument("--evaluation-role", choices=("development", "test"), default="development")
+    parser.add_argument("--candidate-lock", type=Path,
+                        help="Required for final test; binds one development-selected model and probability column")
+    parser.add_argument("--candidate-artifact", type=Path,
+                        help="Final-test model artifact to verify against the candidate lock; never loaded or fitted")
     return parser.parse_args()
 
 
@@ -125,8 +141,12 @@ def sha256(path: Path):
 def validate_sources(input_path: Path, manifest_path: Path, comparison_path: Path):
     manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
     comparison = json.loads(comparison_path.read_text(encoding="utf-8-sig"))
-    if (manifest.get("status"), manifest.get("semanticVersion")) != ("complete", SEMANTIC_VERSION):
+    if (manifest.get("status"), manifest.get("schemaVersion"), manifest.get("semanticVersion")) != (
+            "complete", SCHEMA_VERSION, SEMANTIC_VERSION):
         raise ValueError("Manifest is incomplete or has the wrong semantic version")
+    match_ids = [m["matchId"] for m in manifest["matches"]]
+    if not match_ids or len(match_ids) != len(set(match_ids)):
+        raise ValueError("Manifest contains no matches or duplicate Demo identities")
     if comparison.get("valid") is not True or comparison.get("schemaVersion") != SCHEMA_VERSION:
         raise ValueError("Independent v4 audit did not pass")
     if comparison.get("rows") != sum(m["report"]["rowCount"] for m in manifest["matches"]):
@@ -136,7 +156,7 @@ def validate_sources(input_path: Path, manifest_path: Path, comparison_path: Pat
     return manifest, comparison
 
 
-def load_records(path: Path):
+def load_records(path: Path, match_ids=None):
     records = []
     feature_names = (*NUMERIC_FEATURES, *CATEGORICAL_FEATURES)
     with path.open(encoding="utf-8") as source:
@@ -144,6 +164,8 @@ def load_records(path: Path):
             if not line.strip():
                 continue
             row = json.loads(line)
+            if match_ids is not None and row.get("matchId") not in match_ids:
+                continue
             records.append({
                 "schemaVersion": row.get("schemaVersion"), "semanticVersion": row.get("semanticVersion"),
                 "matchId": row.get("matchId"), "roundId": row.get("roundId"),
@@ -165,7 +187,12 @@ def validate_records(records):
     for row in records:
         if row["schemaVersion"] != SCHEMA_VERSION or row["semanticVersion"] != SEMANTIC_VERSION:
             raise ValueError("Mixed or unsupported schema/semantic version")
-        identity = (str(row["matchId"]), str(row["roundId"]))
+        if (not isinstance(row["matchId"], str) or not row["matchId"]
+                or not isinstance(row["roundId"], str) or not row["roundId"]
+                or row["labelTWin"] not in (0, 1)
+                or not np.isfinite(row["sampleWeight"]) or not 0 < row["sampleWeight"] <= 1):
+            raise ValueError("Invalid sample identity, label or weight")
+        identity = (row["matchId"], row["roundId"])
         key = (*identity, int(row["tick"]))
         if not all(identity) or key in keys:
             raise ValueError(f"Invalid or duplicate sample key: {key}")
@@ -195,6 +222,14 @@ def make_frames(records):
         "phase": [r["phase"] for r in records], "totalAlive": [r["totalAlive"] for r in records],
         "liveElapsed": [r["liveElapsed"] for r in records], "label": [r["labelTWin"] for r in records],
         "weight": [r["sampleWeight"] for r in records],
+        **{key: features[path].to_numpy() for key, path in {
+            "tAlive": "features.t.alive", "ctAlive": "features.ct.alive",
+            "equipmentDifference": "features.baseline.equipmentValueDifference",
+            "aliveKnown": "features.quality.aliveKnown",
+            "equipmentKnown": "features.quality.aliveEquipmentKnown",
+            "positionKnown": "features.quality.alivePositionKnown",
+            "bombRemaining": "features.clock.bombRemainingSeconds",
+        }.items()},
     })
     return features, metadata
 
@@ -209,6 +244,8 @@ def make_preprocessor():
 
 
 def make_models(seed, threads):
+    from lightgbm import LGBMClassifier
+
     return {
         "logistic": Pipeline([("preprocessor", make_preprocessor()),
             ("model", LogisticRegression(max_iter=3000, solver="lbfgs", random_state=seed))]),
@@ -218,24 +255,6 @@ def make_models(seed, threads):
                 colsample_bytree=0.85, reg_alpha=0.2, reg_lambda=1.0, random_state=seed,
                 n_jobs=threads, verbosity=-1, deterministic=True, force_col_wise=True))]),
     }
-
-
-def ece(labels, probabilities, weights, bins=10):
-    assignment = np.minimum((np.clip(probabilities, 0, 1) * bins).astype(int), bins - 1)
-    total = weights.sum()
-    return float(sum(weights[assignment == i].sum() / total * abs(
-        np.average(probabilities[assignment == i], weights=weights[assignment == i]) -
-        np.average(labels[assignment == i], weights=weights[assignment == i]))
-        for i in range(bins) if np.any(assignment == i)))
-
-
-def metrics(labels, probability, weights):
-    probability = np.clip(np.asarray(probability), 1e-6, 1 - 1e-6)
-    return {"logLoss": float(log_loss(labels, probability, sample_weight=weights, labels=[0, 1])),
-            "brierScore": float(brier_score_loss(labels, probability, sample_weight=weights)),
-            "rocAuc": float(roc_auc_score(labels, probability, sample_weight=weights)),
-            "accuracy": float(accuracy_score(labels, probability >= 0.5, sample_weight=weights)),
-            "ece10": ece(labels, probability, weights)}
 
 
 def fit_calibrator(method, probability, labels, weights):
@@ -290,36 +309,6 @@ def training_oof(features, metadata, indices, seed, threads, folds):
     return subset, predictions, calibrated, calibration_metrics
 
 
-def calibration_bins(labels, probabilities, weights, bins=10):
-    assignment = np.minimum((np.clip(probabilities, 0, 1) * bins).astype(int), bins - 1)
-    return [{"lower": i / bins, "upper": (i + 1) / bins, "rows": int(mask.sum()),
-             "weight": float(weights[mask].sum()),
-             "meanPrediction": float(np.average(probabilities[mask], weights=weights[mask])),
-             "observedTWinRate": float(np.average(labels[mask], weights=weights[mask]))}
-            for i in range(bins) if (mask := assignment == i).any()]
-
-
-def slices(metadata, labels, probabilities, weights):
-    definitions = {"all": np.ones(len(metadata), bool), "live": metadata.phase.to_numpy() == "live",
-                   "postPlant": metadata.phase.to_numpy() == "post-plant",
-                   "fiveVsFive": metadata.totalAlive.to_numpy(float) == 10,
-                   "clutch": metadata.totalAlive.to_numpy(float) <= 6,
-                   "openingFiveSeconds": metadata.liveElapsed.to_numpy(float) <= 5}
-    return {name: {"rows": int(mask.sum()), "metrics": metrics(labels[mask], probabilities[mask], weights[mask])}
-            for name, mask in definitions.items() if mask.any() and np.unique(labels[mask]).size == 2}
-
-
-def per_match_metrics(metadata, labels, probabilities, weights):
-    result = {}
-    match_ids = metadata.matchId.to_numpy(str)
-    for match_id in sorted(set(match_ids)):
-        mask = match_ids == match_id
-        result[match_id] = {"rows": int(mask.sum()),
-                            "rounds": int(metadata.loc[mask, "roundId"].nunique()),
-                            "metrics": metrics(labels[mask], probabilities[mask], weights[mask])}
-    return result
-
-
 def json_safe_features(row):
     return {name: (None if pd.isna(value) else value.item() if isinstance(value, np.generic) else value)
             for name, value in row.items()}
@@ -327,7 +316,10 @@ def json_safe_features(row):
 
 def load_validation_ids(path):
     value = json.loads(path.read_text(encoding="utf-8-sig"))
-    return [item["matchId"] for item in value["validation"]], value
+    ids = [item["matchId"] for item in value["validation"]]
+    if not ids or len(ids) != len(set(ids)) or any(not isinstance(item, str) or not item for item in ids):
+        raise ValueError("Fixed validation IDs must be nonempty and unique")
+    return ids, value
 
 
 def paired_v3(v3_path, validation_meta, v4_probability):
@@ -362,6 +354,128 @@ def feature_importance(model, name):
     return [{"feature": str(names[i]), "importance": float(values[i])} for i in order]
 
 
+def load_saved_predictions(path, metadata, columns, artifact_sha256=None):
+    keys = {(r.matchId, r.roundId, int(r.tick)): i for i, r in metadata.iterrows()}
+    result = {name: np.full(len(metadata), np.nan) for name in columns}
+    seen, found_columns = set(), set()
+    with path.open(encoding="utf-8-sig") as source:
+        for line in source:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if artifact_sha256 is not None and row.get("modelArtifactSha256") != artifact_sha256:
+                raise ValueError("Test prediction provenance differs from the frozen candidate")
+            key = (row["matchId"], row["roundId"], row["tick"])
+            if key in seen or key not in keys:
+                raise ValueError("Duplicate or out-of-evaluation prediction key")
+            seen.add(key)
+            index = keys[key]
+            expected = metadata.iloc[index]
+            if row["labelTWin"] != expected.label or not np.isclose(
+                    row["sampleWeight"], expected.weight, rtol=0, atol=1e-12):
+                raise ValueError("Saved prediction label/weight differs from evaluation sample")
+            for name in columns:
+                if name in row:
+                    found_columns.add(name)
+                    if row[name] is not None:
+                        value = float(row[name])
+                        if not np.isfinite(value) or not 0 <= value <= 1:
+                            raise ValueError("Invalid saved probability")
+                        result[name][index] = value
+    if found_columns != set(columns):
+        raise ValueError("Requested probability column is absent")
+    return result
+
+
+def diagnostics_markdown(report):
+    lines = ["# Mirage v4 evaluation diagnostics", "", report["evaluationUse"], "",
+             "| Model | Points | Rounds | Matches | Weight | Coverage | Log Loss | Brier | AUC |",
+             "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    def display(value):
+        return "N/A" if value is None else f"{value:.4f}"
+    for name, model in report["diagnostics"]["models"].items():
+        overall = model["overall"]
+        m = overall["metrics"] or {}
+        lines.append(f"| {name} | {overall['rows']} | {overall['rounds']} | {overall['matches']} | "
+                     f"{overall['weight']:.3f} | {display(overall['coverage']['rowFraction'])} | "
+                     f"{display(m.get('logLoss'))} | {display(m.get('brierScore'))} | {display(m.get('rocAuc'))} |")
+    lines += ["", "## Paired differences (candidate minus reference)", "",
+              "Negative Log Loss/Brier differences favor the candidate. Intervals resample whole matches.", ""]
+    for name, difference in report["diagnostics"]["pairedDifferences"].items():
+        lines.append(f"- {name} vs {difference['reference']}: {difference['rows']} common points, {difference['matches']} matches.")
+        for metric, interval in (difference["intervals"] or {}).items():
+            lines.append(f"  - {metric}: {interval['estimate']:.4f}, 95% interval [{interval['low']:.4f}, {interval['high']:.4f}].")
+    lines += ["", "## Reliability", "", "![Weighted reliability diagrams](reliability.png)", "",
+              "Full slices, per-match metrics, coverage denominators and weighted calibration bins are in report.json.",
+              "Empty groups remain visible; single-class groups have no AUC. Slice weights are not renormalized.",
+              "Export coverage only covers scheduled candidates in completed eligible rounds, not all replay ticks.",
+              "Pistol-round diagnostics await verified format/half metadata. Bootstrap intervals do not certify unseen-match performance.", ""]
+    return "\n".join(lines)
+
+
+def evaluate_saved(args, output, manifest, features, metadata, training_indices, validation_indices):
+    validation = metadata.iloc[validation_indices].reset_index(drop=True)
+    columns = args.probability_column or ["selectedTWin", "logisticTWin", "lightgbmTWin"]
+    candidate = None
+    if args.experiment and args.evaluation_role == "test":
+        if not args.candidate_lock or not args.candidate_artifact:
+            raise ValueError("Final test requires a frozen development-selected candidate lock")
+        candidate = json.loads(args.candidate_lock.read_text(encoding="utf-8-sig"))
+        artifact = candidate.get("modelArtifactSha256", "")
+        if (candidate.get("status") != "frozen" or candidate.get("selectionPartition") != "development"
+                or candidate.get("experimentSha256") != args.experiment_sha256
+                or not isinstance(artifact, str) or len(artifact) != 64
+                or any(c not in "0123456789abcdef" for c in artifact)
+                or not isinstance(candidate.get("probabilityColumn"), str) or not candidate["probabilityColumn"]):
+            raise ValueError("Invalid final-test candidate lock")
+        if args.probability_column and args.probability_column != [candidate["probabilityColumn"]]:
+            raise ValueError("Final test may evaluate only the locked candidate column")
+        if sha256(args.candidate_artifact) != artifact:
+            raise ValueError("Final-test model artifact differs from the frozen candidate")
+        columns = [candidate["probabilityColumn"]]
+    if len(columns) != len(set(columns)) or {"trainingPrior", "smallLogistic"} & set(columns):
+        raise ValueError("Prediction columns must be unique and cannot use reference baseline names")
+    predictions = load_saved_predictions(args.evaluate_predictions, validation, columns,
+                                         candidate["modelArtifactSha256"] if candidate else None)
+    predictions.update(reference_predictions(features.iloc[training_indices], metadata.iloc[training_indices],
+                                             features.iloc[validation_indices], args.seed))
+    report = {"reportVersion": 1, "generatedAtUtc": datetime.now(timezone.utc).isoformat(),
+        "evaluationUse": (f"Frozen experiment partition: {args.evaluation_role}; no test fitting/calibration."
+                          if args.experiment else
+                          "Previously observed fixed holdout: diagnostic only, not a new blind test or model selection."),
+        "schemaVersion": SCHEMA_VERSION, "semanticVersion": SEMANTIC_VERSION,
+        "sources": {name: {"file": path.name, "sha256": sha256(path)} for name, path in {
+            "samples": args.input, "manifest": args.manifest, "audit": args.comparison,
+            "validationSplit": args.validation_split, "predictions": args.evaluate_predictions,
+            "evaluationScript": Path(__file__), "evaluationHelpers": Path(__file__).with_name("win_evaluation.py"),
+        }.items()},
+        "trainingMatchIds": sorted(metadata.iloc[training_indices].matchId.unique()),
+        "validationMatchIds": sorted(validation.matchId.unique()),
+        "referenceBaselines": {"fitScope": "training partition only; fixed hyperparameters, no holdout calibration",
+            "smallFeatures": list(SMALL_FEATURES)},
+        "exportCoverage": export_coverage(manifest, set(validation.matchId)),
+        "diagnostics": evaluation_report(validation, predictions, reference=args.reference_column or columns[0],
+                                          seed=args.seed, resamples=args.bootstrap_resamples),
+        "runtime": {"python": platform.python_version(), "numpy": np.__version__,
+            "pandas": pd.__version__, "scikitLearn": sklearn.__version__,
+            "scipy": version("scipy"), "matplotlib": version("matplotlib"), "seed": args.seed}}
+    for name, path in (("experiment", args.experiment), ("candidateLock", args.candidate_lock),
+                       ("candidateArtifact", args.candidate_artifact)):
+        if path:
+            report["sources"][name] = {"file": path.name, "sha256": sha256(path)}
+    # Exclusive directory creation: a failed run remains inspectable; old outputs are never replaced.
+    output.mkdir(parents=True, exist_ok=False)
+    (output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
+    (output / "report.md").write_text(diagnostics_markdown(report), encoding="utf-8")
+    plot_reliability(report["diagnostics"], output / "reliability.png")
+    saved = validation[["matchId", "roundId", "tick", "label", "weight"]].rename(
+        columns={"label": "labelTWin", "weight": "sampleWeight"}).assign(**predictions)
+    saved.to_json(output / "evaluation_predictions.jsonl", orient="records", lines=True, double_precision=15)
+    completion = {"status": "complete", "artifacts": {p.name: sha256(p) for p in output.iterdir() if p.is_file()}}
+    (output / "evaluation-manifest.json").write_text(json.dumps(completion, indent=2), encoding="utf-8")
+    print(json.dumps({"outputDirectory": str(output), "status": "complete", "evaluationUse": report["evaluationUse"]}))
+
+
 def markdown(report):
     selected = report["selectedBaseline"]
     lines = ["# Mirage schema-v4.2 round-win baseline", "", f"Generated: {report['generatedAtUtc']}", "",
@@ -371,16 +485,19 @@ def markdown(report):
              "|---|---|---:|---:|---:|---:|"]
     for base, methods in report["trainingOofSelection"].items():
         for method, m in methods.items():
-            lines.append(f"| {base} | {method} | {m['logLoss']:.4f} | {m['brierScore']:.4f} | {m['rocAuc']:.4f} | {m['ece10']:.4f} |")
+            auc = "N/A" if m['rocAuc'] is None else f"{m['rocAuc']:.4f}"
+            lines.append(f"| {base} | {method} | {m['logLoss']:.4f} | {m['brierScore']:.4f} | {auc} | {m['ece10']:.4f} |")
     lines += ["", "## Fixed held-out validation", "", f"Selected before holdout: `{selected['model']}` + `{selected['calibration']}`.", "",
               "| Model | Log loss | Brier | AUC | Accuracy | ECE-10 |", "|---|---:|---:|---:|---:|---:|"]
     for name, m in report["evaluation"]["overall"].items():
-        lines.append(f"| {name} | {m['logLoss']:.4f} | {m['brierScore']:.4f} | {m['rocAuc']:.4f} | {m['accuracy']:.4f} | {m['ece10']:.4f} |")
+        auc = "N/A" if m['rocAuc'] is None else f"{m['rocAuc']:.4f}"
+        lines.append(f"| {name} | {m['logLoss']:.4f} | {m['brierScore']:.4f} | {auc} | {m['accuracy']:.4f} | {m['ece10']:.4f} |")
     if report.get("pairedV3V4"):
         lines += ["", "## Paired common-sample comparison", "", "| Model | Log loss | Brier | AUC | ECE-10 |", "|---|---:|---:|---:|---:|"]
         for name in ("v3Logistic", "v4Selected"):
             m = report["pairedV3V4"][name]
-            lines.append(f"| {name} | {m['logLoss']:.4f} | {m['brierScore']:.4f} | {m['rocAuc']:.4f} | {m['ece10']:.4f} |")
+            auc = "N/A" if m['rocAuc'] is None else f"{m['rocAuc']:.4f}"
+            lines.append(f"| {name} | {m['logLoss']:.4f} | {m['brierScore']:.4f} | {auc} | {m['ece10']:.4f} |")
     lines += ["", "## Limits", "", "The held-out matches form a fixed evaluation set. Results should be confirmed on future unseen matches before making a final generalization claim.", ""]
     return "\n".join(lines)
 
@@ -392,10 +509,28 @@ def main():
         raise FileExistsError(output)
     manifest, comparison = validate_sources(args.input, args.manifest, args.comparison)
     validation_ids, split_document = load_validation_ids(args.validation_split)
-    records = load_records(args.input)
+    allowed_ids = None
+    if args.experiment:
+        experiment = load_frozen_experiment(args.experiment, args.experiment_sha256, args.validation_split)
+        if (args.seed, args.bootstrap_resamples) != (experiment["bootstrap"]["seed"], experiment["bootstrap"]["resamples"]):
+            raise ValueError("Evaluation seed/resamples differ from the frozen protocol")
+        if args.evaluation_role == "test" and not args.evaluate_predictions:
+            raise ValueError("Final test is evaluation-only; fitting/model selection is forbidden")
+        if not args.evaluate_predictions:
+            raise ValueError("Use frozen experiments for saved-prediction evaluation; new-data training is a separate experiment")
+        validation_ids = experiment["partitions"][args.evaluation_role]
+        allowed_ids = set(experiment["partitions"]["train"]) | set(validation_ids)
+        if set(m["matchId"] for m in manifest["matches"]) - set(m["matchId"] for m in experiment["matches"]):
+            raise ValueError("Export contains unregistered matches")
+        if allowed_ids - set(m["matchId"] for m in manifest["matches"]):
+            raise ValueError("Export is missing a frozen training/evaluation match")
+    elif args.evaluation_role == "test" or args.candidate_lock or args.candidate_artifact or args.experiment_sha256:
+        raise ValueError("Final-test options require a frozen experiment")
+    records = load_records(args.input, allowed_ids)
     summary = validate_records(records)
-    manifest_rows = sum(match["report"]["rowCount"] for match in manifest["matches"])
-    if summary["rows"] != manifest_rows or summary["matches"] != len(manifest["matches"]):
+    selected_manifest = [m for m in manifest["matches"] if allowed_ids is None or m["matchId"] in allowed_ids]
+    manifest_rows = sum(match["report"]["rowCount"] for match in selected_manifest)
+    if summary["rows"] != manifest_rows or {r["matchId"] for r in records} != {m["matchId"] for m in selected_manifest}:
         raise ValueError("Loaded records do not match the completed export manifest")
     features, metadata = make_frames(records)
     groups = metadata.matchId.to_numpy(str)
@@ -405,6 +540,13 @@ def main():
     training_indices = np.flatnonzero(~validation_mask)
     validation_indices = np.flatnonzero(validation_mask)
     training_match_count = len(set(groups[training_indices]))
+    if not training_match_count:
+        raise ValueError("No training matches remain outside the fixed validation split")
+    if args.evaluate_predictions:
+        evaluate_saved(args, output, manifest, features, metadata, training_indices, validation_indices)
+        return
+    import lightgbm
+
     if args.folds < 2 or args.folds > training_match_count:
         raise ValueError(f"folds must be between 2 and {training_match_count}")
     training_meta, raw_oof, calibrated_oof, selection = training_oof(
@@ -432,6 +574,8 @@ def main():
     selected_raw = final_models[selected_base].predict_proba(features.iloc[validation_indices])[:, 1]
     selected_probability = apply_calibrator(selected_method, selected_calibrator, selected_raw)
     validation_predictions["selected"] = selected_probability
+    validation_predictions.update(reference_predictions(features.iloc[training_indices], metadata.iloc[training_indices],
+                                                        features.iloc[validation_indices], args.seed))
     validation_meta = metadata.iloc[validation_indices].reset_index(drop=True)
     validation_labels = labels[validation_indices]
     validation_weights = weights[validation_indices]
@@ -470,6 +614,9 @@ def main():
                                                        selected_probability, validation_weights),
                 "selectedSlices": slices(validation_meta, validation_labels, selected_probability, validation_weights),
                 "selectedCalibrationBins": calibration_bins(validation_labels, selected_probability, validation_weights)},
+            "diagnostics": evaluation_report(validation_meta, validation_predictions, reference="selected",
+                                               seed=args.seed, resamples=args.bootstrap_resamples),
+            "exportCoverage": export_coverage(manifest, set(validation_ids)),
             "pairedV3V4": paired_v3(args.v3_predictions, validation_meta, selected_probability),
             "featureImportance": {name: feature_importance(model, name) for name, model in final_models.items()},
             "features": {"numeric": list(NUMERIC_FEATURES), "categorical": list(CATEGORICAL_FEATURES),
@@ -477,9 +624,11 @@ def main():
                              "features.players", "features.zones", "labelTWin"]},
             "runtime": {"python": platform.python_version(), "numpy": np.__version__, "pandas": pd.__version__,
                 "scikitLearn": sklearn.__version__, "lightgbm": lightgbm.__version__, "seed": args.seed,
+                "scipy": version("scipy"), "matplotlib": version("matplotlib"),
                 "threads": args.threads, "folds": args.folds}}
         (temp / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
         (temp / "report.md").write_text(markdown(report), encoding="utf-8")
+        plot_reliability(report["diagnostics"], temp / "reliability.png")
         (temp / "validation-split.json").write_text(json.dumps(split_document, ensure_ascii=False, indent=2), encoding="utf-8")
         feature_manifest = {"schemaVersion": SCHEMA_VERSION, "semanticVersion": SEMANTIC_VERSION,
             "numeric": list(NUMERIC_FEATURES), "categorical": list(CATEGORICAL_FEATURES)}
@@ -494,6 +643,7 @@ def main():
             "semanticVersion": SEMANTIC_VERSION, "dataSha256": input_hash,
             "sourceManifestSha256": sha256(args.manifest), "sourceComparisonSha256": sha256(args.comparison),
             "trainingScriptSha256": sha256(Path(__file__)), "selectedModel": selected_base,
+            "evaluationHelpersSha256": sha256(Path(__file__).with_name("win_evaluation.py")),
             "calibration": selected_method, "validationMatchIds": validation_ids,
             "artifacts": {p.name: sha256(p) for p in temp.iterdir() if p.is_file()}}
         (temp / "model-manifest.json").write_text(json.dumps(model_manifest, indent=2), encoding="utf-8")

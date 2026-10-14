@@ -1,0 +1,285 @@
+{
+  "schemaVersion": "situation-stage6-preparation-contract-v1",
+  "status": "frozen",
+  "scope": [
+    "S1",
+    "S2",
+    "S3"
+  ],
+  "baseline": {
+    "resource_state": "situation-implementation/situation-resource-status-v4.json",
+    "resource_state_sha256": "3eaf0ae57871913eeeba5cf7c69fb94b35a48f32a7b09d10347508ef5f335ffd",
+    "resource_accepted": true,
+    "resource_probe_ready": false,
+    "training_ready_at_draft": false,
+    "selected_runtime_at_draft": "none",
+    "base_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "split_file": "situation-implementation/situation-stage4-split-v1.json",
+    "split_sha256": "fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f",
+    "base_dataset": "datasets/situation-stage4-full-20260919-r1",
+    "base_dataset_scope": "v1模板预标注；30,384条/1,899回合，train=24,416；新v8数量必须实测",
+    "frozen_review": "datasets/situation-stage4-review-frozen-20260927-r1",
+    "review_version": "situation-narrative-review-v8-close-exposure-scope50-v1-71fb41d2ecb7de33",
+    "review_scope": "50 approved: train/dev/test=36/7/7; revision 51",
+    "target_rule": "situation-analysis-rules-v8-close-exposure-1",
+    "dependency_profile": "requirements-situation-win-cu126-qlora",
+    "dependency_lock_sha256": "24363990112a62b37573d0979289ff3d0169f9099a6f6015868289f62e5e972c",
+    "representation": "facts-only-utf8-v1",
+    "max_sequence_length": 2560,
+    "generation_reserve_tokens": 512,
+    "minimum_headroom_fraction": 0.1,
+    "baseline_policy": "执行时重新核验，不覆盖历史v1数据、v8人工决定或v4资源接受工件；漂移先定位来源并版本化，不机械接受旧证据。"
+  },
+  "reportShape": {
+    "required": [
+      "schemaVersion",
+      "checkId",
+      "status",
+      "reasonCodes",
+      "evidenceBindings",
+      "details"
+    ],
+    "statuses": [
+      "passed",
+      "failed",
+      "not-tested",
+      "not-required"
+    ],
+    "bindingRequired": [
+      "logicalPath",
+      "sha256"
+    ],
+    "versionBindingFields": [
+      "schemaVersion",
+      "analysisRuleVersion",
+      "reviewVersion",
+      "tokenizerRevision",
+      "split",
+      "purpose",
+      "complete",
+      "frozen",
+      "scope"
+    ]
+  },
+  "signatures": {
+    "stage4_signature": "audit_stage4_closeout(sources, expected) -> report",
+    "corpus_signature": "prepare_paired_corpus(records, reviewed_pairs, contract, output_dir) -> report；records通过现有.NET规则链适配器提供，纯模块用fixture独立验证",
+    "weight_signature": "build_epoch_entries(train_records, repeat_policy) -> weighted_entries；每个原回合所有副本权重和为1；可复用的sample-mean loss reducer有CPU数值验证",
+    "budget_signature": "measure_paired_budget(record_iter, tokenizer_adapter, contract) -> report；tokenizer_adapter注入，独立于G2实现",
+    "readiness_signature": "evaluate_preparation_evidence(stage4_report, corpus_report, budget_report, runtime_config, resource_report) -> report；只消费冻结报告结构"
+  },
+  "records": {
+    "shape": "Existing situation-training-record-v1: schemaVersion,sampleId,metadata,input,output,labelSource,reviewStatus",
+    "metadata": [
+      "split",
+      "matchRef",
+      "roundRef",
+      "tick",
+      "phase",
+      "selectionTags",
+      "sampleWeight",
+      "weightNumerator",
+      "weightDenominator",
+      "sourceSceneSha256",
+      "modelInputSha256",
+      "factsSha256",
+      "prelabelSha256"
+    ],
+    "input": [
+      "scene",
+      "facts",
+      "allowedEvidenceIds"
+    ],
+    "reviewPair": "Full reviewed record plus approved Narrative and reviewVersion, source hashes, evidence IDs; purpose-specific resolver must avoid reading test payloads for train/dev",
+    "fixturePolicy": "Synthetic records follow existing shape. Modules do not import other worker new implementations."
+  },
+  "policy": {
+    "version": "situation-stage6-preparation-contract-v1",
+    "freeze_before_dispatch": true,
+    "frozen_contract_output": "situation-implementation/stage6-goals-handoff/frozen-contract.json",
+    "report_shape": "schemaVersion, checkId, status, reasonCodes[], evidenceBindings[], details；status为passed/failed/not-tested/not-required；缺失、漂移、未测不能推导ready。",
+    "binding_shape": "逻辑路径、SHA-256、源码/Schema/规则/review/tokenizer版本、split、purpose、complete/frozen及检查范围。私有路径只进入私有工件。",
+    "stage4_signature": "audit_stage4_closeout(sources, expected) -> report",
+    "corpus_signature": "prepare_paired_corpus(records, reviewed_pairs, contract, output_dir) -> report；records通过现有.NET规则链适配器提供，纯模块用fixture独立验证",
+    "weight_signature": "build_epoch_entries(train_records, repeat_policy) -> weighted_entries；每个原回合所有副本权重和为1；可复用的sample-mean loss reducer有CPU数值验证",
+    "budget_signature": "measure_paired_budget(record_iter, tokenizer_adapter, contract) -> report；tokenizer_adapter注入，独立于G2实现",
+    "readiness_signature": "evaluate_preparation_evidence(stage4_report, corpus_report, budget_report, runtime_config, resource_report) -> report；只消费冻结报告结构",
+    "test_isolation": "训练/调参消费者只获配train/dev；test由独立用途入口导出/核验/测固定预算，只向主线给出脱敏状态和绑定。真实test内容、目标、长度分布和异常样例不进入子任务prompt或用于配置选择；详细失败证据封存在私有隔离报告。",
+    "scope_interpretation": "步骤二的加权loss落地交付独立可复用函数与数值测试，绑定后续trainer必用契约；本轮不创建optimizer、不声称完成训练梯度集成。步骤六/七将验证真实训练路径。",
+    "status_semantics": "本轮preparationReady/既有stage6Ready只表示前三步语料与配置准入；trainingExecutionReady保持false，仍须步骤四至七。保留resourceAccepted=true与resourceProbeReady=false；不改旧v4状态。"
+  },
+  "ownership": {
+    "G1": [
+      "tools/audit_situation_stage4_closeout.py",
+      "tools/test_situation_stage4_closeout.py",
+      "situation-implementation/stage6-goals-handoff/upstream-audit.md",
+      "situation-implementation/stage6-goals-handoff/todo4-closeout-draft.md"
+    ],
+    "G2": [
+      "tools/situation_stage6_corpus.py",
+      "tools/test_situation_stage6_corpus.py",
+      "tools/situation_stage6_weights.py",
+      "tools/test_situation_stage6_weights.py",
+      "apps/api/Features/Situation/Stage6/SituationStage6CorpusSource.cs",
+      "tests/CsDemoMap.Api.Tests/Stage6/SituationStage6CorpusSourceTests.cs",
+      "situation-implementation/stage6-goals-handoff/corpus-integration.md"
+    ],
+    "G3": [
+      "tools/situation_stage6_budget.py",
+      "tools/test_situation_stage6_budget.py",
+      "tools/situation_stage6_readiness.py",
+      "tools/test_situation_stage6_readiness.py",
+      "situation-implementation/stage6-goals-handoff/runtime-config-draft.json",
+      "situation-implementation/stage6-goals-handoff/budget-integration.md"
+    ]
+  },
+  "mainOwned": [
+    "tools/prepare_situation_corpus.py",
+    "tools/validate_situation_stage6_preparation.py",
+    "tools/test_situation_stage6_integration.py",
+    "tools/check_situation_env.py",
+    "tools/situation_health_policy.py",
+    "tools/test_situation_health_policy.py",
+    "tools/test_situation_health_integration.py",
+    "TODO.md",
+    "TODO_6.md",
+    "situation-implementation/TODO_4.md",
+    "PROJECT_INDEX.md",
+    "docs/context/NOW.md",
+    "docs/context/RUNBOOK.md",
+    "docs/context/MAP.md",
+    "docs/context/DECISIONS.md",
+    "docs/context/RISKS.md",
+    "docs/context/history/2026-10.md",
+    "situation-implementation/stage6-goals-handoff/activation.json",
+    "situation-implementation/stage6-goals-handoff/frozen-contract.json",
+    "situation-implementation/stage6-goals-handoff/coverage.json",
+    "situation-implementation/stage6-goals-handoff/preflight-private.json",
+    "situation-implementation/stage6-goals-handoff/README.md",
+    "situation-implementation/situation-stage6-preparation-v1.json",
+    "situation-implementation/situation-stage6-runtime-v1.json",
+    "situation-implementation/stage6-preparation-report-20261003.md",
+    "situation-implementation/stage4-closeout-report-20261003.md",
+    "tools/collect_situation_stage4_closeout.py"
+  ],
+  "sharedExistingPolicy": "apps/cli、.NET测试登记、现有导出/加载器的必要适配，以及语料/运行新配置和最终报告由主线单独写；精确新增/修改清单在派发前登记到frozen-contract.json。子任务不得并发写这些文件。",
+  "additionalSharedFiles": [
+    "apps/cli/DeveloperCommandDispatcher.cs",
+    "tests/CsDemoMap.Api.Tests/Program.cs"
+  ],
+  "resourceScheduling": "小型CPU单测可并行；.NET构建、真实Demo全量导出、大文件哈希/token遍历分别单实例，由主线统一调度，避免重复IO。默认不启动GPU计算、安装依赖或下载。",
+  "dispatchStatus": "authorized",
+  "runtimeProposal": {
+    "model": "Qwen/Qwen3-1.7B",
+    "quantization": "nf4-double-quant",
+    "compute_dtype": "bfloat16",
+    "rank": 16,
+    "alpha": 32,
+    "dropout": 0.05,
+    "target_modules": "all-linear",
+    "micro_batch_size": 1,
+    "gradient_accumulation_steps": 16,
+    "gradient_checkpointing": true,
+    "use_reentrant": false,
+    "use_cache": false,
+    "sdpa_backend": "cudnn",
+    "loss_implementation": "assistant-positions",
+    "learning_rate": 0.0001,
+    "optimizer": "AdamW",
+    "weight_decay": 0.0,
+    "max_grad_norm": 1.0,
+    "foreach": false,
+    "epochs": 2,
+    "seed": 42,
+    "human_train_total_occurrences_per_epoch": 5,
+    "generation_do_sample": false,
+    "enable_thinking": false,
+    "selection_policy": "只在主线核对实际语料和已接受资源证据后冻结新配置；此表是提案，不表示runtime已选。scheduler/warmup、尾批、checkpoint/dev频率、时间/磁盘预算须在本轮独立配置中明确取值和依据；下一步评价协议绑定后才允许后续训练。"
+  },
+  "testIsolation": "训练/调参消费者只获配train/dev；test由独立用途入口导出/核验/测固定预算，只向主线给出脱敏状态和绑定。真实test内容、目标、长度分布和异常样例不进入子任务prompt或用于配置选择；详细失败证据封存在私有隔离报告。",
+  "weightedLossContract": {
+    "sampleLoss": "mean assistant-token loss including EOS; weighted by per-copy round weight",
+    "epochObjective": "sum(weight_i*sampleMeanLoss_i)/numberOfOriginalRounds",
+    "accumulation": "Use fixed global or predetermined window normalizer, never divide by a single sample weight; no extra multiplier 5",
+    "gradientIntegration": "deferred TODO_6 steps 6/7"
+  },
+  "runtimeFinalization": "Main freezes exact config after actual counts/train-dev budget; test never feeds selection.",
+  "sharedExistingChangesPending": "Exact exporter/loader file list will be added before dispatch after source adapter inspection",
+  "reportCheckIds": {
+    "G1": "stage4-closeout",
+    "G2": "corpus-pairing",
+    "G3budget": "paired-budget",
+    "G3readiness": "stage6-preparation"
+  },
+  "reportDetailsRequired": {
+    "stage4-closeout": [
+      "verified",
+      "baseComplete",
+      "reviewComplete",
+      "reviewFrozen",
+      "approvedCounts",
+      "splitCounts",
+      "regressionChecks"
+    ],
+    "corpus-pairing": [
+      "verified",
+      "complete",
+      "frozen",
+      "counts",
+      "versions",
+      "purposeIsolationVerified",
+      "pairingVerified",
+      "weightsVerified",
+      "splitVerified"
+    ],
+    "paired-budget": [
+      "verified",
+      "maxSequenceLength",
+      "generationReserveTokens",
+      "representationVersion",
+      "trainValidated",
+      "devValidated",
+      "isolatedTestStatus",
+      "overBudgetCount"
+    ],
+    "stage6-preparation": [
+      "preparationReady",
+      "trainingExecutionReady",
+      "selectedRuntime",
+      "resourceAccepted",
+      "resourceProbeReady"
+    ]
+  },
+  "reportBindingRules": "Binding entries contain logicalPath and sha256; file-reading validators must actually rehash through injected resolver. Include report/source/config bindings, not self-referential hashes. Public output removes local absolute paths and raw test details.",
+  "reviewPairInterface": {
+    "sampleId": "str",
+    "split": "train/dev/test",
+    "reviewVersion": "str",
+    "analysisRuleVersion": "str",
+    "record": "full reviewed situation-training-record-v1 equivalent",
+    "label": "approved Narrative",
+    "sourceHashes": "dict of inspected source hashes",
+    "allowedUse": "sft/checkpoint-selection/final-evaluation"
+  },
+  "bindingLogicalPaths": "repo:<repository-relative-posix-path> or storage:<storage-relative-posix-path>; no absolute paths in public bindings",
+  "sourceExportInterface": "ExportAsync(..., ct, shardIndex=0, shardCount=1); dedicated shard CLI; three independent OS export processes; immutable shard manifests and verified merge",
+  "mainAdditionalFiles": [
+    "tools/build_situation_stage6.py",
+    "tools/collect_situation_stage4_closeout.py",
+    "tools/measure_situation_stage6_preparation.py",
+    "situation-implementation/stage4-closeout-report-20261003.md",
+    "tools/situation_stage6_parallel.py",
+    "tools/test_situation_stage6_parallel.py"
+  ],
+  "additionalG2Schema": "situation-implementation/situation-stage6-paired-record-v1.schema.json",
+  "pairedRecordSchema": "situation-stage6-paired-record-v1",
+  "continuationOwnership": "G1/G2/G3 completed; main maintains integration and final corrections after child sessions ended",
+  "userSchedulingOverride": {
+    "date": "2026-10-03",
+    "instruction": "并发三个程序并行导出",
+    "exportWorkers": 3,
+    "assignment": "Within each frozen split: Demo bytes descending, MatchId ordinal tie break, greedy lowest byte total with worker-index tie break. Merge exact disjoint/exhaustive 71/8/8 membership and byte readback before completion.",
+    "previousRuns": "r1/r2 incomplete artifacts retained; r2 own export/supervisor stopped after PID and creation-time verification",
+    "precedence": "Explicit user instruction supersedes draft single-export resource scheduling only."
+  }
+}

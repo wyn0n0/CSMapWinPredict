@@ -1,0 +1,777 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-core-context-v1.schema.json",
+  "title": "Complete Facts and lossless core Scene tables",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "facts",
+    "sceneContext"
+  ],
+  "properties": {
+    "facts": {
+      "$ref": "https://cs-demo-map.local/schemas/situation/situation-facts-v1.schema.json"
+    },
+    "sceneContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map",
+        "sceneBuilderVersion",
+        "geometryVersion",
+        "dataQuality",
+        "players",
+        "round",
+        "bomb",
+        "teams"
+      ],
+      "properties": {
+        "map": {
+          "const": "de_mirage"
+        },
+        "sceneBuilderVersion": {
+          "const": "situation-scene-builder-v1.3"
+        },
+        "geometryVersion": {
+          "const": "mirage-geometry-v1"
+        },
+        "dataQuality": {
+          "oneOf": [
+            {
+              "type": "array",
+              "maxItems": 0
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "columns",
+                "rows"
+              ],
+              "properties": {
+                "columns": {
+                  "const": [
+                    "code",
+                    "fieldPaths",
+                    "severity"
+                  ]
+                },
+                "rows": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "enum": [
+                          "missing-frame",
+                          "stale-frame",
+                          "history-truncated",
+                          "history-file-boundary",
+                          "history-round-boundary",
+                          "history-gap",
+                          "clock-unknown",
+                          "roster-incomplete",
+                          "equipment-unknown",
+                          "utility-unknown",
+                          "position-invalid",
+                          "position-outside-radar",
+                          "region-unknown",
+                          "floor-unknown",
+                          "effect-state-incomplete",
+                          "legacy-default-ambiguous",
+                          "health-state-conflict"
+                        ]
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^/"
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                      },
+                      {
+                        "enum": [
+                          "info",
+                          "warning",
+                          "error"
+                        ]
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "players": {
+          "oneOf": [
+            {
+              "type": "array",
+              "maxItems": 0
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "columns",
+                "rows"
+              ],
+              "properties": {
+                "columns": {
+                  "const": [
+                    "armor",
+                    "floor",
+                    "heading",
+                    "health",
+                    "position",
+                    "region",
+                    "regionSource",
+                    "side",
+                    "slot",
+                    "utilityCounts",
+                    "weaponCategory"
+                  ]
+                },
+                "rows": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      {
+                        "enum": [
+                          "upper",
+                          "lower",
+                          "unknown"
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/vec2"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/vec3"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableString"
+                      },
+                      {
+                        "enum": [
+                          "demo-place-name",
+                          "geometry",
+                          "unknown"
+                        ]
+                      },
+                      {
+                        "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/side"
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^(T|CT)[1-5]$"
+                      },
+                      {
+                        "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/utilityCounts"
+                      },
+                      {
+                        "enum": [
+                          "pistol",
+                          "smg",
+                          "rifle",
+                          "sniper",
+                          "shotgun",
+                          "machinegun",
+                          "grenade",
+                          "knife",
+                          "bomb",
+                          "other",
+                          "unknown"
+                        ]
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 11,
+                    "maxItems": 11
+                  },
+                  "maxItems": 10
+                }
+              }
+            }
+          ]
+        },
+        "round": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "phase",
+            "remainingSeconds",
+            "elapsedSeconds",
+            "clockSource",
+            "score"
+          ],
+          "properties": {
+            "phase": {
+              "enum": [
+                "warmup",
+                "team-intro",
+                "freeze",
+                "live",
+                "post-plant",
+                "ended",
+                "unknown"
+              ]
+            },
+            "remainingSeconds": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeNumber"
+            },
+            "elapsedSeconds": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeNumber"
+            },
+            "clockSource": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableString"
+            },
+            "score": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/score"
+            }
+          }
+        },
+        "bomb": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "carrierSlot",
+            "defuserSlot",
+            "site",
+            "position",
+            "region",
+            "regionSource",
+            "secondsToExplosion",
+            "secondsToDefuse"
+          ],
+          "properties": {
+            "state": {
+              "enum": [
+                "carried",
+                "dropped",
+                "planting",
+                "planted",
+                "defusing",
+                "defused",
+                "exploded",
+                "unknown"
+              ]
+            },
+            "carrierSlot": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^T[1-5]$"
+            },
+            "defuserSlot": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^CT[1-5]$"
+            },
+            "site": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/site"
+            },
+            "position": {
+              "anyOf": [
+                {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/vec3"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "region": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableString"
+            },
+            "regionSource": {
+              "enum": [
+                "demo-place-name",
+                "geometry",
+                "unknown"
+              ]
+            },
+            "secondsToExplosion": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeNumber"
+            },
+            "secondsToDefuse": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeNumber"
+            }
+          }
+        },
+        "teams": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "t",
+            "ct"
+          ],
+          "properties": {
+            "t": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "defuserCount",
+                "equipmentValue",
+                "totalMoney",
+                "helmetCount",
+                "weaponCounts",
+                "utilityCounts"
+              ],
+              "properties": {
+                "defuserCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "equipmentValue": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeInteger"
+                },
+                "totalMoney": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeInteger"
+                },
+                "helmetCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "weaponCounts": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/weaponCounts"
+                },
+                "utilityCounts": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/utilityCounts"
+                }
+              }
+            },
+            "ct": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "defuserCount",
+                "equipmentValue",
+                "totalMoney",
+                "helmetCount",
+                "weaponCounts",
+                "utilityCounts"
+              ],
+              "properties": {
+                "defuserCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "equipmentValue": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeInteger"
+                },
+                "totalMoney": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeInteger"
+                },
+                "helmetCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "weaponCounts": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/weaponCounts"
+                },
+                "utilityCounts": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/utilityCounts"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "decodedCore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map",
+        "sceneBuilderVersion",
+        "geometryVersion",
+        "dataQuality",
+        "players",
+        "round",
+        "bomb",
+        "teams"
+      ],
+      "properties": {
+        "map": {
+          "const": "de_mirage"
+        },
+        "sceneBuilderVersion": {
+          "const": "situation-scene-builder-v1.3"
+        },
+        "geometryVersion": {
+          "const": "mirage-geometry-v1"
+        },
+        "dataQuality": {
+          "type": "array",
+          "items": {
+            "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/dataQuality"
+          }
+        },
+        "players": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slot",
+              "side",
+              "region",
+              "regionSource",
+              "floor",
+              "position",
+              "health",
+              "armor",
+              "weaponCategory",
+              "heading",
+              "utilityCounts"
+            ],
+            "properties": {
+              "slot": {
+                "type": "string",
+                "pattern": "^(T|CT)[1-5]$"
+              },
+              "side": {
+                "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/side"
+              },
+              "region": {
+                "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableString"
+              },
+              "regionSource": {
+                "enum": [
+                  "demo-place-name",
+                  "geometry",
+                  "unknown"
+                ]
+              },
+              "floor": {
+                "enum": [
+                  "upper",
+                  "lower",
+                  "unknown"
+                ]
+              },
+              "position": {
+                "anyOf": [
+                  {
+                    "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/vec3"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "health": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100
+              },
+              "armor": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100
+              },
+              "weaponCategory": {
+                "enum": [
+                  "pistol",
+                  "smg",
+                  "rifle",
+                  "sniper",
+                  "shotgun",
+                  "machinegun",
+                  "grenade",
+                  "knife",
+                  "bomb",
+                  "other",
+                  "unknown"
+                ]
+              },
+              "heading": {
+                "anyOf": [
+                  {
+                    "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/vec2"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "utilityCounts": {
+                "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/utilityCounts"
+              }
+            }
+          }
+        },
+        "round": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "phase",
+            "remainingSeconds",
+            "elapsedSeconds",
+            "clockSource",
+            "score"
+          ],
+          "properties": {
+            "phase": {
+              "enum": [
+                "warmup",
+                "team-intro",
+                "freeze",
+                "live",
+                "post-plant",
+                "ended",
+                "unknown"
+              ]
+            },
+            "remainingSeconds": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeNumber"
+            },
+            "elapsedSeconds": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeNumber"
+            },
+            "clockSource": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableString"
+            },
+            "score": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/score"
+            }
+          }
+        },
+        "bomb": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "carrierSlot",
+            "defuserSlot",
+            "site",
+            "position",
+            "region",
+            "regionSource",
+            "secondsToExplosion",
+            "secondsToDefuse"
+          ],
+          "properties": {
+            "state": {
+              "enum": [
+                "carried",
+                "dropped",
+                "planting",
+                "planted",
+                "defusing",
+                "defused",
+                "exploded",
+                "unknown"
+              ]
+            },
+            "carrierSlot": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^T[1-5]$"
+            },
+            "defuserSlot": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^CT[1-5]$"
+            },
+            "site": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/site"
+            },
+            "position": {
+              "anyOf": [
+                {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/vec3"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "region": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableString"
+            },
+            "regionSource": {
+              "enum": [
+                "demo-place-name",
+                "geometry",
+                "unknown"
+              ]
+            },
+            "secondsToExplosion": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeNumber"
+            },
+            "secondsToDefuse": {
+              "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeNumber"
+            }
+          }
+        },
+        "teams": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "t",
+            "ct"
+          ],
+          "properties": {
+            "t": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "defuserCount",
+                "equipmentValue",
+                "totalMoney",
+                "helmetCount",
+                "weaponCounts",
+                "utilityCounts"
+              ],
+              "properties": {
+                "defuserCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "equipmentValue": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeInteger"
+                },
+                "totalMoney": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeInteger"
+                },
+                "helmetCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "weaponCounts": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/weaponCounts"
+                },
+                "utilityCounts": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/utilityCounts"
+                }
+              }
+            },
+            "ct": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "defuserCount",
+                "equipmentValue",
+                "totalMoney",
+                "helmetCount",
+                "weaponCounts",
+                "utilityCounts"
+              ],
+              "properties": {
+                "defuserCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "equipmentValue": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeInteger"
+                },
+                "totalMoney": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/nullableNonNegativeInteger"
+                },
+                "helmetCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "weaponCounts": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/weaponCounts"
+                },
+                "utilityCounts": {
+                  "$ref": "https://cs-demo-map.local/schemas/situation/minimap-scene-v1.schema.json#/$defs/utilityCounts"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

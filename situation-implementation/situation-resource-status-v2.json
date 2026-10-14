@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "situation-resource-status-v2",
+  "status": "resource-probe-passed",
+  "resourceProbeReady": true,
+  "trainingReady": false,
+  "inputBudgetReady": true,
+  "inputScope": "existing v1 base train only",
+  "maxSequenceLength": 2560,
+  "representationVersion": "facts-only-utf8-v1",
+  "selectedRuntime": {
+    "run": "memory-nf4-combined-2560-20261001-r1",
+    "path": "reports/memory-nf4-combined-2560-20261001-r1/selected-runtime.json",
+    "sha256": "51e9f06f8f6e512619c4d1388a4f601df75369a917130232bc0ad547096aac67"
+  },
+  "dependencyProfile": "requirements-situation-win-cu126-qlora",
+  "dependencyLockSha256": "24363990112a62b37573d0979289ff3d0169f9099a6f6015868289f62e5e972c",
+  "dependencyFunctionalReady": true,
+  "summaryRun": "memory-optimization-verification-20261001-r1",
+  "verificationSha256": "97f879f89ced48dc23fe355d890cf69204ba9f20d2f900dbbf138194054d4276",
+  "checkpoint": {
+    "commit": "6db1e3654f4cd1c6e7ab749280082a8ae75130e8",
+    "tag": "checkpoint/pre-memory-optimizations-20261001"
+  },
+  "attempts": [
+    {
+      "run": "memory-bf16-combined-2560-20261001-r1",
+      "reportSha256": "991a1b430ce316f458d30b83aa4d5cce4f84f48412e9d040561b1b86a0e9f3b0",
+      "eventsSha256": "8f1fbfe45df6d35cdb98030b117558e47909852c561a5182e661bbbbd4094cf6",
+      "precision": "bf16",
+      "rank": 16,
+      "lossImplementation": "assistant-positions",
+      "sdpaBackend": "cudnn",
+      "operationsPassed": true,
+      "resourceReady": false,
+      "status": "insufficient-headroom",
+      "peakAllocatedBytes": 4847669248,
+      "peakReservedBytes": 5320474624,
+      "driverFreeAfterBytes": 507510784,
+      "cudaFreeAfterBytes": 1547427840,
+      "headroomFraction": 0.059114503816793895,
+      "tokensPerSecond": 865.897116975151,
+      "elapsedSeconds": 79.43322439999974
+    },
+    {
+      "run": "memory-nf4-combined-2560-20261001-r1",
+      "reportSha256": "0045011bdbd83d1911a32db44c8fb377f152d64d8b6d12a15f31f4814c3aa340",
+      "eventsSha256": "cb0df2e8f2df72407ee61d936801631b60f9ad34b32158440dd65d4dba41ce29",
+      "precision": "nf4",
+      "rank": 16,
+      "lossImplementation": "assistant-positions",
+      "sdpaBackend": "cudnn",
+      "operationsPassed": true,
+      "resourceReady": true,
+      "status": "passed",
+      "peakAllocatedBytes": 4297622528,
+      "peakReservedBytes": 4928307200,
+      "driverFreeAfterBytes": 904921088,
+      "cudaFreeAfterBytes": 2451570688,
+      "headroomFraction": 0.10540458015267176,
+      "tokensPerSecond": 706.4885577865648,
+      "elapsedSeconds": 97.35614150000038
+    },
+    {
+      "run": "memory-bf16-loss-only-2560-20261001-r1",
+      "reportSha256": "2948f11b2de709e0fd0112c0a303408f6e2569abeb82e3739c19b3f961c88795",
+      "eventsSha256": "41ce87dad83dd7cd8b5ae0597772d0d50e2d42f3aaeb3f0ec3f01ec1b8f6adf8",
+      "precision": "bf16",
+      "rank": 16,
+      "lossImplementation": "assistant-positions",
+      "sdpaBackend": "auto",
+      "operationsPassed": true,
+      "resourceReady": false,
+      "status": "insufficient-headroom",
+      "peakAllocatedBytes": 5744758784,
+      "peakReservedBytes": 6480199680,
+      "driverFreeAfterBytes": 163577856,
+      "cudaFreeAfterBytes": 426291200,
+      "headroomFraction": -0.06717557251908397,
+      "tokensPerSecond": 620.377137400752,
+      "elapsedSeconds": 110.86965630000122
+    },
+    {
+      "run": "memory-bf16-cudnn-only-2560-20261001-r1",
+      "reportSha256": "f65965499691c6d3e6e6c36a57f1c8d1be42e2571ec6cc865770574bacc6d38a",
+      "eventsSha256": "11bc11881e19e730b407895eb723f3129063d03ef2da111e46d607d5c8cab1eb",
+      "precision": "bf16",
+      "rank": 16,
+      "lossImplementation": "full",
+      "sdpaBackend": "cudnn",
+      "operationsPassed": true,
+      "resourceReady": false,
+      "status": "insufficient-headroom",
+      "peakAllocatedBytes": 8582426624,
+      "peakReservedBytes": 9827254272,
+      "driverFreeAfterBytes": 101711872,
+      "cudaFreeAfterBytes": 0,
+      "headroomFraction": -0.36335877862595417,
+      "tokensPerSecond": 586.1768629695013,
+      "elapsedSeconds": 117.33830579999994
+    }
+  ],
+  "remainingTrainingGates": [
+    "stage4-closeout",
+    "formal-corpus-version-pairing-and-budget",
+    "stage6-baselines-and-512-sample-probe",
+    "stage6-quality-evaluation"
+  ],
+  "limitations": [
+    "Selected NF4 rank16 headroom=10.54%; two optimizer steps only; background occupancy can change.",
+    "Complete Facts, 2560, all-linear and original FP32 embedding preparation retained."
+  ],
+  "nextAction": "Implement stage5 health reporting and complete remaining corpus/stage6 gates; use the selected assistant-position loss and cuDNN backend unchanged."
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "situation-facts-prompt-config-v1",
+  "representationVersion": "facts-only-utf8-v1",
+  "status": "adopted-for-stage5-step6",
+  "payloadSchema": "schemas/situation/situation-facts-v1.schema.json",
+  "payloadSchemaSha256": "a24f1c89e0a2f241774f9e31eff1e6ec15679f1b67346ebd062c47f93177135d",
+  "targetSchema": "schemas/situation/situation-narrative-v1.schema.json",
+  "targetSchemaSha256": "89a9778e6ee623628a34b83b1f9b5525c7c1a88d08ecc42658e31b7fb709c32e",
+  "system": "仅依据输入的完整 SituationFactsV1 生成中文局势摘要，输出完整 situation-narrative-v1 JSON：schemaVersion、highlights（2至4项 textZh 和 evidenceIds）、summaryZh、uncertainties。只引用输入 evidence 中已有的 id；保留未知与数据质量限制；不推算新事实，不预测胜率，不提供战术指令。",
+  "payload": "input.facts",
+  "serialization": "json-utf8-sort-keys-compact-no-nan",
+  "allowedEvidencePolicy": "require original allowedEvidenceIds set equals complete facts.evidence id set",
+  "enableThinking": false,
+  "truncation": false,
+  "addSpecialTokensAfterRendering": false,
+  "preserveAllFactsFields": true
+}

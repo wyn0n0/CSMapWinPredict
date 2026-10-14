@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "situation-token-budget-config-v2",
+  "representationConfig": "situation-implementation/situation-facts-prompt-v1.json",
+  "representationConfigSha256": "f53a331a82980d6f0b7034c7c94d4a932544ad36096487018c756d781b353e82",
+  "selectedBudget": 2560,
+  "budgets": [
+    768,
+    1024,
+    1536,
+    2048,
+    2560,
+    3072
+  ],
+  "inferenceOutputReserve": 512,
+  "percentileMethod": "nearest-rank",
+  "analysisRuleVersion": "situation-analysis-rules-v1",
+  "corpusScope": "existing complete v1 base train only; v8 reviewed labels excluded",
+  "splitSha256": "fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f",
+  "modelId": "Qwen/Qwen3-1.7B",
+  "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "baseManifestSha256": "7ceb125e23e6ddb1b98d1541dede19d5c2fc7efd935ca6966c85454dd69ea612",
+  "datasets": [
+    {
+      "role": "pilot",
+      "name": "situation-stage4-pilot-20260919-r10",
+      "manifestSha256": "439d7e184d92e3565adb93cb7ae7e38914c6773e2bf1e170672178c8c94456e8",
+      "trainSha256": "4b8c1eec7608d6fdd95d3faa2c086d41ad237da60147ae4a3de6333f77e4a5b1",
+      "samples": 500
+    },
+    {
+      "role": "full-train",
+      "name": "situation-stage4-full-20260919-r1",
+      "manifestSha256": "e60e8bf001ea55b1932fba7bed83468ee104cac8516525fe539409edaae8a3f9",
+      "trainSha256": "921051316fa45b284aab58fececc5d51d653fde261fcc74aa771a0ade25aedd1",
+      "samples": 24416
+    }
+  ]
+}

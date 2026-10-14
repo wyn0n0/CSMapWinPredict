@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "situation-core-context-config-v1",
+  "representationVersion": "facts-core-scene-table-v1",
+  "status": "frozen-policy-before-measurement",
+  "scope": "step3a-base-input-only",
+  "modelId": "Qwen/Qwen3-1.7B",
+  "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "maxSequenceLength": 5120,
+  "generationReserveTokens": 512,
+  "maxInferenceInputTokens": 4608,
+  "maxCompletionTokens": 512,
+  "enableThinking": false,
+  "truncation": false,
+  "fields": {
+    "common": [
+      "map",
+      "sceneBuilderVersion",
+      "geometryVersion",
+      "dataQuality"
+    ],
+    "players": [
+      "slot",
+      "side",
+      "region",
+      "regionSource",
+      "floor",
+      "position",
+      "health",
+      "armor",
+      "weaponCategory",
+      "heading",
+      "utilityCounts"
+    ],
+    "round": [
+      "phase",
+      "remainingSeconds",
+      "elapsedSeconds",
+      "clockSource",
+      "score"
+    ],
+    "bomb": [
+      "state",
+      "carrierSlot",
+      "defuserSlot",
+      "site",
+      "position",
+      "region",
+      "regionSource",
+      "secondsToExplosion",
+      "secondsToDefuse"
+    ],
+    "teams": [
+      "defuserCount",
+      "equipmentValue",
+      "totalMoney",
+      "helmetCount",
+      "weaponCounts",
+      "utilityCounts"
+    ]
+  },
+  "schemaBindings": [
+    {
+      "path": "schemas/situation/situation-core-context-v1.schema.json",
+      "sha256": "e43e3e46d1f7e1768b1ff71ff10e1b25b95f0a443fe87c01af6238464dbc5ce7"
+    },
+    {
+      "path": "schemas/situation/minimap-scene-v1.schema.json",
+      "sha256": "e9503243e691446a20cf6c57ab68fbf4cd592889ca8ceee87663a864250c7a8e"
+    },
+    {
+      "path": "schemas/situation/situation-facts-v1.schema.json",
+      "sha256": "a24f1c89e0a2f241774f9e31eff1e6ec15679f1b67346ebd062c47f93177135d"
+    },
+    {
+      "path": "schemas/situation/situation-narrative-v1.schema.json",
+      "sha256": "89a9778e6ee623628a34b83b1f9b5525c7c1a88d08ecc42658e31b7fb709c32e"
+    }
+  ],
+  "system": "仅依据完整Facts及同条核心Scene生成中文局势摘要，输出完整situation-narrative-v1 JSON：schemaVersion、highlights（2至4项textZh和evidenceIds）、summaryZh、uncertainties。highlights只引用Facts.evidence原id，Scene引用不可冒充旧id。保留null、unknown与全部质量限制；不推测意图、未来、胜率或提供战术指令。columns/rows递归还原为对象数组；坐标保持原归一化尺度，slot只在当前场景有效。回合remainingSeconds不是爆炸倒计时，道具库存不是活动效果，未知拆包条件不作确定判断。",
+  "supportMapping": {
+    "version": "core-scene-observations-v1",
+    "namespace": "scene:",
+    "pathRule": "scene:<JSON Pointer>引用还原后sceneContext的标量或空容器；同路径对应配对input.scene，不含未选字段。",
+    "validation": "仅支持同值、同类型equals观测；来源哈希在工件侧绑定。引用存在不等于中文结论被支持；派生判断另需版本化规则和语义评价。"
+  },
+  "runtimeCandidate": {
+    "quantization": "nf4",
+    "doubleQuant": true,
+    "computeDtype": "bfloat16",
+    "loraRank": 16,
+    "loraAlpha": 32,
+    "loraDropout": 0.05,
+    "targetModules": "all-linear",
+    "microBatchSize": 1,
+    "gradientAccumulationSteps": 16
+  },
+  "pending": [
+    "A-D prompt and planner budgets after step4",
+    "generation resource calibration in step5",
+    "new labels and training resource checks in step6A"
+  ],
+  "generationExecutionReady": false,
+  "trainingExecutionReady": false
+}

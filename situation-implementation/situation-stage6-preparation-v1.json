@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "situation-stage6-preparation-bundle-v1",
+  "status": "complete",
+  "frozen": true,
+  "analysisRuleVersion": "situation-analysis-rules-v8-close-exposure-1",
+  "artifacts": {
+    "stage4": {
+      "logicalPath": "storage:reports/situation-stage6-closeout-20261003-r2/stage4-report.json",
+      "sha256": "84931afa4f7976b9629356a8727c9af7e18c70f0374c70a53845c46361092ed4"
+    },
+    "corpus": {
+      "logicalPath": "storage:datasets/situation-stage6-paired-v8-20261003-r1/report.json",
+      "sha256": "f861402cd2cdd82d20082ad52a211124be2244dc542f47f9933eae29d745a5b4"
+    },
+    "budget": {
+      "logicalPath": "storage:reports/situation-stage6-budget-v8-20261003-r1/budget-report.json",
+      "sha256": "b3d73c93df8041a4ac9e40aa9492667cc4d51c4dd4c6dacb31f5954ad54c20d6"
+    },
+    "runtime": {
+      "logicalPath": "storage:reports/situation-stage6-budget-v8-20261003-r1/runtime.json",
+      "sha256": "aa591f6f62d384e336288e350c61c02ad60f236bc52938600394cd77c9bd5de4"
+    }
+  },
+  "evidenceBindings": [
+    {
+      "logicalPath": "storage:runs/situation-stage6-preparation-20261003-r4/finish-complete.json",
+      "sha256": "f86d2be102115f8b2e1a011a71276389af7455389aca75df1b6817b3d6ce619d"
+    },
+    {
+      "logicalPath": "repo:tools/check_situation_env.py",
+      "sha256": "44ed5352697c2ac999fed2dbeccf83c92cf4842cf7dd9b088e97ba1c75f0489a"
+    },
+    {
+      "logicalPath": "repo:tools/validate_situation_stage6_preparation.py",
+      "sha256": "584c02345d85e514119cff0851a001c6e306a2cdc5384a689e86f42d185b99dc"
+    },
+    {
+      "logicalPath": "repo:tools/situation_health_policy.py",
+      "sha256": "5c9af115d98efe83c166b67847cdd8be467651f853cc6aa823c44cfbfb98fefa"
+    },
+    {
+      "logicalPath": "repo:tools/situation_health_collectors.py",
+      "sha256": "b52b2ba3090865f624abbeb9f1476d60ffbcd87a2287f388862cdcec5a3a414e"
+    },
+    {
+      "logicalPath": "repo:tools/situation_stage6_readiness.py",
+      "sha256": "8a472a136a17dbe4777e871ed3756892beadda1f16affe4338149e3a75e3f231"
+    },
+    {
+      "logicalPath": "repo:tools/verify_situation_stage6_admission.py",
+      "sha256": "77a1d07994489ddaeca059191b5d2935fb065140c63c56c1214047983a77bbc1"
+    },
+    {
+      "logicalPath": "repo:situation-implementation/situation-resource-status-v4.json",
+      "sha256": "3eaf0ae57871913eeeba5cf7c69fb94b35a48f32a7b09d10347508ef5f335ffd"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation-commentary-plan-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["version", "focus", "supportedClaims", "limitations"],
+  "properties": {
+    "version": {"const": "commentary-planner-v1"},
+    "focus": {"enum": ["factor-conflict", "post-plant", "contact", "numbers", "uncertain"]},
+    "supportedClaims": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/claim"}},
+    "limitations": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/limitation"}}
+  },
+  "$defs": {
+    "ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "claim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["textZh", "evidenceIds", "ruleIds"],
+      "properties": {"textZh": {"type": "string", "minLength": 1, "maxLength": 120}, "evidenceIds": {"$ref": "#/$defs/ids"}, "ruleIds": {"$ref": "#/$defs/ids"}}
+    },
+    "limitation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["textZh", "ruleIds"],
+      "anyOf": [{"required": ["evidenceIds"]}, {"required": ["sceneRefs"]}],
+      "properties": {"textZh": {"type": "string", "minLength": 1, "maxLength": 120}, "evidenceIds": {"$ref": "#/$defs/ids"}, "sceneRefs": {"$ref": "#/$defs/ids"}, "ruleIds": {"$ref": "#/$defs/ids"}}
+    }
+  }
+}

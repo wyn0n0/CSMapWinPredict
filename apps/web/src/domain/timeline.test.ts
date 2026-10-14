@@ -45,24 +45,80 @@ describe('timeline utilities', () => {
     expect(windowIndexAt(999, 30, 4)).toBe(3)
   })
 
-  it('interpolates fresh predictions only within one round phase', () => {
+  it('holds the latest reached prediction and preserves its actual sample time', () => {
     const predictions: WinPredictionPoint[] = [
       { tick: 640, timeSeconds: 10, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'live', tWin: .4, ctWin: .6 },
       { tick: 704, timeSeconds: 11, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'live', tWin: .6, ctWin: .4 },
       { tick: 768, timeSeconds: 12, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'post-plant', tWin: .8, ctWin: .2 },
     ]
 
-    expect(winPredictionAt(predictions, 10.5, 'live')).toMatchObject({ tWin: .5, ctWin: .5, tick: 672 })
-    expect(winPredictionAt(predictions, 11.5, 'post-plant')).toBeNull()
-    expect(winPredictionAt(predictions, 12, 'post-plant')).toMatchObject({ tWin: .8, ctWin: .2 })
+    expect(winPredictionAt(predictions, 10, 'live', 600)).toEqual(predictions[0])
+    expect(winPredictionAt(predictions, 10.5, 'live', 600)).toEqual(predictions[0])
+    expect(winPredictionAt(predictions, 11, 'live', 600)).toEqual(predictions[1])
+    expect(winPredictionAt(predictions, 11.5, 'post-plant', 600)).toBeNull()
+    expect(winPredictionAt(predictions, 12, 'post-plant', 600)).toEqual(predictions[2])
+    // Seeking backwards must not retain the later probability or timestamp.
+    expect(winPredictionAt(predictions, 10.5, 'live', 600)).toEqual(predictions[0])
   })
 
-  it('does not show stale predictions outside active round phases', () => {
+  it('is unaffected by changing, appending or removing future predictions', () => {
+    const past: WinPredictionPoint = { tick: 640, timeSeconds: 10, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'live', tWin: .4, ctWin: .6 }
+    const future = { ...past, tick: 704, timeSeconds: 11, tWin: .9, ctWin: .1 }
+    const variants = [
+      [past],
+      [past, future],
+      [past, { ...future, tWin: .1, ctWin: .9 }],
+      [past, { ...future, roundId: 's1-a2', segmentId: 1, phase: 'post-plant' }],
+      [past, future, { ...future, tick: 768, timeSeconds: 12 }],
+    ]
+    for (const points of variants) {
+      for (const time of [9.9, 10, 10.5, 10.999]) {
+        expect(winPredictionAt(points, time, 'live', 600)).toEqual(time < 10 ? null : past)
+      }
+    }
+    // A kill at 10.75 is first reflected by the sample at 11, never before it.
+    expect(winPredictionAt([past, future], 10.75, 'live', 600)).toEqual(past)
+    expect(winPredictionAt([past, future], 11, 'live', 600)).toEqual(future)
+  })
+
+  it('rejects missing, future and expired predictions, retaining the inclusive age limit', () => {
     const predictions: WinPredictionPoint[] = [
       { tick: 640, timeSeconds: 10, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'live', tWin: .4, ctWin: .6 },
     ]
 
-    expect(winPredictionAt(predictions, 12, 'live')).toBeNull()
-    expect(winPredictionAt(predictions, 10.2, 'freeze')).toBeNull()
-    expect(winPredictionAt(predictions, 9.9, 'live')).toBeNull()
-  })})
+    expect(winPredictionAt([], 10, 'live', 600)).toBeNull()
+    expect(winPredictionAt(predictions, 11.5, 'live', 600)).toEqual(predictions[0])
+    expect(winPredictionAt(predictions, 11.501, 'live', 600)).toBeNull()
+    expect(winPredictionAt(predictions, 9.9, 'live', 600)).toBeNull()
+    expect(winPredictionAt(predictions, 10, 'live', 600, -1)).toBeNull()
+    expect(winPredictionAt(predictions, 10, 'live', 600, 0)).toEqual(predictions[0])
+    expect(winPredictionAt(predictions, 10.01, 'live', 600, 0)).toBeNull()
+    for (const phase of ['warmup', 'team-intro', 'freeze', 'ended', 'unknown', 'post-plant']) {
+      expect(winPredictionAt(predictions, 10.2, phase, 600)).toBeNull()
+    }
+  })
+
+  it.each([
+    { roundId: 's0-a2', segmentId: 0, roundNumber: 2 },
+    { roundId: 's0-a2', segmentId: 0, roundNumber: 1 },
+    { roundId: 's1-a2', segmentId: 1, roundNumber: 1 },
+  ])('does not carry a prediction into a new attempt: $roundId / round $roundNumber', identity => {
+    const old: WinPredictionPoint = { tick: 640, timeSeconds: 10, roundId: 's0-a1', segmentId: 0, roundNumber: 1, phase: 'live', tWin: .4, ctWin: .6 }
+    const next = { ...old, ...identity, tick: 704, timeSeconds: 11, tWin: .7, ctWin: .3 }
+    const points = [old, next]
+    expect(winPredictionAt(points, 10.5, 'live', 672)).toBeNull()
+    expect(winPredictionAt(points, 11, 'live', 672)).toEqual(next)
+    expect(winPredictionAt(points, 10.25, 'live', 600)).toEqual(old)
+  })
+
+  it('keeps the same value across overlapping windows', () => {
+    const points: WinPredictionPoint[] = [29, 30, 31, 32].map((timeSeconds, index) => ({
+      tick: timeSeconds * 64, timeSeconds, roundId: 's0-a1', segmentId: 0,
+      roundNumber: 1, phase: 'live', tWin: .4 + index * .1, ctWin: .6 - index * .1,
+    }))
+    for (const time of [29.999, 30, 30.5]) {
+      expect(winPredictionAt(points.slice(0, 3), time, 'live', 600))
+        .toEqual(winPredictionAt(points, time, 'live', 600))
+    }
+  })
+})

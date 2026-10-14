@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/schemas/situation/situation-frozen-review-manifest-v2.schema.json",
+  "title": "Scoped, replayable human review artifact with explicit approval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "reviewStatus", "reviewVersion", "baseDatasetSha256", "identity", "target", "workspaceRevision", "counts", "contentSha256", "approvedContentSha256", "files"],
+  "properties": {
+    "schemaVersion": { "const": "situation-frozen-review-manifest-v2" },
+    "status": { "enum": ["incomplete", "complete"] },
+    "reviewStatus": { "enum": ["awaiting-approval", "frozen"] },
+    "reviewVersion": { "type": "string", "minLength": 1 },
+    "baseDatasetSha256": { "$ref": "#/$defs/sha256" },
+    "identity": { "$ref": "situation-review-work-v1.schema.json#/$defs/identity" },
+    "target": { "enum": [50, 300] },
+    "workspaceRevision": { "type": "integer", "minimum": 0 },
+    "counts": {
+      "type": "object", "additionalProperties": false, "required": ["train", "dev", "test"],
+      "properties": { "train": { "type": "integer" }, "dev": { "type": "integer" }, "test": { "type": "integer" } }
+    },
+    "contentSha256": { "type": "string", "pattern": "^([0-9a-f]{64})?$" },
+    "approvedContentSha256": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }] },
+    "files": { "type": "array", "items": { "$ref": "situation-training-manifest-v1.schema.json#/$defs/file" } }
+  },
+  "allOf": [
+    { "if": { "properties": { "target": { "const": 50 } } }, "then": { "properties": { "counts": { "properties": { "train": { "const": 36 }, "dev": { "const": 7 }, "test": { "const": 7 } } } } }, "else": { "properties": { "counts": { "properties": { "train": { "const": 220 }, "dev": { "const": 40 }, "test": { "const": 40 } } } } } },
+    { "if": { "properties": { "status": { "const": "complete" } } }, "then": { "properties": { "contentSha256": { "$ref": "#/$defs/sha256" } } } },
+    { "if": { "properties": { "reviewStatus": { "const": "frozen" } } }, "then": { "properties": { "approvedContentSha256": { "$ref": "#/$defs/sha256" } } }, "else": { "properties": { "approvedContentSha256": { "type": "null" } } } }
+  ],
+  "$defs": { "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+}

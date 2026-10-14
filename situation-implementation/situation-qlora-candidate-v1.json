@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "situation-optional-quantization-v1",
+  "name": "bitsandbytes",
+  "version": "0.48.1",
+  "url": "https://files.pythonhosted.org/packages/05/46/339ab9a33fa0964b07a7a0e8b13ec02687f03c8e9b03164edfb8688ce08f/bitsandbytes-0.48.1-py3-none-win_amd64.whl",
+  "sha256": "d7d3f9b00b132bb25f09320ee07ccbfae8c1e0ea11cae48fbf7e1eff9943c7b4",
+  "bytes": 59524237,
+  "activation": "only-after-BF16-resource-failure",
+  "status": "metadata-only-not-installed-not-validated",
+  "requiresFullQloraLockAndNF4DoubleQuantProbe": true
+}

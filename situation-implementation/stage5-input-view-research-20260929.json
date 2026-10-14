@@ -1,0 +1,340 @@
+{
+  "status": "research-only-not-adopted",
+  "trainable": false,
+  "trainingReady": false,
+  "samples": 500,
+  "devTestContentRead": false,
+  "inputSelectionUsesTargets": false,
+  "currentTemplateHighlightExactEvidenceSupport": 500,
+  "tokenizerManifestSha256": "7ceb125e23e6ddb1b98d1541dede19d5c2fc7efd935ca6966c85454dd69ea612",
+  "sourceTrainSha256": "4b8c1eec7608d6fdd95d3faa2c086d41ad237da60147ae4a3de6333f77e4a5b1",
+  "scriptSha256": "3d326fcc851ce8c196ba39c2f0db99d10b1e576f70a0111e0540ee02934e16ce",
+  "promptSystem": "仅依据输入事实和证据生成中文局势摘要，输出完整 situation-narrative-v1 JSON：schemaVersion、highlights（2至4项 textZh 和 evidenceIds）、summaryZh、uncertainties。只引用 allowedEvidenceIds；保留未知与数据质量限制；不推算新事实，不预测胜率，不提供战术指令。",
+  "targetSerialization": "literal UTF-8 compact sorted JSON; semantic equality checked",
+  "variants": {
+    "utf8-full-scene": {
+      "samples": 500,
+      "distributions": {
+        "inputTokens": {
+          "min": 3226,
+          "p50": 18931,
+          "p95": 24802,
+          "p99": 27398,
+          "max": 30719
+        },
+        "inferencePromptTokens": {
+          "min": 3226,
+          "p50": 18931,
+          "p95": 24802,
+          "p99": 27398,
+          "max": 30719
+        },
+        "targetTokens": {
+          "min": 148,
+          "p50": 187,
+          "p95": 238,
+          "p99": 243,
+          "max": 252
+        },
+        "targetStandaloneTokens": {
+          "min": 148,
+          "p50": 187,
+          "p95": 238,
+          "p99": 243,
+          "max": 252
+        },
+        "completionTokens": {
+          "min": 150,
+          "p50": 189,
+          "p95": 240,
+          "p99": 245,
+          "max": 254
+        },
+        "assistantSuffixTokens": {
+          "min": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "max": 2
+        },
+        "systemStandaloneTokens": {
+          "min": 44,
+          "p50": 44,
+          "p95": 44,
+          "p99": 44,
+          "max": 44
+        },
+        "userStandaloneTokens": {
+          "min": 3165,
+          "p50": 18870,
+          "p95": 24741,
+          "p99": 27337,
+          "max": 30658
+        },
+        "specialTokens": {
+          "min": 6,
+          "p50": 6,
+          "p95": 6,
+          "p99": 6,
+          "max": 6
+        },
+        "totalTokens": {
+          "min": 3404,
+          "p50": 19100,
+          "p95": 25014,
+          "p99": 27581,
+          "max": 30902
+        }
+      },
+      "overBudget": {
+        "768": {
+          "total": 500,
+          "input": 500,
+          "targetAlone": 0
+        },
+        "1024": {
+          "total": 500,
+          "input": 500,
+          "targetAlone": 0
+        },
+        "1536": {
+          "total": 500,
+          "input": 500,
+          "targetAlone": 0
+        },
+        "2048": {
+          "total": 500,
+          "input": 500,
+          "targetAlone": 0
+        },
+        "3072": {
+          "total": 500,
+          "input": 500,
+          "targetAlone": 0
+        },
+        "4096": {
+          "total": 494,
+          "input": 494,
+          "targetAlone": 0
+        }
+      },
+      "prefixExactCount": 500
+    },
+    "full-facts": {
+      "samples": 500,
+      "distributions": {
+        "inputTokens": {
+          "min": 977,
+          "p50": 1394,
+          "p95": 1593,
+          "p99": 1612,
+          "max": 1624
+        },
+        "inferencePromptTokens": {
+          "min": 977,
+          "p50": 1394,
+          "p95": 1593,
+          "p99": 1612,
+          "max": 1624
+        },
+        "targetTokens": {
+          "min": 148,
+          "p50": 187,
+          "p95": 238,
+          "p99": 243,
+          "max": 252
+        },
+        "targetStandaloneTokens": {
+          "min": 148,
+          "p50": 187,
+          "p95": 238,
+          "p99": 243,
+          "max": 252
+        },
+        "completionTokens": {
+          "min": 150,
+          "p50": 189,
+          "p95": 240,
+          "p99": 245,
+          "max": 254
+        },
+        "assistantSuffixTokens": {
+          "min": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "max": 2
+        },
+        "systemStandaloneTokens": {
+          "min": 73,
+          "p50": 73,
+          "p95": 73,
+          "p99": 73,
+          "max": 73
+        },
+        "userStandaloneTokens": {
+          "min": 887,
+          "p50": 1304,
+          "p95": 1503,
+          "p99": 1522,
+          "max": 1534
+        },
+        "specialTokens": {
+          "min": 6,
+          "p50": 6,
+          "p95": 6,
+          "p99": 6,
+          "max": 6
+        },
+        "totalTokens": {
+          "min": 1151,
+          "p50": 1569,
+          "p95": 1804,
+          "p99": 1842,
+          "max": 1854
+        }
+      },
+      "overBudget": {
+        "768": {
+          "total": 500,
+          "input": 500,
+          "targetAlone": 0
+        },
+        "1024": {
+          "total": 500,
+          "input": 494,
+          "targetAlone": 0
+        },
+        "1536": {
+          "total": 299,
+          "input": 159,
+          "targetAlone": 0
+        },
+        "2048": {
+          "total": 0,
+          "input": 0,
+          "targetAlone": 0
+        },
+        "3072": {
+          "total": 0,
+          "input": 0,
+          "targetAlone": 0
+        },
+        "4096": {
+          "total": 0,
+          "input": 0,
+          "targetAlone": 0
+        }
+      },
+      "prefixExactCount": 500
+    },
+    "narrative-view": {
+      "samples": 500,
+      "distributions": {
+        "inputTokens": {
+          "min": 568,
+          "p50": 683,
+          "p95": 728,
+          "p99": 743,
+          "max": 754
+        },
+        "inferencePromptTokens": {
+          "min": 568,
+          "p50": 683,
+          "p95": 728,
+          "p99": 743,
+          "max": 754
+        },
+        "targetTokens": {
+          "min": 148,
+          "p50": 187,
+          "p95": 238,
+          "p99": 243,
+          "max": 252
+        },
+        "targetStandaloneTokens": {
+          "min": 148,
+          "p50": 187,
+          "p95": 238,
+          "p99": 243,
+          "max": 252
+        },
+        "completionTokens": {
+          "min": 150,
+          "p50": 189,
+          "p95": 240,
+          "p99": 245,
+          "max": 254
+        },
+        "assistantSuffixTokens": {
+          "min": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "max": 2
+        },
+        "systemStandaloneTokens": {
+          "min": 86,
+          "p50": 86,
+          "p95": 86,
+          "p99": 86,
+          "max": 86
+        },
+        "userStandaloneTokens": {
+          "min": 465,
+          "p50": 580,
+          "p95": 625,
+          "p99": 640,
+          "max": 651
+        },
+        "specialTokens": {
+          "min": 6,
+          "p50": 6,
+          "p95": 6,
+          "p99": 6,
+          "max": 6
+        },
+        "totalTokens": {
+          "min": 742,
+          "p50": 873,
+          "p95": 948,
+          "p99": 980,
+          "max": 994
+        }
+      },
+      "overBudget": {
+        "768": {
+          "total": 487,
+          "input": 0,
+          "targetAlone": 0
+        },
+        "1024": {
+          "total": 0,
+          "input": 0,
+          "targetAlone": 0
+        },
+        "1536": {
+          "total": 0,
+          "input": 0,
+          "targetAlone": 0
+        },
+        "2048": {
+          "total": 0,
+          "input": 0,
+          "targetAlone": 0
+        },
+        "3072": {
+          "total": 0,
+          "input": 0,
+          "targetAlone": 0
+        },
+        "4096": {
+          "total": 0,
+          "input": 0,
+          "targetAlone": 0
+        }
+      },
+      "prefixExactCount": 500
+    }
+  }
+}

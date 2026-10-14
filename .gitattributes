@@ -1,0 +1,14 @@
+# Preserve byte-level dependency provenance across Windows Git checkouts.
+/requirements-situation.in text eol=lf
+/requirements-situation-win-cu126.lock.txt text eol=lf
+/requirements-situation-win-cu126.sources.json text eol=lf
+/tools/prepare_situation_dependencies.py text eol=lf
+
+# Preserve the pinned model reference hash used by external base manifests.
+/situation-implementation/situation-qwen3-base-reference-v1.json text eol=lf
+
+# Keep schema bytes consistent with the frozen core-context hash bindings.
+/schemas/situation/situation-core-context-v1.schema.json text eol=lf
+/schemas/situation/minimap-scene-v1.schema.json text eol=crlf
+/schemas/situation/situation-facts-v1.schema.json text eol=crlf
+/schemas/situation/situation-narrative-v1.schema.json text eol=crlf

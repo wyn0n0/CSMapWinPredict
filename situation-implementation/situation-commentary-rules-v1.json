@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "situation-commentary-rules-v1",
+  "version": "commentary-rules-v1",
+  "rules": [
+    {
+      "id": "g1",
+      "text": "已知人数可以比较；人数优势不等于空间优势或胜率。"
+    },
+    {
+      "id": "g2",
+      "text": "已下包时攻防围绕拆包机会；没有明确倒计时与条件，不能判断是否来得及。"
+    },
+    {
+      "id": "g3",
+      "text": "接触风险和潜在暴露不证明已经交火、受伤或击杀。"
+    },
+    {
+      "id": "g4",
+      "text": "人数与空间条件冲突时分别说明；不合成为未经验证的胜负结论。"
+    },
+    {
+      "id": "g5",
+      "text": "回合时钟不是爆炸倒计时，道具库存不是活动效果。"
+    },
+    {
+      "id": "g6",
+      "text": "null/unknown和质量限制保持未知；不猜位置、意图、未来或导航支援时间。"
+    }
+  ],
+  "authority": "approved repository task/spec; general interpretation limits, not new DEM observations",
+  "sourceDocuments": [
+    "docs/situation-commentary-improvement-plan-20261004.md",
+    "docs/situation-core-context-5120-spec-20261005.md"
+  ],
+  "planner": {
+    "maxClaims": 2,
+    "maxLimitations": 2,
+    "priority": [
+      "factor-conflict",
+      "post-plant",
+      "contact",
+      "numbers",
+      "uncertain"
+    ]
+  }
+}

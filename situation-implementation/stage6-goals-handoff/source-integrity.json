@@ -1,0 +1,1240 @@
+{
+  "schemaVersion": "situation-stage6-source-integrity-v1",
+  "startedUtc": "2026-10-02T17:53:50.884641+00:00",
+  "status": "passed",
+  "scope": "frozen base and review byte hashes only; no test content decoded",
+  "artifacts": {
+    "situation-stage4-full-20260919-r1": {
+      "manifestSha256": "e60e8bf001ea55b1932fba7bed83468ee104cac8516525fe539409edaae8a3f9",
+      "status": "complete",
+      "counts": {
+        "train": {
+          "matches": 71,
+          "rounds": 1526,
+          "samples": 24416
+        },
+        "dev": {
+          "matches": 8,
+          "rounds": 201,
+          "samples": 3216
+        },
+        "test": {
+          "matches": 8,
+          "rounds": 172,
+          "samples": 2752
+        }
+      },
+      "files": [
+        {
+          "logicalPath": "storage:datasets/situation-stage4-full-20260919-r1/dev.jsonl",
+          "sha256": "10aa025b93ae90a5dcba0c7f0095437278c4967e2311b3304638e85372f12b0b",
+          "expectedSha256": "10aa025b93ae90a5dcba0c7f0095437278c4967e2311b3304638e85372f12b0b",
+          "bytes": 118834098,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-full-20260919-r1/label-stats.json",
+          "sha256": "ce0139ebeefd15bc7092ea0dfcc60b04fc385d82cda28255636e97b2fe58b4d3",
+          "expectedSha256": "ce0139ebeefd15bc7092ea0dfcc60b04fc385d82cda28255636e97b2fe58b4d3",
+          "bytes": 50859,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-full-20260919-r1/provenance.json",
+          "sha256": "93fb7d2f0339f9a1c4b9ba73bfe2b9ecb4f9da655611181960f116ca62a76427",
+          "expectedSha256": "93fb7d2f0339f9a1c4b9ba73bfe2b9ecb4f9da655611181960f116ca62a76427",
+          "bytes": 488121,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-full-20260919-r1/split.json",
+          "sha256": "fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f",
+          "expectedSha256": "fddbf3f8feff81e8930bf309c68671ae2561a55e51985b0b5868a05773fbbd9f",
+          "bytes": 16211,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-full-20260919-r1/test.jsonl",
+          "sha256": "0281c8941103b7647722a3b055dccb45408ab82155a7f0eb652eb38f276499b7",
+          "expectedSha256": "0281c8941103b7647722a3b055dccb45408ab82155a7f0eb652eb38f276499b7",
+          "bytes": 101727857,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-full-20260919-r1/train.jsonl",
+          "sha256": "921051316fa45b284aab58fececc5d51d653fde261fcc74aa771a0ade25aedd1",
+          "expectedSha256": "921051316fa45b284aab58fececc5d51d653fde261fcc74aa771a0ade25aedd1",
+          "bytes": 905001827,
+          "status": "passed"
+        }
+      ]
+    },
+    "situation-stage4-review-frozen-20260927-r1": {
+      "manifestSha256": "856958021e1199cc65d79af614380c75404d11e7b3c7641ec38c353597c1cd2d",
+      "status": "complete",
+      "counts": {
+        "dev": 7,
+        "test": 7,
+        "train": 36
+      },
+      "files": [
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/consumer-provenance.json",
+          "sha256": "8535ae2df142709e58dfb79eb914f8c920badb1f7cf390af9afefa3d36bcaabd",
+          "expectedSha256": "8535ae2df142709e58dfb79eb914f8c920badb1f7cf390af9afefa3d36bcaabd",
+          "bytes": 8747,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-071014d2d6664c42fb569cca976d3c42720b6d3de7580caae445a79484a615a2.json",
+          "sha256": "a0b71910755f4c4092dc0df5782a5dde18cdc2748e6baa52463504f15a2ecd09",
+          "expectedSha256": "a0b71910755f4c4092dc0df5782a5dde18cdc2748e6baa52463504f15a2ecd09",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-18f2f6b4a3c0a7c2f9f3acce42fda33075eeb775847e3a028596a1baff0860ba.json",
+          "sha256": "e1263a4a4bdf7bd9d0a6708922c96d33cfc642d75e8212084b28041e5be0cf7e",
+          "expectedSha256": "e1263a4a4bdf7bd9d0a6708922c96d33cfc642d75e8212084b28041e5be0cf7e",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-1ff63af8f459dfb8efbe559325b4771c9ce84939d364eb96796358f1ece28667.json",
+          "sha256": "31737229dac66a3e06acac9b1955449564a796698ad6ebee78e14f73fa80dea2",
+          "expectedSha256": "31737229dac66a3e06acac9b1955449564a796698ad6ebee78e14f73fa80dea2",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-204d58da4bd31e9febfb1babc2ef33a7aa3ddba6cad74e205e4135b8bf150484.json",
+          "sha256": "de6dc4d28ceac4575ac8502fa4704cb7263c3a8ff77166681ddedd231a800628",
+          "expectedSha256": "de6dc4d28ceac4575ac8502fa4704cb7263c3a8ff77166681ddedd231a800628",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-20a1297ea1850ad45abd1ae1550257988c1547c7ee5422ef5efdfb9a02958d88.json",
+          "sha256": "2ae3193cc5ba1cca2afcd09f07b6b286d783d5d562589add6cb0af69f76aafb2",
+          "expectedSha256": "2ae3193cc5ba1cca2afcd09f07b6b286d783d5d562589add6cb0af69f76aafb2",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-23138a3ecbea9e9712fe5f04f77d33dcda6202a0c21eb25ecf4543a78db395ae.json",
+          "sha256": "a980daae2544d5993dfed6ad389a11539f3ae9c135ef28c405b666dffb867bbd",
+          "expectedSha256": "a980daae2544d5993dfed6ad389a11539f3ae9c135ef28c405b666dffb867bbd",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-2757b9a00e2bce32a43ba9543a626d5077e0d9768e3295097d9b1f3c40747657.json",
+          "sha256": "9f71b0ab40315e44bbf552fdd915c6c1eb92e5cb31aa8723bdfa5443d49dad97",
+          "expectedSha256": "9f71b0ab40315e44bbf552fdd915c6c1eb92e5cb31aa8723bdfa5443d49dad97",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-314aa67261676f6f9952488031104d0acedb223ca961da807cc28357ed55222a.json",
+          "sha256": "7a91b229a0970bcd1ef6549fc2e8bfb2baaf818627e7dbe6ac7ff73d33f998d5",
+          "expectedSha256": "7a91b229a0970bcd1ef6549fc2e8bfb2baaf818627e7dbe6ac7ff73d33f998d5",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-31b1779f8891ab8b4e9e6a07cbede898a9eca7986c1d7c4fa9c2d29a04f998d6.json",
+          "sha256": "ef66545fcf76d3569493508a52739f7a51d215b5b66df68e0e66b2f1d906adde",
+          "expectedSha256": "ef66545fcf76d3569493508a52739f7a51d215b5b66df68e0e66b2f1d906adde",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-32941e66dc285abbe1ae9658c81ba9fb1a7a9993fe979c7f0179b294090e3b85.json",
+          "sha256": "33d758087686d44605c2e8e050056a564bf457e0d5d9a42a5a9df2fc3f6cd4db",
+          "expectedSha256": "33d758087686d44605c2e8e050056a564bf457e0d5d9a42a5a9df2fc3f6cd4db",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-35e3cf0ea899d55d6b138bb5cc697c9ce0e9739ec8d97694659df0fd6d56b9c6.json",
+          "sha256": "30f5f5e36b19d083714459060b6f715cd9f93b5f7fb2be30e82841c2a8588108",
+          "expectedSha256": "30f5f5e36b19d083714459060b6f715cd9f93b5f7fb2be30e82841c2a8588108",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-374f11086a58bef742453567ff74ef89db37a3cc45188a322bb00cd517cad2f7.json",
+          "sha256": "c662b457161e3c59387044dec673b9c4770b0f49e85b6e6328d6d8739d95bc42",
+          "expectedSha256": "c662b457161e3c59387044dec673b9c4770b0f49e85b6e6328d6d8739d95bc42",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-45b42a78ce581955c152ab7f4d6a612ac040387e1c535dd2b8ced6cbf7b28b17.json",
+          "sha256": "8b568930e53355eec02e9f1e42f273b9590220ca108722d603c6341c7dbdedfc",
+          "expectedSha256": "8b568930e53355eec02e9f1e42f273b9590220ca108722d603c6341c7dbdedfc",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-45b7fec6df3f6172c09716d7825281f0521aba95eee289dcc4ecd43702da1651.json",
+          "sha256": "b62f8e3685fdae27be40e78d9f0ee085f71365d5fa9aa7688fc0b262269b8906",
+          "expectedSha256": "b62f8e3685fdae27be40e78d9f0ee085f71365d5fa9aa7688fc0b262269b8906",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-46b3bdaa6e3044db3d1f8f30d7a0e93df774288e537d4a110d1b0e7a59e75c90.json",
+          "sha256": "80e4ede20e70558f231c055480bd3481887a24d1da51a4f6f144a9e8fe2df3fd",
+          "expectedSha256": "80e4ede20e70558f231c055480bd3481887a24d1da51a4f6f144a9e8fe2df3fd",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-4fecbc8bdca978d1381f15ffa5e03a29124e4fa703be0699d5ac618cd3c73593.json",
+          "sha256": "54923f579f50054a91d7d08fd48940455f8f805875c8f38e098f6170c86a93c2",
+          "expectedSha256": "54923f579f50054a91d7d08fd48940455f8f805875c8f38e098f6170c86a93c2",
+          "bytes": 790,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-51f36039390702f008da2f43d6b38a49181ab7a4054dc7240683daa0d271c55b.json",
+          "sha256": "6048b93a9dd110f389b3d2d198ce70d11f82815e03df6b38b91fcd5bf09ef31c",
+          "expectedSha256": "6048b93a9dd110f389b3d2d198ce70d11f82815e03df6b38b91fcd5bf09ef31c",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-56c8e0f071d065137916d0238af6b2064a0f9bb400922a06e35a5133b0de7c8a.json",
+          "sha256": "6155fa60d5f1e3979724a345f9a8bc669971941045d614085016b57a3604cfeb",
+          "expectedSha256": "6155fa60d5f1e3979724a345f9a8bc669971941045d614085016b57a3604cfeb",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-57eb7ff9d6171abb969a865e464a07ff39fa371bc5c49cac5b5b82954ac61bbc.json",
+          "sha256": "f6efd61ee62602e5d54ff8ff6a21784e5fe7f22b7cab5e602898d43a9cd27774",
+          "expectedSha256": "f6efd61ee62602e5d54ff8ff6a21784e5fe7f22b7cab5e602898d43a9cd27774",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-5b44ce4aef696423b8ec9d8a18368f66d5504e4e127f22c5a2b3892a6dfb3dc1.json",
+          "sha256": "4f49b37f7daa6b1a5d2594ea9680e8c00020b45d3698b3ff9ac2d37d46900349",
+          "expectedSha256": "4f49b37f7daa6b1a5d2594ea9680e8c00020b45d3698b3ff9ac2d37d46900349",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-6944aa79c1daaa0a649ce0d3e14f19ef24c0b3e01e3a00df8fd4250fcc4c5f14.json",
+          "sha256": "d52c2c50260efdf0e594203520856d1d76f5663e2ae8b7371ba246f450b6c4c5",
+          "expectedSha256": "d52c2c50260efdf0e594203520856d1d76f5663e2ae8b7371ba246f450b6c4c5",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-6b09ccf4b286146d0047761aa5d4b61aee7fc60442c913d168f03190c353a0f9.json",
+          "sha256": "a0593d68eaf39749f6bddb8f819aaf7c77406693b63c8a79c419c55c734dd738",
+          "expectedSha256": "a0593d68eaf39749f6bddb8f819aaf7c77406693b63c8a79c419c55c734dd738",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-6e369272d7980493b458bb4752d3e8b4dcc88767b1bd7a909ba9629f582fbd8a.json",
+          "sha256": "de7c218302539ab77793be907d3bd3f17104422c5ec48e893c2d5aec182b9652",
+          "expectedSha256": "de7c218302539ab77793be907d3bd3f17104422c5ec48e893c2d5aec182b9652",
+          "bytes": 790,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-71718a0648137ab3f9527d0ef21c769725708aa5d2adbf506870d60626d21c81.json",
+          "sha256": "ae1338aac74e5a08113925f74f8eae35170be79cd6ee846250dd77d005ce109c",
+          "expectedSha256": "ae1338aac74e5a08113925f74f8eae35170be79cd6ee846250dd77d005ce109c",
+          "bytes": 790,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-71763c425d9dbfd8f290af0be666e759237fe66b6b3e5de207830ffb110fb953.json",
+          "sha256": "9b10e99a998956cacec78067c5d9bf774c3485e89a8e137704bb3b1ed2fff55b",
+          "expectedSha256": "9b10e99a998956cacec78067c5d9bf774c3485e89a8e137704bb3b1ed2fff55b",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-8b8afe5233aca7c7081ef58e2fb9acd02ea711104548508a7a10f99caf27e326.json",
+          "sha256": "bdebfd0db2e0eb90c226c11d86116a67ff26e50f919fc5e871b5ef63140a9d83",
+          "expectedSha256": "bdebfd0db2e0eb90c226c11d86116a67ff26e50f919fc5e871b5ef63140a9d83",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-9aa9c752c72d4089876d06b5193ce610d87da341aaf8e0bb02d45cc05e67f543.json",
+          "sha256": "136ae8c34ada839aa7f4d695b6e02834b30c1e8727f4ef0a030f051170d3189e",
+          "expectedSha256": "136ae8c34ada839aa7f4d695b6e02834b30c1e8727f4ef0a030f051170d3189e",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-9b534544b0f97905397848b56f64802cfc948a8da2a07ed2bb8f5aef50699993.json",
+          "sha256": "d7bc6ed34d7ad9c3ddc1cadfc46a9873547cc3c35355dfb59cc6b4b9ce5f5360",
+          "expectedSha256": "d7bc6ed34d7ad9c3ddc1cadfc46a9873547cc3c35355dfb59cc6b4b9ce5f5360",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-b44efb30e11c65ca3792cdb9c61460317a4bef0f15c8cc30cd6c189cbbd11789.json",
+          "sha256": "a371ba013948fdf685d94930c405ce6ecc012a491c50b0dbb35d8c5a68880560",
+          "expectedSha256": "a371ba013948fdf685d94930c405ce6ecc012a491c50b0dbb35d8c5a68880560",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-b4e3b55a8ca5df40ae88e05a9400bcf2b350bcef240906b1953a3534f1f21600.json",
+          "sha256": "053e24b285318ecb1f6c280d20f5ab1d1ad10039e77cf368dd3092ac00f3d260",
+          "expectedSha256": "053e24b285318ecb1f6c280d20f5ab1d1ad10039e77cf368dd3092ac00f3d260",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-ba5bcbfe4b4dd0dd4490416ebe652c63605dc60bd55f7f0249a9d11d8d26ccfe.json",
+          "sha256": "ff892620afe37e6ea22cd7fe9534e9152936a7cde715f8c3d72ba79e3aa524c8",
+          "expectedSha256": "ff892620afe37e6ea22cd7fe9534e9152936a7cde715f8c3d72ba79e3aa524c8",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-bb696fb690ce9a79ccef10b49e9dac6728c7165a39ac3e73b36f21c5bb77332f.json",
+          "sha256": "909c651b4d3ff36f768413c8a07d66d9bc200b3385a43042d305e62d57e8f7e5",
+          "expectedSha256": "909c651b4d3ff36f768413c8a07d66d9bc200b3385a43042d305e62d57e8f7e5",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-bd763e397c1b4a07ff4c4746c52a4ababa92688da46191ab2bb2ab468198ced8.json",
+          "sha256": "8996e48d59d65ccdec41d92316fafbe99b97fd80737747cc7c58e76aa23b5993",
+          "expectedSha256": "8996e48d59d65ccdec41d92316fafbe99b97fd80737747cc7c58e76aa23b5993",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-c856d8f58e88e0c355695416304ca125c0324e7dd608e0dd7098057cba68a436.json",
+          "sha256": "8de4645c72e36378181e0083b9d4e65eb60faf243d3889a9da7c3dfb8f25ad69",
+          "expectedSha256": "8de4645c72e36378181e0083b9d4e65eb60faf243d3889a9da7c3dfb8f25ad69",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-ca3a67a072937ddcaaa48f4ab67b916be0ed939d4865463939c919fe31f8ea49.json",
+          "sha256": "6d8db34630a97b043897fa0d2c95052026af56a33eacfed7a86a708884f7c938",
+          "expectedSha256": "6d8db34630a97b043897fa0d2c95052026af56a33eacfed7a86a708884f7c938",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-cf06e5c849000f67c374b36c385ba61f820bd2584b71171b5e2c9371a0278cda.json",
+          "sha256": "177596b9dfe7aac8e82b86ed58b2f3ea9d79a43a5131fddf9a3d0dd636ec1a29",
+          "expectedSha256": "177596b9dfe7aac8e82b86ed58b2f3ea9d79a43a5131fddf9a3d0dd636ec1a29",
+          "bytes": 790,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-d1e03b124c54c253738cd653cc4c156718d954ee5a5001fd2bf1ce2e538c36ff.json",
+          "sha256": "4836f76ae0ad13deed05be3e4d2aa25c3b89e4c7b879b7aab79c2b9a73fb3e7b",
+          "expectedSha256": "4836f76ae0ad13deed05be3e4d2aa25c3b89e4c7b879b7aab79c2b9a73fb3e7b",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-d26bd091b1f9e13ba97cd061c0c632d5cbac406856022b1cc3da8f5dd09b8b13.json",
+          "sha256": "4268aedec9eff752245058b2a685d9ec392666dc7df2af5ec0bd887dd495c484",
+          "expectedSha256": "4268aedec9eff752245058b2a685d9ec392666dc7df2af5ec0bd887dd495c484",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-d978e13cbc5fb4b17d59789a4ad7227ad894e297c18676502a06685aa3c33107.json",
+          "sha256": "18ad0f4d67f2d555fe998ccec342ddec84d18b6d3115abc49587386125e131e5",
+          "expectedSha256": "18ad0f4d67f2d555fe998ccec342ddec84d18b6d3115abc49587386125e131e5",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-d993d5f1117b09cd1b6aac7ac59e5646dc81b8c9ccfce98ac45de00629e9d1a8.json",
+          "sha256": "57afd7c9d771a68fc2f499909d546a0ad89bdf4b9335dd514849843597faf9bd",
+          "expectedSha256": "57afd7c9d771a68fc2f499909d546a0ad89bdf4b9335dd514849843597faf9bd",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-dea4b3414e421f17dd144381fb57ca9e2722b163a0a8559895c973c315ffecef.json",
+          "sha256": "a982bd18a0d060fc5d18758ee94769325fe0c83e6309149cdaa2ef798fe6c328",
+          "expectedSha256": "a982bd18a0d060fc5d18758ee94769325fe0c83e6309149cdaa2ef798fe6c328",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-e6efb010bab063b3501cf9c06be539547629e8f3bcfe748d2ba29d3c01824094.json",
+          "sha256": "101dbd52c886543b0b2f718702d1d93dee43f688b141ca059b701cc46c05959c",
+          "expectedSha256": "101dbd52c886543b0b2f718702d1d93dee43f688b141ca059b701cc46c05959c",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-e910d56c355c4889fc28b323e674caced17a336495140b94d82c746dcd194c21.json",
+          "sha256": "6f14ad93e74962b2bbf369efce1d168283bbdc3a85021c43cbef8994bf2e5810",
+          "expectedSha256": "6f14ad93e74962b2bbf369efce1d168283bbdc3a85021c43cbef8994bf2e5810",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-ea514d5943467c073954dfda08fae11b668924ba0c668b358a5d37495bc276b1.json",
+          "sha256": "dd499d4b3549db5feadfb8967635cfe58c8f1ad23986edd066d296320cec9322",
+          "expectedSha256": "dd499d4b3549db5feadfb8967635cfe58c8f1ad23986edd066d296320cec9322",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-f1a118154722ec564c279b922183ce046a4becaaedf6d1a8e14449c33e453e44.json",
+          "sha256": "1ca01bf4cfa608662f52ce1801c5b585a16c80f9b8bedbdaf501673ca276aeff",
+          "expectedSha256": "1ca01bf4cfa608662f52ce1801c5b585a16c80f9b8bedbdaf501673ca276aeff",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-f35eac6b1cab87a0caabffd7248d0ffd8d2f31c1fc4f171ab3fb7292668ea135.json",
+          "sha256": "060a10164cc79775918f254a233dd6d7808f5748f195f2cecd647683c65220c4",
+          "expectedSha256": "060a10164cc79775918f254a233dd6d7808f5748f195f2cecd647683c65220c4",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-f462e1df56e262cd1d9b7584b41d27f7a1746c32d63232fd833a3555dc737798.json",
+          "sha256": "f523ac50ae2cb288237069ff67c7127f6d9b52e73299b3b32166d3a5acfb0e46",
+          "expectedSha256": "f523ac50ae2cb288237069ff67c7127f6d9b52e73299b3b32166d3a5acfb0e46",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-f619c5e5ae9962f6bf79d7098cfb50eed47220821e1f0da3e2498ba7a9e3eccc.json",
+          "sha256": "9dd8e83bb7f122d7a0c988a6fd374b09f47e714d05c66e6e41c9ec087187a0d0",
+          "expectedSha256": "9dd8e83bb7f122d7a0c988a6fd374b09f47e714d05c66e6e41c9ec087187a0d0",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-f9a4d39e395bbd8ec97f3795ef87abf4968de1e84195387b1ad8e5504f86d4f9.json",
+          "sha256": "1fb32c04400afd2c5e8d26fe13fd69f9a25fa8bd7f5710e06488122335b530a2",
+          "expectedSha256": "1fb32c04400afd2c5e8d26fe13fd69f9a25fa8bd7f5710e06488122335b530a2",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/decisions/sample-fb5b59fd5e69bc38ef509e3e1e81fd756f6e3c2cd4790a325ff3e1e78e5265d6.json",
+          "sha256": "73190a8895061096c03ef202de0a542bb2ec12f30b24beb5e229742b61ee6579",
+          "expectedSha256": "73190a8895061096c03ef202de0a542bb2ec12f30b24beb5e229742b61ee6579",
+          "bytes": 791,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/review-scope.json",
+          "sha256": "a6c7793b8e58cbda3979d3921f2dc6da5b682cb3c01c515542f407d409796902",
+          "expectedSha256": "a6c7793b8e58cbda3979d3921f2dc6da5b682cb3c01c515542f407d409796902",
+          "bytes": 3287,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000001.commit",
+          "sha256": "1279f02372f601ebfcbff000295c507881b64a5e2d0414ca27360654d850b4c6",
+          "expectedSha256": "1279f02372f601ebfcbff000295c507881b64a5e2d0414ca27360654d850b4c6",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000001.json",
+          "sha256": "78cd88961a1effc6a2e2a0e220513ebedba6d89ce7d66b0a578590046c2d668f",
+          "expectedSha256": "78cd88961a1effc6a2e2a0e220513ebedba6d89ce7d66b0a578590046c2d668f",
+          "bytes": 1325,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000002.commit",
+          "sha256": "9b0f77b6396759a1792767fdbea9b63d81db139317356c3f8f469d2dc5d06a48",
+          "expectedSha256": "9b0f77b6396759a1792767fdbea9b63d81db139317356c3f8f469d2dc5d06a48",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000002.json",
+          "sha256": "c9b5df413dc9f2415961356c7daa83102f564d3a20ffb078d7d5f85aef8f0f04",
+          "expectedSha256": "c9b5df413dc9f2415961356c7daa83102f564d3a20ffb078d7d5f85aef8f0f04",
+          "bytes": 1325,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000003.commit",
+          "sha256": "56755ec2ea2b9a0f097571cb0952a24e6400f89227ae115652642b5eebe351ea",
+          "expectedSha256": "56755ec2ea2b9a0f097571cb0952a24e6400f89227ae115652642b5eebe351ea",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000003.json",
+          "sha256": "56b07b80404d1403782610a28d7011bd3adca3b1a01fc1dd1e0b0deb43295770",
+          "expectedSha256": "56b07b80404d1403782610a28d7011bd3adca3b1a01fc1dd1e0b0deb43295770",
+          "bytes": 1325,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000004.commit",
+          "sha256": "a570a3f5c00a69d3128a6e310adc584834992014ff93273a1ed70c964921c20b",
+          "expectedSha256": "a570a3f5c00a69d3128a6e310adc584834992014ff93273a1ed70c964921c20b",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000004.json",
+          "sha256": "2166dec110f63c751739fed9e4462d5a6e2a9c80db58e1758b307a2d69c056ea",
+          "expectedSha256": "2166dec110f63c751739fed9e4462d5a6e2a9c80db58e1758b307a2d69c056ea",
+          "bytes": 1325,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000005.commit",
+          "sha256": "e98cacbc55e83d80c92e9c3f2483bb590240f00442b6291010e37bb18a610d30",
+          "expectedSha256": "e98cacbc55e83d80c92e9c3f2483bb590240f00442b6291010e37bb18a610d30",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000005.json",
+          "sha256": "ef977a75e5061f5d050d0471860868722b7a288b1cfce9cf42ebe2718707f921",
+          "expectedSha256": "ef977a75e5061f5d050d0471860868722b7a288b1cfce9cf42ebe2718707f921",
+          "bytes": 1325,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000006.commit",
+          "sha256": "4f3dc088a5d86215d35cdc37b82ec0ae13b03cb744f0edf642df29651985a4f7",
+          "expectedSha256": "4f3dc088a5d86215d35cdc37b82ec0ae13b03cb744f0edf642df29651985a4f7",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000006.json",
+          "sha256": "0bffb4a791dc67747b6ce471e5b4cc8c1a30dfc865774db434e067726e1a701f",
+          "expectedSha256": "0bffb4a791dc67747b6ce471e5b4cc8c1a30dfc865774db434e067726e1a701f",
+          "bytes": 1325,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000007.commit",
+          "sha256": "9c7a1cfc042b340c71884f986e8e99c7a0cb306d8ace7aafed5e7096d4ed030c",
+          "expectedSha256": "9c7a1cfc042b340c71884f986e8e99c7a0cb306d8ace7aafed5e7096d4ed030c",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000007.json",
+          "sha256": "24a6b32d2f7069bd8d037a77bae5e86d97b9690415f3949eb850e7747be4347b",
+          "expectedSha256": "24a6b32d2f7069bd8d037a77bae5e86d97b9690415f3949eb850e7747be4347b",
+          "bytes": 1325,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000008.commit",
+          "sha256": "57ba4199cbb94e44c96b20da42aa9c326aba49a7fae80f7a424dab0c52266306",
+          "expectedSha256": "57ba4199cbb94e44c96b20da42aa9c326aba49a7fae80f7a424dab0c52266306",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000008.json",
+          "sha256": "830b345e8162ffdedba6fc7937b9a548e09a9d344f7ad3fcccbe49aa10b291cb",
+          "expectedSha256": "830b345e8162ffdedba6fc7937b9a548e09a9d344f7ad3fcccbe49aa10b291cb",
+          "bytes": 1325,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000009.commit",
+          "sha256": "aa7a760e28b8c2111b4fd238fddc34f981401059b5682232cc264ea45d7d7da8",
+          "expectedSha256": "aa7a760e28b8c2111b4fd238fddc34f981401059b5682232cc264ea45d7d7da8",
+          "bytes": 101,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000009.json",
+          "sha256": "da8fd1a5d53651e2d61fa3ef046f3be79223a9929603dd9aaceec106c2125f64",
+          "expectedSha256": "da8fd1a5d53651e2d61fa3ef046f3be79223a9929603dd9aaceec106c2125f64",
+          "bytes": 1324,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000010.commit",
+          "sha256": "5f7e3fd74d45ac09cee50786aecc2c5ead2717b62ae661a431a53ba863c8553f",
+          "expectedSha256": "5f7e3fd74d45ac09cee50786aecc2c5ead2717b62ae661a431a53ba863c8553f",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000010.json",
+          "sha256": "a9798277171523c2e8a59d6c09162308948483bce2f24171d60e5339243ee89b",
+          "expectedSha256": "a9798277171523c2e8a59d6c09162308948483bce2f24171d60e5339243ee89b",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000011.commit",
+          "sha256": "43c1ff217b0d51393de862e5905ae588b759d341a78ea1236e21edfbb8d30d77",
+          "expectedSha256": "43c1ff217b0d51393de862e5905ae588b759d341a78ea1236e21edfbb8d30d77",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000011.json",
+          "sha256": "314705cef738e8bd47ec9f643c4efed4523e8704e608c47cb9aa129339677d60",
+          "expectedSha256": "314705cef738e8bd47ec9f643c4efed4523e8704e608c47cb9aa129339677d60",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000012.commit",
+          "sha256": "fb71d287639e251511d8e1297cb366c0ecfd29b2ddfee8f1cff961e8559da907",
+          "expectedSha256": "fb71d287639e251511d8e1297cb366c0ecfd29b2ddfee8f1cff961e8559da907",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000012.json",
+          "sha256": "116fc387db90f87603581b929f5412b87620fda54ad00e49589cbd8e9f20f7ff",
+          "expectedSha256": "116fc387db90f87603581b929f5412b87620fda54ad00e49589cbd8e9f20f7ff",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000013.commit",
+          "sha256": "bf1844a8f363e31b2e8d1dce096a5a5f30bed9498cddb5e3b54d1b76b82ed722",
+          "expectedSha256": "bf1844a8f363e31b2e8d1dce096a5a5f30bed9498cddb5e3b54d1b76b82ed722",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000013.json",
+          "sha256": "6d5d1b5dd1cfaae1251e4034b4a954549cb2c0cd75a72733639825a4d4ff002d",
+          "expectedSha256": "6d5d1b5dd1cfaae1251e4034b4a954549cb2c0cd75a72733639825a4d4ff002d",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000014.commit",
+          "sha256": "d974a2223b00972c800357f90516a2ccf72793aac30ceba828e2d6718b9a5294",
+          "expectedSha256": "d974a2223b00972c800357f90516a2ccf72793aac30ceba828e2d6718b9a5294",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000014.json",
+          "sha256": "3f291524c089dab5da6364347bedc521ee3c67837fcdfdecaa20253729cdcd97",
+          "expectedSha256": "3f291524c089dab5da6364347bedc521ee3c67837fcdfdecaa20253729cdcd97",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000015.commit",
+          "sha256": "e00a0ea63a232d8dc5d9ef31fc43ce6f2f56cb4d9c3ee24005d364bb1c675a16",
+          "expectedSha256": "e00a0ea63a232d8dc5d9ef31fc43ce6f2f56cb4d9c3ee24005d364bb1c675a16",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000015.json",
+          "sha256": "5c558909b06c9c276019a2312c694b74dffce8b6a5d074f6e1341e716b6a02d7",
+          "expectedSha256": "5c558909b06c9c276019a2312c694b74dffce8b6a5d074f6e1341e716b6a02d7",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000016.commit",
+          "sha256": "c0772573debe3f3105524470d1693bb05638d44cce52853d258af55c29617741",
+          "expectedSha256": "c0772573debe3f3105524470d1693bb05638d44cce52853d258af55c29617741",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000016.json",
+          "sha256": "5be23b33d5b18a596b48b4a88240375560d2df440d53c297fd4a490b23d1dcef",
+          "expectedSha256": "5be23b33d5b18a596b48b4a88240375560d2df440d53c297fd4a490b23d1dcef",
+          "bytes": 1326,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000017.commit",
+          "sha256": "d4ed20701173b7a99c94f2d0ec1ab1ada304a1dc22c37cc50a0b026d7bb898a9",
+          "expectedSha256": "d4ed20701173b7a99c94f2d0ec1ab1ada304a1dc22c37cc50a0b026d7bb898a9",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000017.json",
+          "sha256": "16cb5a894fad4772956abe6cb7b8a529b35ad3fe37e4bd801a58d1d2bcc174c5",
+          "expectedSha256": "16cb5a894fad4772956abe6cb7b8a529b35ad3fe37e4bd801a58d1d2bcc174c5",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000018.commit",
+          "sha256": "7e600284aad8a73a99bf1bc277da4378edd450fb693dfebaceeec062b1ad2f8b",
+          "expectedSha256": "7e600284aad8a73a99bf1bc277da4378edd450fb693dfebaceeec062b1ad2f8b",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000018.json",
+          "sha256": "fabba604a5636118de773101dcc37167e1b697208adcae514ca5ff0db4afcb2b",
+          "expectedSha256": "fabba604a5636118de773101dcc37167e1b697208adcae514ca5ff0db4afcb2b",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000019.commit",
+          "sha256": "1da3fe27d5c5d9a05c252bc9665c2301b5ded5b49127f0c18707f9d96f6fd917",
+          "expectedSha256": "1da3fe27d5c5d9a05c252bc9665c2301b5ded5b49127f0c18707f9d96f6fd917",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000019.json",
+          "sha256": "5b090e802157049f789098c649af177012d815778921875623007d4e5217e0ad",
+          "expectedSha256": "5b090e802157049f789098c649af177012d815778921875623007d4e5217e0ad",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000020.commit",
+          "sha256": "86e356b701b55fc2d1122989020abe0499b0f7640d16a10839ce93d005a3a90e",
+          "expectedSha256": "86e356b701b55fc2d1122989020abe0499b0f7640d16a10839ce93d005a3a90e",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000020.json",
+          "sha256": "3d7bbfb5377fc27ea90d73b27f163331bc1645b3197b126cf1e0e4b451c984b8",
+          "expectedSha256": "3d7bbfb5377fc27ea90d73b27f163331bc1645b3197b126cf1e0e4b451c984b8",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000021.commit",
+          "sha256": "d2bfe7b4ad27fca739aa9d12e0970e085098bf405fa1506c3c9b3ab537ca700c",
+          "expectedSha256": "d2bfe7b4ad27fca739aa9d12e0970e085098bf405fa1506c3c9b3ab537ca700c",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000021.json",
+          "sha256": "8ecf4db43c9d83ef45a3a69ce289eb9c5e706d440262237caf68ef5761300ac7",
+          "expectedSha256": "8ecf4db43c9d83ef45a3a69ce289eb9c5e706d440262237caf68ef5761300ac7",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000022.commit",
+          "sha256": "efec5c9f1357056f7f70d54de81d12fa4f13f7c26bb0487a43a7afd56ebdb22a",
+          "expectedSha256": "efec5c9f1357056f7f70d54de81d12fa4f13f7c26bb0487a43a7afd56ebdb22a",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000022.json",
+          "sha256": "22ea291579a7a1f4ba39997120436ca7831d3a20695be8458b864567dd809e7e",
+          "expectedSha256": "22ea291579a7a1f4ba39997120436ca7831d3a20695be8458b864567dd809e7e",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000023.commit",
+          "sha256": "f691dcb38490caa933f6b77fa013a434293ec883723251a05f51403145c30408",
+          "expectedSha256": "f691dcb38490caa933f6b77fa013a434293ec883723251a05f51403145c30408",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000023.json",
+          "sha256": "9375464911af9bfcf2ad9784ebb3cb53fa251b311096aad723aadf67e1ffeb50",
+          "expectedSha256": "9375464911af9bfcf2ad9784ebb3cb53fa251b311096aad723aadf67e1ffeb50",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000024.commit",
+          "sha256": "6b11fde01bd2c5947e843fce080afcf6080bf4624bba3201802c786d9e44dd58",
+          "expectedSha256": "6b11fde01bd2c5947e843fce080afcf6080bf4624bba3201802c786d9e44dd58",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000024.json",
+          "sha256": "22ef812be2e82c70d7c7e13cf05cdf867a3f31ca749e6ae48c7725d35ce42592",
+          "expectedSha256": "22ef812be2e82c70d7c7e13cf05cdf867a3f31ca749e6ae48c7725d35ce42592",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000025.commit",
+          "sha256": "34a751660949a79d6ae6ce6459c7ca7f4ed7dde57a09f6b428824c670701bb6e",
+          "expectedSha256": "34a751660949a79d6ae6ce6459c7ca7f4ed7dde57a09f6b428824c670701bb6e",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000025.json",
+          "sha256": "9c32c11e1e495d516f6bf347b5a7edae3490aad9d10f8489ca31f126e4c1749c",
+          "expectedSha256": "9c32c11e1e495d516f6bf347b5a7edae3490aad9d10f8489ca31f126e4c1749c",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000026.commit",
+          "sha256": "f559baeccaf195b636a455ad4f64ab973e0c26abafed9650629702d56d32909c",
+          "expectedSha256": "f559baeccaf195b636a455ad4f64ab973e0c26abafed9650629702d56d32909c",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000026.json",
+          "sha256": "d12c31025a23eba8ccabc82ae1ae1ad748d142a037295d6e8098c38938c4af85",
+          "expectedSha256": "d12c31025a23eba8ccabc82ae1ae1ad748d142a037295d6e8098c38938c4af85",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000027.commit",
+          "sha256": "8ecf58ea5cf45dda7c2ba1f009fe0b0a7e5622a7a24c4c3897a8355545e8da12",
+          "expectedSha256": "8ecf58ea5cf45dda7c2ba1f009fe0b0a7e5622a7a24c4c3897a8355545e8da12",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000027.json",
+          "sha256": "0ac4ad42842d06c95b7fd0994f1e4cfe9e3d806c6df3fe8c6ae4c178c64f52b9",
+          "expectedSha256": "0ac4ad42842d06c95b7fd0994f1e4cfe9e3d806c6df3fe8c6ae4c178c64f52b9",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000028.commit",
+          "sha256": "5301b70fe505f4d8998df12dfe7d63b197eb345c93224ba3b082d986e7e09795",
+          "expectedSha256": "5301b70fe505f4d8998df12dfe7d63b197eb345c93224ba3b082d986e7e09795",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000028.json",
+          "sha256": "ba0db8878f7cf7a0f7934f5db54fdbd4bd2176999161d87bf2140de874e87c4b",
+          "expectedSha256": "ba0db8878f7cf7a0f7934f5db54fdbd4bd2176999161d87bf2140de874e87c4b",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000029.commit",
+          "sha256": "01503af6f152da52ec431df3c969b4fa6a5624f0a270ddca9748796c304249e7",
+          "expectedSha256": "01503af6f152da52ec431df3c969b4fa6a5624f0a270ddca9748796c304249e7",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000029.json",
+          "sha256": "50fdf02afd4589ed07d2a03ac66644f6aa78ca5ec5284341af025625e1bba18b",
+          "expectedSha256": "50fdf02afd4589ed07d2a03ac66644f6aa78ca5ec5284341af025625e1bba18b",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000030.commit",
+          "sha256": "7109a4a2a17b683c1cba3581d63205b94f5758d29a668b08d807cc66430e5f69",
+          "expectedSha256": "7109a4a2a17b683c1cba3581d63205b94f5758d29a668b08d807cc66430e5f69",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000030.json",
+          "sha256": "000f61e10981b6858eaf29d3b727a03f8ec62d50f3eeaef3ed296a070d965488",
+          "expectedSha256": "000f61e10981b6858eaf29d3b727a03f8ec62d50f3eeaef3ed296a070d965488",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000031.commit",
+          "sha256": "aacee9b864be6b163bacef6c7323e08d1b63100fbb35b26639ff563c87142fdf",
+          "expectedSha256": "aacee9b864be6b163bacef6c7323e08d1b63100fbb35b26639ff563c87142fdf",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000031.json",
+          "sha256": "e52829c28717dab17d248d3d74a87af5cafa510f99dc8373e0b00841cf11eaae",
+          "expectedSha256": "e52829c28717dab17d248d3d74a87af5cafa510f99dc8373e0b00841cf11eaae",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000032.commit",
+          "sha256": "899a8c4f1e2724bf0fbc4540bc4d58183f9f9aac4bd286657fde756d6a069518",
+          "expectedSha256": "899a8c4f1e2724bf0fbc4540bc4d58183f9f9aac4bd286657fde756d6a069518",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000032.json",
+          "sha256": "2216db05268d9e192a85e0011d9ae52b8467ac7e973dec91dc85711c6199d187",
+          "expectedSha256": "2216db05268d9e192a85e0011d9ae52b8467ac7e973dec91dc85711c6199d187",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000033.commit",
+          "sha256": "6e3121205b58344719d4afd7fb1323da45b88758ef956088c74fab8c2bd5b0aa",
+          "expectedSha256": "6e3121205b58344719d4afd7fb1323da45b88758ef956088c74fab8c2bd5b0aa",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000033.json",
+          "sha256": "0fb04d3272630bed8db0cb51c58f7d519072cb12533470282e7533e83b699836",
+          "expectedSha256": "0fb04d3272630bed8db0cb51c58f7d519072cb12533470282e7533e83b699836",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000034.commit",
+          "sha256": "47ea84dd9d4b8c655e34703aaab8bfb6650944c712b8684923e7d969d1bba47b",
+          "expectedSha256": "47ea84dd9d4b8c655e34703aaab8bfb6650944c712b8684923e7d969d1bba47b",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000034.json",
+          "sha256": "6384dec3b596c5293b16cf2eb9c0844d88168c283b6526b5b8042f06a551019e",
+          "expectedSha256": "6384dec3b596c5293b16cf2eb9c0844d88168c283b6526b5b8042f06a551019e",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000035.commit",
+          "sha256": "c5ead04e5a31b0a0d2729bcd0118b619bb5672be26a1b445ccfc8f1ccaa50888",
+          "expectedSha256": "c5ead04e5a31b0a0d2729bcd0118b619bb5672be26a1b445ccfc8f1ccaa50888",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000035.json",
+          "sha256": "ba1f9f6b9158106f275d25d24ad416e6bf8265b2d94f7814030977cda178182f",
+          "expectedSha256": "ba1f9f6b9158106f275d25d24ad416e6bf8265b2d94f7814030977cda178182f",
+          "bytes": 1326,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000036.commit",
+          "sha256": "011c5ff49779f19d79a5ef3b4b83b050f1b524940ca3a81ca3d4643958ed8946",
+          "expectedSha256": "011c5ff49779f19d79a5ef3b4b83b050f1b524940ca3a81ca3d4643958ed8946",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000036.json",
+          "sha256": "d8c942a23f1a53c2383f53aed1de5830274d51d4987fa3808591275c48604f71",
+          "expectedSha256": "d8c942a23f1a53c2383f53aed1de5830274d51d4987fa3808591275c48604f71",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000037.commit",
+          "sha256": "4004d6afb044d4de2faa4212084eccea4f24dd3e4ecc29b1faa7e8c63ed35dd3",
+          "expectedSha256": "4004d6afb044d4de2faa4212084eccea4f24dd3e4ecc29b1faa7e8c63ed35dd3",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000037.json",
+          "sha256": "88edfb4d5349cec18c79047715254a446383a028164ab02f211607e54c4a3967",
+          "expectedSha256": "88edfb4d5349cec18c79047715254a446383a028164ab02f211607e54c4a3967",
+          "bytes": 1326,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000038.commit",
+          "sha256": "2d3dcc2f476953c5e584a8418463f477d58b73d599863cc346fc2a1e5b116170",
+          "expectedSha256": "2d3dcc2f476953c5e584a8418463f477d58b73d599863cc346fc2a1e5b116170",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000038.json",
+          "sha256": "48693a313bd657043fe3d70822fbc5b282c0d26ff59e76a95975d10a2743a2d6",
+          "expectedSha256": "48693a313bd657043fe3d70822fbc5b282c0d26ff59e76a95975d10a2743a2d6",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000039.commit",
+          "sha256": "21aa17d6c2701e8a01cb63586bd8079de3d7b57d27e1486e9d5a4b9e6b8df141",
+          "expectedSha256": "21aa17d6c2701e8a01cb63586bd8079de3d7b57d27e1486e9d5a4b9e6b8df141",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000039.json",
+          "sha256": "8c196c60c4195c9e8d67d43f8dcdc6f8d95b6af9efc3e1379e9fcc2e7d216d10",
+          "expectedSha256": "8c196c60c4195c9e8d67d43f8dcdc6f8d95b6af9efc3e1379e9fcc2e7d216d10",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000040.commit",
+          "sha256": "f3011496d37de89709d4dbd951d41b4e7f5e8a996fc06e4f4d0a019e5c78cb5d",
+          "expectedSha256": "f3011496d37de89709d4dbd951d41b4e7f5e8a996fc06e4f4d0a019e5c78cb5d",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000040.json",
+          "sha256": "692b6fb7c2af7104c820b6fcc8daedc6416609842da0a06eaa71e90e54ba64a6",
+          "expectedSha256": "692b6fb7c2af7104c820b6fcc8daedc6416609842da0a06eaa71e90e54ba64a6",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000041.commit",
+          "sha256": "06bad93ae3a2731564e608037813aa3486ca57f8a2295f5e6aeabb19618b1f0a",
+          "expectedSha256": "06bad93ae3a2731564e608037813aa3486ca57f8a2295f5e6aeabb19618b1f0a",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000041.json",
+          "sha256": "27f19b165240ca2398a88e16abed13e0219bdabf81b22b9fbe30760a6c011b7f",
+          "expectedSha256": "27f19b165240ca2398a88e16abed13e0219bdabf81b22b9fbe30760a6c011b7f",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000042.commit",
+          "sha256": "c3fd5bbfc7968c715896fd98e09fb882a7bb2f3c55bec06a6459af32be6ffd32",
+          "expectedSha256": "c3fd5bbfc7968c715896fd98e09fb882a7bb2f3c55bec06a6459af32be6ffd32",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000042.json",
+          "sha256": "f4c5393e4f60972929730b86e4348586dbd95828298d2fdfae8ce5b7d015ce07",
+          "expectedSha256": "f4c5393e4f60972929730b86e4348586dbd95828298d2fdfae8ce5b7d015ce07",
+          "bytes": 1389,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000043.commit",
+          "sha256": "b96e05b9becd010c4bb787d7f462b1a0adc6b08d461d2fb348ba7377610dc66b",
+          "expectedSha256": "b96e05b9becd010c4bb787d7f462b1a0adc6b08d461d2fb348ba7377610dc66b",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000043.json",
+          "sha256": "a98cf6d11a041c8118359f7dbc56c3852b606f1767266b6c81a3cb7c700049d7",
+          "expectedSha256": "a98cf6d11a041c8118359f7dbc56c3852b606f1767266b6c81a3cb7c700049d7",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000044.commit",
+          "sha256": "3a05cbfe9bb4c8bc6fd3e824b9b6decfca87adee9a69333fffa98d7788ef2a1d",
+          "expectedSha256": "3a05cbfe9bb4c8bc6fd3e824b9b6decfca87adee9a69333fffa98d7788ef2a1d",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000044.json",
+          "sha256": "f0e566063b688c19f1bb29a70d38d04864fc92aad7fe65c45150c69e3203c357",
+          "expectedSha256": "f0e566063b688c19f1bb29a70d38d04864fc92aad7fe65c45150c69e3203c357",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000045.commit",
+          "sha256": "580f9e2d646b8a2fef381a82083e8b0e71ee51d8488658d38f5dfe08443a55e8",
+          "expectedSha256": "580f9e2d646b8a2fef381a82083e8b0e71ee51d8488658d38f5dfe08443a55e8",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000045.json",
+          "sha256": "a423b47bdb605e3607a5c384079e9b3d78d8ffe6c16d8cd98157f0127feccbfb",
+          "expectedSha256": "a423b47bdb605e3607a5c384079e9b3d78d8ffe6c16d8cd98157f0127feccbfb",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000046.commit",
+          "sha256": "b65798dc17321bb5e8f6d3eb9a24e6745222c367f84f2ab35b3e81bdb56dcbcc",
+          "expectedSha256": "b65798dc17321bb5e8f6d3eb9a24e6745222c367f84f2ab35b3e81bdb56dcbcc",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000046.json",
+          "sha256": "3bf2938adbc412cb5ee8cc046a18c23d5213b7bbca95d501d788537329b95631",
+          "expectedSha256": "3bf2938adbc412cb5ee8cc046a18c23d5213b7bbca95d501d788537329b95631",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000047.commit",
+          "sha256": "5c12c6806169a34bd6273c35634a417db96b5330f4d2cbcb720e30a785834fce",
+          "expectedSha256": "5c12c6806169a34bd6273c35634a417db96b5330f4d2cbcb720e30a785834fce",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000047.json",
+          "sha256": "a864a44d0deaff65163ece273829591b89a90288ac07253a21c2e027b97806c7",
+          "expectedSha256": "a864a44d0deaff65163ece273829591b89a90288ac07253a21c2e027b97806c7",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000048.commit",
+          "sha256": "830506637a68cb42b34f483d18ce47410fd0cabb11e605e47b072e5720be038b",
+          "expectedSha256": "830506637a68cb42b34f483d18ce47410fd0cabb11e605e47b072e5720be038b",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000048.json",
+          "sha256": "56004f0f266c2ba3fa3e9811b766ec6d48a57f3812b12471e49a5c20cde013f5",
+          "expectedSha256": "56004f0f266c2ba3fa3e9811b766ec6d48a57f3812b12471e49a5c20cde013f5",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000049.commit",
+          "sha256": "0379016e1cf1cb70c2ed30c584fd0e2c489f247664917a24ef237fae4c1ca51d",
+          "expectedSha256": "0379016e1cf1cb70c2ed30c584fd0e2c489f247664917a24ef237fae4c1ca51d",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000049.json",
+          "sha256": "83c7b387f7b5c0015fca4c9dd38b776987d28358cf600d38443e9a4c80c93b0b",
+          "expectedSha256": "83c7b387f7b5c0015fca4c9dd38b776987d28358cf600d38443e9a4c80c93b0b",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000050.commit",
+          "sha256": "b7173662c3136178adb09ece64af77b0248262bf28e8e362a8dda7c80d2fe920",
+          "expectedSha256": "b7173662c3136178adb09ece64af77b0248262bf28e8e362a8dda7c80d2fe920",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000050.json",
+          "sha256": "a1f9f4053bcd404c5e3bb166a86d4de01f52b7731ceb28335086f5dd353f410e",
+          "expectedSha256": "a1f9f4053bcd404c5e3bb166a86d4de01f52b7731ceb28335086f5dd353f410e",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000051.commit",
+          "sha256": "762c9011e71cd431df05f29fbf377f18f89256c2997da3a33f0cb830b059c875",
+          "expectedSha256": "762c9011e71cd431df05f29fbf377f18f89256c2997da3a33f0cb830b059c875",
+          "bytes": 102,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/transactions/00000000000000000051.json",
+          "sha256": "f47ce552fd1594042d20ad2ccb0e1476538ed8e340870113d194d5384c75f06a",
+          "expectedSha256": "f47ce552fd1594042d20ad2ccb0e1476538ed8e340870113d194d5384c75f06a",
+          "bytes": 1327,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/audit/workspace.json",
+          "sha256": "42604fb608f6c5935809e440069b12dd64dff85f32f8d07d6a56ba363d8ca955",
+          "expectedSha256": "42604fb608f6c5935809e440069b12dd64dff85f32f8d07d6a56ba363d8ca955",
+          "bytes": 34931,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/dev-labels.jsonl",
+          "sha256": "b4ba59c3842e2d161301b0c13c98fac5da081e34a376c5de078432d3ee08f0cd",
+          "expectedSha256": "b4ba59c3842e2d161301b0c13c98fac5da081e34a376c5de078432d3ee08f0cd",
+          "bytes": 10822,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/provenance/base-manifest.json",
+          "sha256": "e60e8bf001ea55b1932fba7bed83468ee104cac8516525fe539409edaae8a3f9",
+          "expectedSha256": "e60e8bf001ea55b1932fba7bed83468ee104cac8516525fe539409edaae8a3f9",
+          "bytes": 6261,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/provenance/candidate-manifest.json",
+          "sha256": "9e0e1b4f58321041c208f5d6be716242f7340bef362a6ef43f407b929c8325f4",
+          "expectedSha256": "9e0e1b4f58321041c208f5d6be716242f7340bef362a6ef43f407b929c8325f4",
+          "bytes": 35813312,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/provenance/derived-manifest.json",
+          "sha256": "db9beab8373fcd80c3babff988039dd09c7d95431e3c698574c7aabbba68d4fa",
+          "expectedSha256": "db9beab8373fcd80c3babff988039dd09c7d95431e3c698574c7aabbba68d4fa",
+          "bytes": 3954,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/provenance/freezer-sources.json",
+          "sha256": "ef8c75d4dc63c32898130815aa257e2a5bd39b4f22721ec00daf07ec93cff78e",
+          "expectedSha256": "ef8c75d4dc63c32898130815aa257e2a5bd39b4f22721ec00daf07ec93cff78e",
+          "bytes": 17855,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/review-inputs.jsonl",
+          "sha256": "6488c9dc81ca762e99a8054fce353dad46a3c0dd2810f4c286a1c7ec25d73240",
+          "expectedSha256": "6488c9dc81ca762e99a8054fce353dad46a3c0dd2810f4c286a1c7ec25d73240",
+          "bytes": 1758887,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/review-results.jsonl",
+          "sha256": "bea564e160832935a71d1eda187f8c3294de1d6d81d1a5f5bf67df815133b5de",
+          "expectedSha256": "bea564e160832935a71d1eda187f8c3294de1d6d81d1a5f5bf67df815133b5de",
+          "bytes": 45261,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/review-stats.json",
+          "sha256": "8a825a3482525e763c2fce557f8638bc6388616013cc26c6a18cca6b00bb3b02",
+          "expectedSha256": "8a825a3482525e763c2fce557f8638bc6388616013cc26c6a18cca6b00bb3b02",
+          "bytes": 2170,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/test-labels.jsonl",
+          "sha256": "5b1d6d02f3cdf13165160cf6b8453ef5df9e9b51b21024f16ff9138ab3713b23",
+          "expectedSha256": "5b1d6d02f3cdf13165160cf6b8453ef5df9e9b51b21024f16ff9138ab3713b23",
+          "bytes": 10955,
+          "status": "passed"
+        },
+        {
+          "logicalPath": "storage:datasets/situation-stage4-review-frozen-20260927-r1/train-labels.jsonl",
+          "sha256": "b1c589b7266d55f741e2bdbe7d5e990b8d55b94cd805aa65ddf6d80343149b13",
+          "expectedSha256": "b1c589b7266d55f741e2bdbe7d5e990b8d55b94cd805aa65ddf6d80343149b13",
+          "bytes": 57685,
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "elapsedSeconds": 0.9689999999973224
+}

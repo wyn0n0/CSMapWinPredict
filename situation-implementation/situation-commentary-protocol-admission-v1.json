@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "situation-commentary-protocol-admission-bundle-v1",
+  "status": "complete",
+  "frozen": true,
+  "protocolId": "stage6-commentary-20261005-v1",
+  "artifact": {
+    "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/admission.json",
+    "sha256": "146e59662abda077524ea18efb952a553eac559f68504958341cb9df4fe95efc"
+  },
+  "protocolReady": true,
+  "generationExecutionReady": false,
+  "trainingExecutionReady": false,
+  "counts": {
+    "train": 24418,
+    "dev": 3216
+  },
+  "groupInputCount": 110536,
+  "diagnosticCount": 50,
+  "maxInferenceInputTokens": 4290,
+  "maxInputWithReserveTokens": 4802,
+  "failureCount": 0,
+  "artifacts": {
+    "selection-inventory.json": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/selection-inventory.json",
+      "sha256": "ee71e52224cece5c9f518c6724711c19076878d314d7c2a25712ffc2705073cd"
+    },
+    "selection.json": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/selection.json",
+      "sha256": "e5a279fdb4ffa4b5d8cc7cc6f97a3e183242a4ad4e16f2e4fd220760a841bbd2"
+    },
+    "protocol.json": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/protocol.json",
+      "sha256": "4ed4583ae221f0a477258c0325d1ade5acc186b99239f2e2c2f6f11474b28374"
+    },
+    "prompts.json": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/prompts.json",
+      "sha256": "330672ee0a3a1c981f583aed4a802a97014f2a1cd12d31d95ba9660dc976a01e"
+    },
+    "rules.json": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/rules.json",
+      "sha256": "dd88731745a9dbc05e88b49c6b390b34da1f79920f03d649d2a9d3d4fe55f0eb"
+    },
+    "budget-rows.jsonl": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/budget-rows.jsonl",
+      "sha256": "cea699111b4caad5bc44534d4203f9c9e21d41664cf6a5eee788845335b977e4"
+    },
+    "diagnostic-inputs.jsonl": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/diagnostic-inputs.jsonl",
+      "sha256": "5a5d76ac1a3d2c178ad1eceb23fe30f1a2c49827ee9b1ddbd696bd32d1c0e178"
+    },
+    "rendered-prompts.jsonl": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/rendered-prompts.jsonl",
+      "sha256": "2bd324bbabfaa21550e0133448b3eb504d95d5544c67b80a63220a058dfb2b78"
+    },
+    "budget.json": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/budget.json",
+      "sha256": "b0f00b6b39170eda145d9602f699f2511cb24a710a8241e04b3a970134b9c04d"
+    },
+    "blind-review-template.json": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/blind-review-template.json",
+      "sha256": "7dea4b015fe0d877da4a6ecea9b303743f51aeef8b43b9610ebe86021f3039ac"
+    },
+    "private-alias-map.json": {
+      "logicalPath": "storage:reports/situation-stage6-commentary-protocol-20261005-r2/private-alias-map.json",
+      "sha256": "5c6152d219d2cdd0b2bd76aa5316fef035d21c66724e8bb0577d2aa463d1366b"
+    }
+  },
+  "B2": "unselected",
+  "humanReviews": "pending-step5",
+  "coverageLimitation": "Only one real factor-conflict train input and zero dev inputs; real train included, dev gap disclosed.",
+  "pending": [
+    "step5 unified evaluator and format-only repair validation",
+    "step5 generation resource calibration and A-D outputs",
+    "fresh blind reviews and dev-only B2 freeze",
+    "new analysis labels and training resource checks"
+  ]
+}

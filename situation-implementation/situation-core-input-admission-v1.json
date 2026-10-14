@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "situation-core-input-admission-reference-v1",
+  "status": "complete",
+  "frozen": true,
+  "representationVersion": "facts-core-scene-table-v1",
+  "baseInputReady": true,
+  "generationExecutionReady": false,
+  "trainingExecutionReady": false,
+  "artifact": {
+    "logicalPath": "storage:reports/situation-stage6-core-input-5120-20261005-r2/admission.json",
+    "sha256": "96c128af9eda877683e4c8d61f909b271f8b57c0dc522c567265dc9d681c5be3"
+  },
+  "config": {
+    "logicalPath": "repo:situation-implementation/situation-core-context-v1.json",
+    "sha256": "5bebc6f832e117f3b8efce3246f25be938eb615a189db1c1c25f12d876758cda"
+  },
+  "pending": [
+    "A-D prompt and planner budgets after step4",
+    "generation resource calibration in step5",
+    "new labels and training resource checks in step6A"
+  ]
+}

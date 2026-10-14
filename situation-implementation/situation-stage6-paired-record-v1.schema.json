@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cs-demo-map.local/situation-implementation/situation-stage6-paired-record-v1.schema.json",
+  "title": "Stage-six paired training record envelope",
+  "description": "New envelope; original sample IDs preserve v1 lineage. Full Scene, Facts and Narrative retain their existing schemas. Repetition is an external epoch index.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sampleId",
+    "metadata",
+    "input",
+    "output",
+    "labelSource",
+    "reviewStatus",
+    "purpose"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "situation-stage6-paired-record-v1"
+    },
+    "sampleId": {
+      "type": "string",
+      "pattern": "^sample-[0-9a-f]{64}$"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "input": {
+      "$ref": "https://cs-demo-map.local/schemas/situation/situation-training-record-v1.schema.json#/$defs/trainingInput"
+    },
+    "output": {
+      "$ref": "https://cs-demo-map.local/schemas/situation/situation-narrative-v1.schema.json"
+    },
+    "labelSource": {
+      "enum": [
+        "template-prelabel",
+        "human-approved",
+        "human-modified"
+      ]
+    },
+    "reviewStatus": {
+      "enum": [
+        "unreviewed",
+        "approved",
+        "modified"
+      ]
+    },
+    "purpose": {
+      "enum": [
+        "sft",
+        "checkpoint-selection",
+        "prompt-selection",
+        "evaluation",
+        "final-evaluation"
+      ]
+    },
+    "reviewVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pairingHashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordSha256",
+        "inputSha256",
+        "labelSha256"
+      ],
+      "properties": {
+        "recordSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "inputSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "labelSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "originalRecordSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "originalCandidateSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "labelSource": {
+            "const": "template-prelabel"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "reviewStatus": {
+            "const": "unreviewed"
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "reviewVersion"
+              ]
+            },
+            {
+              "required": [
+                "pairingHashes"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "labelSource": {
+            "const": "human-approved"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "reviewStatus": {
+            "const": "approved"
+          },
+          "metadata": {
+            "required": [
+              "payloadHashDomain"
+            ]
+          }
+        },
+        "required": [
+          "reviewVersion",
+          "pairingHashes"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "labelSource": {
+            "const": "human-modified"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "reviewStatus": {
+            "const": "modified"
+          },
+          "metadata": {
+            "required": [
+              "payloadHashDomain"
+            ]
+          }
+        },
+        "required": [
+          "reviewVersion",
+          "pairingHashes"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "split": {
+                "const": "train"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "purpose": {
+            "enum": [
+              "sft"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "split": {
+                "const": "dev"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "purpose": {
+            "enum": [
+              "checkpoint-selection",
+              "prompt-selection",
+              "evaluation"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "split": {
+                "const": "test"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "purpose": {
+            "enum": [
+              "final-evaluation"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "input": {
+          "properties": {
+            "facts": {
+              "properties": {
+                "analysisRuleVersion": {
+                  "const": "situation-analysis-rules-v8-close-exposure-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "semanticTag": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "split",
+        "matchRef",
+        "roundRef",
+        "tick",
+        "phase",
+        "selectionTags",
+        "sampleWeight",
+        "weightNumerator",
+        "weightDenominator",
+        "sourceSceneSha256",
+        "modelInputSha256",
+        "factsSha256",
+        "prelabelSha256"
+      ],
+      "properties": {
+        "split": {
+          "enum": [
+            "train",
+            "dev",
+            "test"
+          ]
+        },
+        "matchRef": {
+          "type": "string",
+          "pattern": "^match-[0-9a-f]{64}$"
+        },
+        "roundRef": {
+          "type": "string",
+          "pattern": "^round-[0-9a-f]{64}$"
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "phase": {
+          "enum": [
+            "live",
+            "post-plant"
+          ]
+        },
+        "selectionTags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/semanticTag"
+          }
+        },
+        "sampleWeight": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "weightNumerator": {
+          "const": 1
+        },
+        "weightDenominator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceSceneSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "modelInputSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "factsSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "prelabelSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "payloadHashDomain": {
+          "const": "stage6-json-v1"
+        }
+      }
+    }
+  }
+}

@@ -18,5 +18,19 @@ __pycache__/
 *.py[cod]
 .venv/
 **/TODO*.md
+# Reviewed project plans and compatibility entries are portable documentation.
+!/TODO.md
+!/TODO_5.md
+!/TODO_6.md
+!/situation-implementation/TODO_1.md
+!/situation-implementation/TODO_2.md
+!/situation-implementation/TODO_3.md
+!/situation-implementation/TODO_4.md
+# Local instructions and original working notes may contain private context.
 /AGENT.md
+/AGENTS.md
 /SKILL.md
+/situation-implementation/local-history/
+
+# Disposable build outputs; historical bin/obj evidence stays in place.
+/.artifacts/

@@ -1,47 +1,30 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useReplay } from './composables/useReplay'
 import BrandMark from './components/BrandMark.vue'
 import EventFeed from './components/EventFeed.vue'
 import RadarMap from './components/RadarMap.vue'
 import WinProbabilityCard from './components/WinProbabilityCard.vue'
-import { sampleTimeline, sampleWinPredictions } from './data/sampleTimeline'
+import { sampleWinPredictions } from './data/sampleTimeline'
 import {
-  findFrameIndex,
   findTickIndex,
   formatTime,
   winPredictionAt,
   windowIndexAt,
-  type DemoManifest,
-  type DemoTimeline,
-  type DemoWindow,
   type PlayerEquipmentState,
 } from './domain/timeline'
-import { importDemo, loadDemoWindow, type ImportStage } from './services/api'
+import type { ImportStage } from './services/api'
 
-const timeline = ref<DemoTimeline>(sampleTimeline)
-const manifest = ref<DemoManifest | null>(null)
-const activeWindow = ref<DemoWindow | null>(null)
-const demoId = ref('')
-const currentTime = ref(0)
-const playing = ref(false)
-const speed = ref(1)
+const {
+  timeline, manifest, activeWindow, currentTime, playing, speed,
+  importing, importStage, importFileName, activatingWindow, error,
+  frameIndex, currentFrame, duration, togglePlayback, seek, handleFile, loadSample,
+} = useReplay()
 const showNames = ref(true)
 const showTrails = ref(true)
 const showProjectiles = ref(true)
 const showEffects = ref(true)
 const showInventory = ref(true)
-const importing = ref(false)
-const importStage = ref<ImportStage>('uploading')
-const importFileName = ref('')
-const activatingWindow = ref(false)
-const error = ref('')
-const windowCache = new Map<number, DemoWindow>()
-const windowRequests = new Map<number, Promise<DemoWindow>>()
-let animationFrame = 0
-let previousTimestamp = 0
-let windowGeneration = 0
-let activationSequence = 0
-let pendingWindowIndex: number | null = null
 
 const stageLabels: Record<ImportStage, string> = {
   uploading: '正在上传…',
@@ -52,9 +35,6 @@ const stageLabels: Record<ImportStage, string> = {
   loading: '正在载入首屏…',
 }
 
-const frameIndex = computed(() => findFrameIndex(timeline.value.frames, currentTime.value))
-const currentFrame = computed(() => timeline.value.frames[frameIndex.value])
-const duration = computed(() => timeline.value.metadata.durationSeconds)
 const importStageLabel = computed(() => stageLabels[importStage.value])
 const totalFrameCount = computed(() => manifest.value?.frameCount ?? timeline.value.frames.length)
 const globalFrameNumber = computed(() => activeWindow.value
@@ -138,18 +118,31 @@ const teamStats = computed(() => {
 })
 const predictionPoints = computed(() => activeWindow.value?.winPredictions
   ?? (manifest.value ? [] : sampleWinPredictions))
-const currentWinPrediction = computed(() => winPredictionAt(
-  predictionPoints.value,
-  currentTime.value,
-  currentFrame.value?.round.phase ?? '',
+// Event ticks identify attempts even when the legacy replay and model round numbers differ.
+// A score rollback starts a new semantic segment at round-live, including partial demos.
+const roundBoundaries = computed(() => timeline.value.events.filter(event =>
+  event.type === 'round-start' || event.type === 'round-live' || event.type === 'round-end'))
+const predictionWindowReady = computed(() => !manifest.value || activeWindow.value?.index === windowIndexAt(
+  currentTime.value, manifest.value.windowSeconds, manifest.value.windowCount,
 ))
+const currentWinPrediction = computed(() => {
+  if (importing.value || !predictionWindowReady.value) return null
+  const boundaryIndex = findTickIndex(roundBoundaries.value, currentTime.value * timeline.value.metadata.tickRate)
+  return winPredictionAt(
+    predictionPoints.value,
+    currentTime.value,
+    currentFrame.value?.round.phase ?? '',
+    roundBoundaries.value[boundaryIndex]?.tick ?? 0,
+  )
+})
 const winPredictionState = computed<'ready' | 'waiting' | 'unavailable'>(() => {
   if (manifest.value && manifest.value.winPrediction?.status !== 'ready') return 'unavailable'
   return currentWinPrediction.value ? 'ready' : 'waiting'
 })
 const winPredictionStatusLabel = computed(() => {
   if (winPredictionState.value === 'unavailable') return '模型当前不可用'
-  if (winPredictionState.value === 'ready') return '实时更新'
+  if (winPredictionState.value === 'ready') return '按采样更新'
+  if (!predictionWindowReady.value) return '等待回放窗口'
   const phase = currentFrame.value?.round.phase ?? ''
   if (phase !== 'live' && phase !== 'post-plant') return `${roundPhaseLabel.value}阶段不预测`
   if (manifest.value?.winPrediction?.sampleCount === 0) return '没有有效回合预测'
@@ -164,183 +157,6 @@ const winPredictionSourceLabel = computed(() => {
   return `${model} · ${metadata.sampleIntervalSeconds}s 采样`
 })
 
-function togglePlayback() {
-  if (playing.value) {
-    stopPlayback()
-    return
-  }
-  if (currentTime.value >= duration.value) {
-    currentTime.value = 0
-    void activateWindowAt(0)
-  }
-  playing.value = true
-  previousTimestamp = performance.now()
-  animationFrame = requestAnimationFrame(advance)
-}
-
-function advance(timestamp: number) {
-  if (!playing.value) return
-  const delta = Math.min(0.1, (timestamp - previousTimestamp) / 1000)
-  previousTimestamp = timestamp
-  currentTime.value = Math.min(duration.value, currentTime.value + delta * speed.value)
-  void activateWindowAt(currentTime.value)
-  prefetchNextWindow()
-  if (currentTime.value >= duration.value) stopPlayback()
-  else animationFrame = requestAnimationFrame(advance)
-}
-
-function stopPlayback() {
-  playing.value = false
-  cancelAnimationFrame(animationFrame)
-}
-
-function seek(value: number | string) {
-  currentTime.value = Math.max(0, Math.min(duration.value, Number(value)))
-  void activateWindowAt(currentTime.value)
-  prefetchNextWindow()
-}
-
-async function handleFile(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-
-  stopPlayback()
-  resetImportedState()
-  importing.value = true
-  importFileName.value = file.name
-  error.value = ''
-  try {
-    const imported = await importDemo(file, stage => { importStage.value = stage })
-    demoId.value = imported.id
-    manifest.value = imported.manifest
-    activeWindow.value = imported.firstWindow
-    windowCache.set(0, imported.firstWindow)
-    applyWindow(imported.firstWindow)
-    currentTime.value = 0
-    prefetchNextWindow()
-  } catch (reason) {
-    error.value = reason instanceof Error ? reason.message : '导入失败。'
-  } finally {
-    importing.value = false
-    input.value = ''
-  }
-}
-
-function loadSample() {
-  stopPlayback()
-  resetImportedState()
-  timeline.value = sampleTimeline
-  currentTime.value = 0
-  error.value = ''
-}
-
-async function activateWindowAt(timeSeconds: number) {
-  const targetIndex = windowIndexForTime(timeSeconds)
-  if (targetIndex === null) return
-  if (activeWindow.value?.index === targetIndex) {
-    if (pendingWindowIndex !== null) activationSequence++
-    pendingWindowIndex = null
-    activatingWindow.value = false
-    return
-  }
-  if (pendingWindowIndex === targetIndex) return
-
-  const sequence = ++activationSequence
-  pendingWindowIndex = targetIndex
-  activatingWindow.value = true
-  try {
-    const window = await getWindow(targetIndex)
-    if (sequence === activationSequence && windowIndexForTime(currentTime.value) === targetIndex)
-      applyWindow(window)
-  } catch (reason) {
-    if (sequence === activationSequence)
-      error.value = reason instanceof Error ? reason.message : '载入时间窗口失败。'
-  } finally {
-    if (sequence === activationSequence) {
-      pendingWindowIndex = null
-      activatingWindow.value = false
-    }
-  }
-}
-
-function prefetchNextWindow() {
-  const info = manifest.value
-  const targetIndex = windowIndexForTime(currentTime.value)
-  if (!info || targetIndex === null || targetIndex + 1 >= info.windowCount) return
-  const targetCoreTo = Math.min(info.metadata.durationSeconds, (targetIndex + 1) * info.windowSeconds)
-  if (currentTime.value < targetCoreTo - 5) return
-  void getWindow(targetIndex + 1).catch(() => undefined)
-}
-
-function getWindow(index: number): Promise<DemoWindow> {
-  const cached = windowCache.get(index)
-  if (cached) return Promise.resolve(cached)
-  const existing = windowRequests.get(index)
-  if (existing) return existing
-
-  const id = demoId.value
-  const generation = windowGeneration
-  const request = loadDemoWindow(id, index).then(window => {
-    if (generation === windowGeneration) {
-      windowCache.set(index, window)
-      trimWindowCache(index)
-    }
-    return window
-  }).finally(() => {
-    if (windowRequests.get(index) === request) windowRequests.delete(index)
-  })
-  windowRequests.set(index, request)
-  return request
-}
-
-function applyWindow(window: DemoWindow) {
-  const info = manifest.value
-  if (!info) return
-  activeWindow.value = window
-  timeline.value = {
-    metadata: info.metadata,
-    events: info.events,
-    frames: window.frames,
-    utilityTracks: window.utilityTracks,
-    utilityEffects: window.utilityEffects,
-    playerUtilityStates: window.playerUtilityStates,
-    playerEquipmentStates: window.playerEquipmentStates,
-  }
-}
-
-function windowIndexForTime(timeSeconds: number): number | null {
-  const info = manifest.value
-  if (!info) return null
-  return windowIndexAt(timeSeconds, info.windowSeconds, info.windowCount)
-}
-
-function trimWindowCache(preferredIndex: number) {
-  if (windowCache.size <= 3) return
-  for (const index of windowCache.keys()) {
-    if (index !== activeWindow.value?.index && index !== preferredIndex) {
-      windowCache.delete(index)
-      if (windowCache.size <= 3) break
-    }
-  }
-}
-
-function resetImportedState() {
-  windowGeneration++
-  activationSequence++
-  pendingWindowIndex = null
-  activatingWindow.value = false
-  manifest.value = null
-  activeWindow.value = null
-  demoId.value = ''
-  windowCache.clear()
-  windowRequests.clear()
-}
-
-onBeforeUnmount(() => {
-  stopPlayback()
-  resetImportedState()
-})
 </script>
 
 <template>

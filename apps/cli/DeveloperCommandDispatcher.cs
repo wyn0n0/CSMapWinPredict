@@ -9,6 +9,36 @@ internal static class DeveloperCommandDispatcher
 {
     public static async Task<int> RunAsync(string[] args, CancellationToken cancellationToken)
     {
+        if (args.Length == 0 || args is ["--help"] or ["-h"] or ["help"])
+        {
+            Console.WriteLine(DeveloperCommandHelp.Text);
+            return 0;
+        }
+        if (args is ["--export-situation-stage6-source-shard", var shardDemos, var shardSplit,
+            var shardBase, var shardOutput, var shardPartition, var shardPurpose, var shardIndex, var shardCount])
+        {
+            await SituationStage6CorpusSource.ExportAsync(shardDemos, shardSplit, shardBase,
+                shardOutput, shardPartition, shardPurpose, cancellationToken,
+                int.Parse(shardIndex, CultureInfo.InvariantCulture), int.Parse(shardCount, CultureInfo.InvariantCulture));
+            return 0;
+        }
+        if (args is ["--export-situation-stage6-source", var stage6Demos, var stage6Split,
+            var stage6Base, var stage6Output, var stage6Partition, var stage6Purpose])
+        {
+            await SituationStage6CorpusSource.ExportAsync(stage6Demos, stage6Split, stage6Base,
+                stage6Output, stage6Partition, stage6Purpose, cancellationToken);
+            return 0;
+        }
+        if (args is ["--export-situation-tokenizer-inputs", var tokenizerPilot, var tokenizerOutput])
+        {
+            await SituationTokenizerCommands.ExportAsync(tokenizerPilot, tokenizerOutput, cancellationToken);
+            return 0;
+        }
+        if (args.Length > 0 && args[0] is "--freeze-situation-review" or "--verify-situation-review")
+        {
+            await SituationReviewFreezeCommands.RunAsync(args, cancellationToken);
+            return 0;
+        }
         if (args is ["--analyze-situation-raycast", var raycastScene, var raycastOutput])
         {
             await SituationRaycastCommands.AnalyzeAsync(raycastScene, raycastOutput, cancellationToken);
@@ -146,6 +176,14 @@ internal static class DeveloperCommandDispatcher
             return 0;
         }
 
+        if (args is ["--export-win-spatial", var spatialInput, var spatialOutput, var supportRadius, var siteRadius])
+        {
+            await WinSpatialDatasetExporter.ExportAsync(spatialInput, spatialOutput,
+                new WinSpatialRadii(double.Parse(supportRadius, CultureInfo.InvariantCulture),
+                    double.Parse(siteRadius, CultureInfo.InvariantCulture)), cancellationToken);
+            return 0;
+        }
+
         if (args is ["--export-win-data-v4", var v4Input, var v4Output])
         {
             await WinDatasetV4Exporter.ExportAsync(v4Input, v4Output, cancellationToken);
@@ -252,7 +290,7 @@ internal static class DeveloperCommandDispatcher
             return 0;
         }
 
-        Console.Error.WriteLine("Unknown command. See docs/context/RUNBOOK.md.");
+        Console.Error.WriteLine("Unknown command or invalid arguments. Run npm run cli -- --help.");
         return 2;
     }
 
