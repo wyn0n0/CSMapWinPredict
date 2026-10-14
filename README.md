@@ -2,69 +2,69 @@
 
 English | [简体中文](README.zh-CN.md)
 
-**Turn a CS2 match recording into a map replay you can explore, with estimates of each side’s chance of winning the current round.**
+CS Demo Map is a Counter-Strike 2 replay and win-probability analysis project. It turns `.dem` recordings into an interactive radar replay, showing match progress alongside round-win estimates based on player status, equipment and the bomb situation.
 
-Use it to review Mirage matches: follow player movement, see where utility lands, and watch how the balance changes as players, equipment and the bomb situation change.
+The project currently focuses on **Mirage** and supports match review, tactical observation and prediction-model research.
 
 ![Mirage replay dashboard](docs/assets/demo-replay-dashboard.png)
 
-## What can you do?
+## Features
 
-- **Watch a match on a map:** Open a CS2 `.dem` recording to see player positions, facing direction, health, weapons and equipment.
-- **Control the replay:** Play, pause, jump to another moment and change the speed to review key events.
-- **Follow movement and utility:** Show player trails, thrown grenades, smoke and fire areas. Turn display layers on or off as needed.
-- **See round-win estimates:** With the matching prediction files installed, view the estimated chance that the attacking side (T) or defending side (CT) will win the current round.
-- **Try an example first:** A simulated replay is included, so you can explore the interface without a match recording or prediction files.
+- **Demo import and map replay:** Read CS2 recordings and display player positions, facing direction, health, weapons and equipment on a radar map.
+- **Interactive playback:** Play, pause, seek and adjust playback speed to locate and review key moments.
+- **Movement and utility layers:** View player trails, projectiles, smoke and fire areas, with individual display layers that can be toggled as needed.
+- **Round-win prediction:** With a compatible model configured, follow the estimated probability of T or CT winning the current round as the replay progresses.
+- **Built-in example:** Explore the replay interface with simulated data, without a real Demo or model.
 
-The project currently focuses on **Mirage**. It shows the match from above on a map, rather than as a first-person video from the game.
+The replay uses a top-down radar view to highlight positioning and changes in the round. It does not reproduce the game’s first-person view.
 
-## What does the win estimate mean?
+## About win predictions
 
-The estimate uses information known at the current point in the recording and usually updates about once per second. It describes **this round**, not the result of the whole map or match.
+The model uses information available at the current point in the recording, with estimates usually updated about once per second. The prediction target is **the current round winner**, not the final result of the map or match.
 
-For example, 70% for T means the program considers T more likely to win from the current situation. It does not mean T will definitely win. Estimates can be less reliable early in a round, when both sides have equal numbers of players, or when information is limited.
+Win probability provides context for reviewing a round, rather than a definite outcome. Predictions remain uncertain early in a round, with equal player counts, or when information is limited.
 
-The card shows the recording time associated with the estimate. It clears before a round starts, after it ends, or when no suitable estimate is available, so an old result is not presented as current.
+The probability card includes the recording time associated with its estimate. It clears during round preparation, after the round ends, or when a current prediction is unavailable, to avoid displaying outdated results.
 
-**You can still import and replay recordings without the prediction files; win estimates will simply be unavailable.**
+If the model is missing or fails to load, Demo import and replay remain available. The interface indicates that predictions are unavailable.
 
-## Try the example
+## Quick start
 
-For now, you need to run the project on your own computer. Initial setup requires a few software tools; there is no ready-to-use installer yet.
+The project is currently distributed as source code and runs locally after installing its dependencies.
 
-To try only the example, install **Node.js 20.19+ (20.x) or 22.12+**, download and extract the project, then open a terminal in the project folder. On Windows, you can use PowerShell. Run these commands one at a time:
+The example requires only **Node.js 20.19+ (20.x) or 22.12+**. Download or clone the project, open a terminal in the project root (PowerShell on Windows), and run:
 
 ```bash
 npm install
 npm run dev:web
 ```
 
-The first command downloads the components needed by the interface and requires an internet connection on first use. The second starts the interface.
+These commands install the frontend dependencies and start the example interface. The initial installation requires internet access.
 
-Keep the terminal open and visit [http://localhost:5173](http://localhost:5173) in your browser. If the terminal shows a different address, use that address instead.
+Open [http://localhost:5173](http://localhost:5173), or the address shown in the terminal. Keep the service running while using the app.
 
-This mode lets you explore the included simulated replay. To import your own recording, continue with the setup below.
+Example mode uses built-in simulated data. To import a real Demo, start the full service as described below.
 
-## Replay your own match
+## Local setup and Demo import
 
-In addition to Node.js, install **.NET SDK 10.0 or later**, which reads match recordings. For win estimates, you also need **Python 3, pip** and the matching prediction files.
+The full replay service also requires **.NET SDK 10.0 or later**. To enable win predictions, additionally install **Python 3 and pip**, and provide a compatible model bundle.
 
-Run these commands one at a time in the project folder:
+Install dependencies from the project root:
 
 ```bash
 npm install
 dotnet restore apps/api/CsDemoMap.Api.csproj
 ```
 
-If you want win estimates, also install the Python components used for prediction:
+For win predictions, install the Python dependencies:
 
 ```bash
 python -m pip install -r requirements-inference.txt
 ```
 
-The prediction files are also called a “model bundle”: files saved after the program has learned from match data. **The project download does not include a model bundle or real match recordings.** Installing the software alone will therefore not enable win estimates. See “Further setup” below for where to place a model bundle.
+**Model bundles, training datasets and real Demos are not included in the repository.** Predictions require a model compatible with the current version. See “Configuration and development” below for model paths and settings.
 
-If the example is still running, press `Ctrl+C` in its terminal to stop it. Then run:
+If the example service is still running, stop it with `Ctrl+C`, then start the full service:
 
 ```bash
 npm run dev
@@ -72,42 +72,42 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173), then:
 
-1. Choose a CS2 `.dem` recording in the upper-right corner of the page.
-2. Wait while the program reads and prepares it. The page shows progress; larger files may take longer.
-3. Once it loads, use the playback button, timeline and speed controls to explore the match.
-4. If a working model bundle is configured, round-win estimates will appear during play. Otherwise, the page will say predictions are unavailable.
+1. Select a CS2 `.dem` file in the upper-right corner of the page.
+2. Wait for the import to complete. The page shows reading and processing progress; larger files may take longer.
+3. Review the match using the playback controls, timeline and speed settings.
+4. When the model is available, round-win estimates appear during play. Otherwise, replay remains available without predictions.
 
-Keep the terminal open while using the app. Press `Ctrl+C` in the terminal when you want to stop it.
+Stop the service with `Ctrl+C` in the terminal when finished.
 
-## What is available today?
+## Development status
 
 As of **2026-10-14**:
 
-- **Available:** Mirage map replay, playback controls, player and utility displays, and round-win estimates when a model bundle is installed.
-- **Still improving:** The prediction model has been checked on 13 additional matches, but early rounds and situations with equal player counts remain weaknesses. Treat its output as an estimate, not a reliable answer to who will win.
-- **Not yet available in the interface:** Better predictions based on player positioning and automatically written situation commentary. These are still being researched and tested.
+- **Implemented:** Mirage replay, playback controls, player and utility displays, and round-win prediction with a compatible model.
+- **Ongoing improvements:** The current model has been evaluated on 13 additional matches. Early-round and equal-player-count situations remain key areas for improvement.
+- **Experimental:** Prediction improvements based on player positioning and automatic situation commentary are still under development and evaluation. Neither is integrated into the interface, and their benefits remain unverified.
 
-## Before you use it
+## Limitations
 
-- The app reads recorded matches, not a game currently being played live.
+- Analysis currently uses recorded Demos; live game input is not supported.
 - Predictions and map settings currently focus on Mirage. Results on other maps have not been verified.
-- Large recordings can take longer to open and use more memory.
-- After restarting the program, you need to import your recordings again.
+- Large Demos may require substantial processing time and memory.
+- Import records are not yet saved between sessions. Demos must be reimported after restarting the service.
 
 <details>
-<summary>Further setup: model location, checks and developer resources</summary>
+<summary>Configuration and development: model settings, validation and documentation</summary>
 
-### Place the model bundle
+### Model configuration
 
-The default model folder is:
+Default model directory:
 
 ```text
 models/win-baseline-v4-holdout-87-8-20260908
 ```
 
-Use a complete bundle that matches the current program (schema v4 / `mirage-semantics-v4.2`). Unrelated prediction files will not work as a replacement.
+Use a complete model bundle that matches the program’s data version. Avoid mixing models and configuration from different versions.
 
-To choose the Python command or model location, set these values in Windows PowerShell before starting:
+To override the Python command or model directory, configure these values in Windows PowerShell before starting:
 
 ```powershell
 $env:WinInference__PythonExecutable = "python"
@@ -117,9 +117,9 @@ npm run dev
 
 Once running, the [model status page](http://localhost:5088/api/win-model/status) returns status information. `ready` means the model is available; `unavailable` or `disabled` means predictions cannot currently be provided.
 
-### Check changes to the program
+### Development checks
 
-These commands are for developers. You do not need to run them just to watch a replay:
+After changing code, run the relevant type checks, tests and build, or view the available tool commands:
 
 ```bash
 npm run typecheck
@@ -129,11 +129,11 @@ npm run test:groups -- --help
 npm run cli -- --help
 ```
 
-Checks require the relevant software and components. Some model and recording checks also need additional local files. When training a new model or preparing data in bulk, use a new output folder to avoid overwriting previous results.
+Install the relevant dependencies before running checks. Some checks also require a local model or Demo. Use a new output directory for model training and batch data processing to avoid overwriting previous results.
 
 Further reading:
 
-- [How the program is organized](docs/architecture.md)
+- [Project architecture](docs/architecture.md)
 - [Data processing commands](apps/cli/DeveloperCommandHelp.cs)
 - [Prediction evaluation tool](tools/win_experiment.py)
 - [Player-position data checker](tools/audit_win_spatial.py)
