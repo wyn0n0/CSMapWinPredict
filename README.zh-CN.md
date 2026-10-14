@@ -2,215 +2,144 @@
 
 [English](README.md) | 简体中文
 
-CS Demo Map 用于导入 Counter-Strike 2 .dem 文件，在交互式雷达中回放比赛，并显示当前回合 T/CT 的实时胜率。预测目标是当前回合胜方，不是整张地图或整场系列赛的胜负。
+**把 CS2 比赛录像变成可以拖动查看的地图回放，并估算当前回合双方的胜率。**
+
+你可以用它复盘 Mirage：查看队员如何移动、道具落在哪里，以及人数、装备和炸弹状态变化时，哪一方更有机会赢下这一回合。
 
 ![Mirage 回放界面](docs/assets/demo-replay-dashboard.png)
 
-## 已实现能力
+## 可以做什么？
 
-- 通过 DemoFile.Game.Cs 解析 CS2 CSTV/GOTV 与 POV Demo。
-- 以 8 Hz 记录玩家位置、速度、朝向、血量、武器、经济、装备、道具库存、回合状态、C4、比分、连败数和区域人数。
-- 以 16 Hz 记录投掷物轨迹，并按真实生命周期显示烟雾和燃烧区域。
-- 基于 Vue 3 与 SVG 的回放界面，支持播放、拖动、倍速、玩家名称、轨迹、投掷物、效果和库存图层。
-- 以带两秒重叠的 30 秒 Brotli 压缩窗口传输时间线；浏览器只加载当前窗口、维持小型缓存并预取下一窗口。
-- 使用 schema v4 / `mirage-semantics-v4.2` Mirage 模型，在 live 与下包后阶段约每秒生成一次回合胜率。
-- 页面胜率卡片保持最近已观测样本并显示采样时间，不向未来样本插值；拒绝当前回合边界之前的样本，冻结、结束、跨阶段和过期数据都会清空旧胜率。
+- **从地图上看比赛**：导入 CS2 的 `.dem` 录像文件，查看玩家位置、朝向、血量、武器和装备。
+- **自由控制回放**：播放、暂停、拖动时间和调整速度，反复查看关键时刻。
+- **查看道具和路线**：显示玩家移动轨迹、投掷物，以及烟雾和燃烧区域；可按需要开关显示内容。
+- **观察回合胜率**：准备好配套的预测文件后，查看进攻方（T）和防守方（CT）赢下当前回合的估计概率。
+- **先用示例体验**：项目自带模拟回放，不需要准备比赛录像或预测文件，就能先看看界面。
 
-仓库还包含合成 Mirage 时间线，因此无需 Demo 文件或 API 也能体验前端界面。
+目前主要支持 **Mirage**。这里的回放是俯视地图上的比赛过程，不是游戏中的第一人称画面。
 
-## 当前状态（2026-10-14）
+## 怎样理解胜率？
 
-- **回放与胜率**：Mirage 回放及当前回合胜率已接入界面；默认模型配置仍指向 `win-baseline-v4-holdout-87-8-20260908`，采用逻辑回归＋Sigmoid 校准。本次没有训练或替换模型。
-- **胜率检验**：2026-10-14 的既有模型检验覆盖 13 场、271 回合、24,489 个时点，按回合加权的 Log Loss 为 0.4836、Brier 为 0.1626、准确率为 74.3%。这是已有本地报告的结果，不是本次文档更新重新运行的结果；不能解释为开局预测准确率。相对人数／装备小模型的收益尚未得到稳定确认。这 13 场现已观察，不能再次用作新候选的最终盲测。
-- **空间特征实验**：新增独立 `win-spatial-v1` 导出与审计，覆盖 C4、携包人、包点邻近和队形距离；已完成 3 场、7,309 点的工程验证。尚未接入线上胜率模型，也尚无模型收益结论；直线距离不代表导航或实际支援能力。
-- **局势解说**：Scene/Facts、核心输入、协议和预算工具处于离线研发阶段；完整序列预算 5120，输入最多 4608，输出预留 512。当前重构源码需要重新建立来源与预算证据；生成、训练及产品 HTTP API／界面尚未完成准入或接入。
+胜率根据录像播放到当前时刻时已知的信息计算，通常约每秒更新一次。它表示**当前这一回合**的胜负倾向，不代表整张地图或整场比赛的结果。
 
-源码、测试、必要配置和当前使用说明属于发布范围；历史执行记录、旧阶段报告、归档草稿及本地训练工件不随本次更新推送。GitHub 中已存在的历史文件不在本次清除范围。
+例如，T 方显示 70%，表示程序根据当前情况认为 T 方更有机会赢，并不表示 T 方一定会赢。开局、双方人数相同或信息不足时，判断仍可能不准确。
 
-## 架构
+卡片会显示这次估计对应的录像时间。回合尚未开始、已经结束或暂时没有合适的估计值时，卡片会清空，避免把旧结果当成当前情况。
 
-~~~text
-.dem
-  -> DemoFile.Game.Cs
-  -> DemoParserService
-  -> WinFeatureSampleBuilder
-  -> WinInferenceClient（由 API 托管的 Python 进程）
-  -> WinTimelinePredictionService
-  -> DemoImportService（Brotli 窗口文件）
-  -> Vue 回放界面与实时胜率卡片
-~~~
+**没有配套预测文件时，仍然可以导入和回放录像，只是无法显示胜率。**
 
-API 管理一个长期运行的 Python 推理子进程。启动时会校验模型清单、工件哈希、依赖契约和固定推理样例。模型无法加载时，Demo 回放仍可使用，页面会明确显示预测不可用。
+## 先看看示例
 
-仓库按职责组织：
+目前需要在自己的电脑上启动项目。首次使用需要安装一些软件，还没有可直接双击使用的安装包。
 
-- `apps/api/Program.cs` 只包含 HTTP 宿主和依赖装配。
-- `apps/api/Features/` 按 Replay、Semantics、Maps、WinPrediction 和 Situation 划分后端代码。
-- `apps/cli/` 保存数据导出、诊断和验收工作流。
-- `tests/CsDemoMap.Api.Tests/` 保存 .NET 验证门禁和真实 Demo 前缀检查。
-- `apps/web/src/composables/useReplay.ts` 管理导入、回放与窗口缓存。
-- `tools/` 保存 Python 模型训练、审计、推理及局势解说研发工具。
-- `tools/run-tests.mjs` 统一调度测试，每次调用只构建一次 .NET 验证程序。
+如果只想体验示例，先安装 **Node.js 20.19+（20.x）或 22.12+**，下载并解压项目，然后在项目文件夹中打开终端（Windows 可使用 PowerShell），逐行运行：
 
-## 环境要求
-
-- Node.js 20.19+（20.x）或 22.12+
-- .NET SDK 10.0+
-- Python 3 与 pip，用于模型推理
-- 需要真实预测时，准备本地 schema v4 / `mirage-semantics-v4.2` 模型包
-
-默认模型目录为 models/win-baseline-v4-holdout-87-8-20260908。模型包、数据集和 Demo 文件均被 Git 忽略。
-
-## 快速启动
-
-~~~bash
-npm install
-dotnet restore apps/api/CsDemoMap.Api.csproj
-dotnet restore apps/cli/CsDemoMap.Cli.csproj
-dotnet restore tests/CsDemoMap.Api.Tests/CsDemoMap.Api.Tests.csproj
-python -m pip install -r requirements-inference.txt
-npm run dev
-~~~
-
-打开 http://localhost:5173。前端会将 API 请求代理到 http://localhost:5088。npm run dev 会同时启动 API、前端和由 API 管理的 Python 推理进程。
-
-若只想查看合成回放：
-
-~~~bash
+```bash
 npm install
 npm run dev:web
-~~~
+```
 
-### 推理配置
+第一条命令下载运行界面所需的组件，首次执行需要联网；第二条命令启动界面。
 
-启动前可以通过环境变量覆盖默认配置：
+保持终端打开，在浏览器访问 [http://localhost:5173](http://localhost:5173)。如果终端显示了其他地址，请以终端显示的地址为准。
 
-~~~powershell
+这个模式用于体验自带的模拟回放。要导入自己的录像，请继续完成下面的设置。
+
+## 回放自己的比赛
+
+除 Node.js 外，还需要安装 **.NET SDK 10.0 或更新版本**，它负责读取比赛录像。需要胜率功能时，还要准备 **Python 3、pip** 和配套的预测文件。
+
+在项目文件夹中逐行运行：
+
+```bash
+npm install
+dotnet restore apps/api/CsDemoMap.Api.csproj
+```
+
+如果要使用胜率功能，再安装预测所需的 Python 组件：
+
+```bash
+python -m pip install -r requirements-inference.txt
+```
+
+预测文件也叫“模型包”，是程序根据比赛数据学习后保存的一组文件。**项目下载中不包含模型包和真实比赛录像**，因此完成软件安装并不意味着已经可以显示胜率。模型包的放置方法见下方“需要进一步设置时”。
+
+如果示例界面还在运行，先在原终端按 `Ctrl+C` 停止它，再运行：
+
+```bash
+npm run dev
+```
+
+打开 [http://localhost:5173](http://localhost:5173)，然后：
+
+1. 在页面右上角选择一个 CS2 `.dem` 录像文件。
+2. 等待程序读取和整理录像；页面会显示进度，大文件可能需要更久。
+3. 加载完成后，使用播放按钮、时间条和速度选项查看比赛。
+4. 如果已配置可用的模型包，回合进行时会显示双方胜率；否则页面会提示预测不可用。
+
+使用过程中保持终端打开。结束时可以在终端按 `Ctrl+C` 停止程序。
+
+## 目前做到哪一步？
+
+截至 **2026-10-14**：
+
+- **已经可以使用**：Mirage 地图回放、播放控制、玩家与道具显示，以及配有模型包时的回合胜率。
+- **还在改进**：胜率模型已经过额外的 13 场比赛检验，但开局和双方人数相同时仍有不足，不能把它当成可靠的胜负答案。
+- **尚未开放到界面**：根据队员站位改进预测、自动生成局势文字解说。这些仍在研究和测试中。
+
+## 使用前需要了解
+
+- 目前读取的是已经录制的比赛文件，不是正在进行的实时对局。
+- 当前预测和地图配置主要针对 Mirage，其他地图的效果尚未验证。
+- 较大的录像可能读取较慢，也会占用较多内存。
+- 重启程序后，之前导入的录像需要重新导入。
+
+<details>
+<summary>需要进一步设置时：模型位置、检查命令和开发资料</summary>
+
+### 放置模型包
+
+默认模型文件夹为：
+
+```text
+models/win-baseline-v4-holdout-87-8-20260908
+```
+
+需要使用与当前程序匹配的完整模型包（schema v4 / `mirage-semantics-v4.2`），不能随意替换为其他预测文件。
+
+如需指定 Python 或模型位置，可在 Windows PowerShell 中设置后启动：
+
+```powershell
 $env:WinInference__PythonExecutable = "python"
 $env:WinInference__ModelDirectory = "models/win-baseline-v4-holdout-87-8-20260908"
 npm run dev
-~~~
+```
 
-使用以下接口检查模型状态：
+启动后，[模型状态页面](http://localhost:5088/api/win-model/status)会返回状态信息；`ready` 表示模型可用，`unavailable` 或 `disabled` 表示当前无法提供预测。
 
-~~~http
-GET /api/win-model/status
-~~~
+### 修改程序后如何检查
 
-模型就绪时，响应会提供 schema、语义版本、模型、校准方式、工件哈希和 Python 运行时。模型缺失、不兼容或被禁用时，接口会返回 unavailable 或 disabled 与错误原因；Demo 仍可继续导入和回放。
+以下命令供开发者使用，普通回放使用者无需执行：
 
-## 导入 Demo
-
-在网页右上角选择 .dem 文件：
-
-~~~http
-POST /api/demos/import
-Content-Type: multipart/form-data
-file=<demo file>
-
-GET /api/demos/{id}/status
-GET /api/demos/{id}/windows/{index}
-~~~
-
-界面会显示上传、排队、解析、计算胜率、生成窗口和载入首屏等状态。每次完成的导入包含：
-
-- manifest.winPrediction：模型状态、schema/语义版本、模型、校准、工件哈希、样本数、采样间隔，以及不可用时的错误。
-- windows[].winPredictions[]：tick、Demo 时间、回合身份、segment、正式回合号、阶段、T 方概率和 CT 方概率。
-
-页面只在 live 与下包后阶段显示胜率，保持播放时间之前最近一次采样的值与原始时间戳；超过 1.5 秒、早于当前回合边界或阶段不匹配的样本不会显示。冻结和结束阶段会清空卡片。
-
-### 离线导入
-
-API 可直接导入 data/mirage 目录中已有的文件，避免再次上传数百 MB 的 Demo：
-
-~~~http
-GET /api/demos/offline
-
-POST /api/demos/offline/import
-Content-Type: application/json
-
-{"fileName":"furia-vs-pain-m1-mirage.dem"}
-~~~
-
-离线接口只接受顶层 .dem 文件名。使用其他目录时：
-
-~~~powershell
-$env:OfflineDemos__RootPath = "D:\other\demo-directory"
-dotnet run --project apps/api/CsDemoMap.Api.csproj
-~~~
-
-## 数据与模型流程
-
-v4.2 流程仅使用 live 与下包后阶段、当前 tick 已知的因果特征。特征不包含玩家身份、未来事件、回合最终状态或目标标签。
-
-训练前安装固定依赖：
-
-~~~bash
-python -m pip install -r requirements-train.txt
-~~~
-
-以下为参数模板，先替换 `<...>`。导出、审计和切分必须对应同一批 schema v4 数据；训练仅在清单、审计和比赛级切分准备完成后执行。
-
-~~~text
-npm run cli -- --export-win-data-v4 <demo-directory> <new-dataset-directory>
-python tools/audit_win_v4.py --v3 <matching-v3.jsonl> --v4-dir <new-dataset-directory> --output <new-audit.json>
-python tools/train_win_baseline_v4.py --input <samples.jsonl> --manifest <manifest.json> --comparison <audit.json> --validation-split <match-split.json> --output-dir <new-model-directory> --threads 4 --folds 5 --seed 42
-~~~
-
-每次导出和训练使用不存在的新输出目录。v3 仅用于历史复现或上述审计对照，不能作为 v4 训练输入或与 v4 模型包混用。模型、数据、切分与审计文件不随仓库下载提供。
-
-### 实验工具
-
-~~~text
-python tools/win_experiment.py --help
-python tools/train_win_baseline_v4.py --help
-npm run cli -- --export-win-spatial <demo-or-directory> <new-output> <support-radius> <site-radius>
-python tools/audit_win_spatial.py <spatial-output-directory>
-~~~
-
-`win_experiment.py` 提供实验登记模板与来源冻结；保存预测的评价入口为 `--evaluate-predictions`，最终 test 需要匹配的冻结及候选来源。空间半径以世界单位计，只能依据 train/dev 确定；伴随数据不能直接送入现有 v4 训练或推理。CLI 全部参数见 `npm run cli -- --help`。
-
-## 验证
-
-`npm test` 默认运行前端、API 数据管线和语义检查。包含 .NET 的测试调用会执行还原／构建，并将输出隔离在 `.artifacts/dotnet/`；首次运行需要 NuGet 源可访问或完整的本地缓存。按改动选择测试分组；局势解说和 Python 检查不全部包含在默认测试中。
-
-~~~bash
+```bash
 npm run typecheck
 npm test
-npm run test:groups -- --help
-npm run test:groups -- api semantics situation:stage6
-npm run test:commands
-npm run cli -- --help
-npm run test:inference
-npm run test:inference:dotnet
-npm run test:audit
-npm run test:train
-npm run test:train:v4
-python -B -m unittest discover -s tools -p "test_audit_win_spatial.py"
-python -B -m unittest discover -s tools -p "test_situation_*.py"
 npm run build
-~~~
+npm run test:groups -- --help
+npm run cli -- --help
+```
 
-Python 检查应在安装对应依赖的环境运行；局势工具使用独立环境和本地配置。真实 Demo、模型加载、GPU 生成和训练需要额外本地工件，不能仅凭源码测试通过就视为已完成端到端验收。
+测试需要相应的软件和组件；部分模型与录像检查还需要额外的本地文件。训练新模型、批量整理数据时应使用新的输出文件夹，避免覆盖已有结果。
 
-## 文档与源码入口
+更多资料：
 
-- [架构与运行边界](docs/architecture.md)
-- [胜率特征与导出](apps/api/Features/WinPrediction/)
-- [CLI 命令帮助](apps/cli/DeveloperCommandHelp.cs)
-- [实验登记与冻结](tools/win_experiment.py)
-- [空间伴随数据审计](tools/audit_win_spatial.py)
-- [局势数据结构](schemas/situation/)
-- [第三方声明](THIRD_PARTY_NOTICES.md)
+- [程序结构说明](docs/architecture.md)
+- [数据处理命令](apps/cli/DeveloperCommandHelp.cs)
+- [胜率评估工具](tools/win_experiment.py)
+- [站位数据检查工具](tools/audit_win_spatial.py)
 
-## 当前限制
+</details>
 
-- 任务与 manifest 保存在进程内，重启 API 后正在进行的导入失效。
-- 解析器仍会先构建完整 DemoTimeline 再分割窗口，峰值内存尚未实现真正流式化。
-- 当前模型和地图几何仅面向 Mirage。
-- 真实直播输入、任务持久化、TTL 清理、多实例协作和更多地图仍待实现。
+## 致谢
 
-## 致谢与许可证说明
-
-- Demo 解析使用 [demofile-net](https://github.com/saul/demofile-net)，许可证为 MIT。
-- apps/web/public/radars/simpleradar 中的 Simple Radar 资源来自 [cs-hud](https://github.com/drweissbrot/cs-hud)。来源与再分发说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+录像读取使用 [demofile-net](https://github.com/saul/demofile-net)（MIT 许可证）。Simple Radar 地图素材来自 [cs-hud](https://github.com/drweissbrot/cs-hud)。素材来源与使用说明见[第三方声明](THIRD_PARTY_NOTICES.md)。
