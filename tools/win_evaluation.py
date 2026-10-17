@@ -16,6 +16,14 @@ SMALL_FEATURES = (
     "features.t.alive", "features.ct.alive",
     "features.t.equipmentValue", "features.ct.equipmentValue",
 )
+BROAD_ENDGAME_DEFINITION = "broad-endgame-v1: live/post-plant; known integer team counts in [1,5]; tAlive + ctAlive <= 7"
+
+
+def broad_endgame_mask(phase, t, ct):
+    phase, t, ct = map(np.asarray, (phase, t, ct))
+    return (np.isin(phase, ["live", "post-plant"])
+            & np.isin(t, [1, 2, 3, 4, 5]) & np.isin(ct, [1, 2, 3, 4, 5])
+            & (t + ct <= 7))
 
 
 def calibration_bins(labels, probabilities, weights, bins=10):
@@ -93,13 +101,18 @@ def slice_masks(metadata):
     elapsed, economy = column("liveElapsed"), column("equipmentDifference")
     alive, equipment, position = column("aliveKnown"), column("equipmentKnown"), column("positionKnown")
     bomb = column("bombRemaining")
-    post_plant = metadata.phase.to_numpy() == "post-plant"
+    phase = metadata.phase.to_numpy()
+    post_plant = phase == "post-plant"
     one_vs_n = (t > 0) & (ct > 0) & ((t == 1) | (ct == 1))
+    # In 5v5, either side <= 2 already implies total <= 7. Keep the old
+    # oneVsN / totalAliveAtMost6 slices and trained isClutch feature distinct.
+    broad_endgame = broad_endgame_mask(phase, t, ct)
     return {
         "all": np.ones(len(metadata), bool),
-        "live": metadata.phase.to_numpy() == "live", "postPlant": post_plant,
+        "live": phase == "live", "postPlant": post_plant,
         "fiveVsFive": (t == 5) & (ct == 5),
         "totalAliveAtMost6": t + ct <= 6,
+        "broadEndgame": broad_endgame,
         "oneVsN": one_vs_n, "oneVsOne": (t == 1) & (ct == 1),
         "oneVsMany": one_vs_n & (t + ct > 2),
         "openingFiveSeconds": (elapsed >= 0) & (elapsed <= 5),
@@ -196,10 +209,11 @@ def evaluation_report(metadata, predictions, *, reference, seed=42, resamples=20
         raise ValueError("Reference prediction is absent")
     report = {"weighting": "original per-round weights; no renormalization after slicing or missing predictions",
               "bootstrapScope": "Log Loss and Brier only; conditional on observed matches, not new-match certification",
+              "sliceDefinitions": {"broadEndgame": BROAD_ENDGAME_DEFINITION},
               "unavailableSlices": {"pistolRound": "round format/half metadata is not verified in schema v4.2"},
               "models": {}, "pairedDifferences": {}}
     masks = slice_masks(metadata)
-    key_slices = ("openingFiveSeconds", "fiveVsFive", "postPlant", "oneVsN")
+    key_slices = ("openingFiveSeconds", "fiveVsFive", "postPlant", "broadEndgame", "oneVsN")
     for name, probability in predictions.items():
         probability = np.asarray(probability, dtype=float)
         report["models"][name] = {

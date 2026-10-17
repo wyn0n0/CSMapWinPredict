@@ -180,12 +180,14 @@ class WinModelRuntime:
             },
         }
 
-    @staticmethod
-    def _validate_version(document: dict[str, Any], name: str):
+    @classmethod
+    def _validate_version(cls, document: dict[str, Any], name: str):
         if document.get("schemaVersion") != SCHEMA_VERSION:
             raise ModelLoadError(f"{name} schemaVersion must be {SCHEMA_VERSION}")
         if document.get("semanticVersion") != SEMANTIC_VERSION:
             raise ModelLoadError(f"{name} semanticVersion must be {SEMANTIC_VERSION}")
+        if document.get("featureContract") != getattr(cls, "FEATURE_CONTRACT", None):
+            raise ModelLoadError(f"{name} has an unsupported experimental feature contract")
 
     def _flatten_sample(self, sample: Any, index: int) -> dict[str, Any]:
         if not isinstance(sample, dict):

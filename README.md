@@ -79,17 +79,25 @@ Open [http://localhost:5173](http://localhost:5173), then:
 
 Stop the service with `Ctrl+C` in the terminal when finished.
 
+## Standalone endgame prediction and GSI recording (experimental)
+
+[`endgame_prediction/`](endgame_prediction/README.md) provides standalone Mirage round-win predictions when both teams have surviving players and no more than seven players remain in total. It leaves the replay interface, API and default model unchanged.
+
+[`endgame_prediction/gsi/`](endgame_prediction/gsi/README.md) receives GSI data from a CS2 observer with full spectator information and records raw snapshots, receipt times and individual prediction results locally. The recorder defaults to `127.0.0.1:3002`. Model bundles, source data and recordings are not distributed with the GitHub source. After providing a compatible endgame model bundle, follow the [full-match recording guide](endgame_prediction/gsi/README.md#录制一场完整比赛) to install the configuration, start and stop recording.
+
+Engineering checks pass; real-match field alignment and prediction quality remain unvalidated. A normal player view does not expose complete data for both teams.
+
 ## Development status
 
-As of **2026-10-14**:
+As of **2026-10-18**:
 
 - **Implemented:** Mirage replay, playback controls, player and utility displays, and round-win prediction with a compatible model.
 - **Ongoing improvements:** The current model has been evaluated on 13 additional matches. Early-round and equal-player-count situations remain key areas for improvement.
-- **Experimental:** Prediction improvements based on player positioning and automatic situation commentary are still under development and evaluation. Neither is integrated into the interface, and their benefits remain unverified.
+- **Experimental:** Standalone endgame prediction, GSI reception and recording are implemented. Spatial-feature model comparisons have completed development evaluation; adoption still requires new-match validation. Automatic situation commentary remains in development. These experiments are not integrated into the interface.
 
 ## Limitations
 
-- Analysis currently uses recorded Demos; live game input is not supported.
+- The main interface analyzes recorded Demos. GSI input is handled by separate experimental scripts and is not integrated into the interface.
 - Predictions and map settings currently focus on Mirage. Results on other maps have not been verified.
 - Large Demos may require substantial processing time and memory.
 - Import records are not yet saved between sessions. Demos must be reimported after restarting the service.

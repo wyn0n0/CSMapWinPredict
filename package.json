@@ -32,6 +32,7 @@
     "test:audit": "python -m unittest tools.test_audit_win_v4",
     "test:train": "python -m unittest tools.test_train_win_baseline",
     "test:train:v4": "python -m unittest tools.test_train_win_baseline_v4",
+    "test:train:m4": "python -m unittest tools.test_train_win_experiments",
     "test:inference": "python -m unittest tools.test_win_inference_service",
     "test:inference:dotnet": "node tools/run-tests.mjs inference:dotnet",
     "cli": "dotnet run --project apps/cli/CsDemoMap.Cli.csproj --artifacts-path .artifacts/dotnet --",

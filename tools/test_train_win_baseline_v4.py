@@ -109,10 +109,39 @@ class EvaluationTests(unittest.TestCase):
         np.testing.assert_array_equal(masks["oneVsN"], [True, True, False, False])
         np.testing.assert_array_equal(masks["oneVsOne"], [True, False, False, False])
         np.testing.assert_array_equal(masks["oneVsMany"], [False, True, False, False])
+        np.testing.assert_array_equal(masks["broadEndgame"], [True, True, True, False])
         self.assertTrue(masks["totalAliveAtMost6"].all())
         self.assertEqual(masks["equipmentMissing"].sum(), 1)
         self.assertEqual(masks["positionMissing"].sum(), 1)
         self.assertEqual(masks["postPlantBombRemaining0To10"].sum(), 1)
+
+    def test_broad_endgame_covers_5v5_boundaries_and_rejects_unknown_or_ended(self):
+        pairs = [(t, ct) for t in range(6) for ct in range(6)]
+        for phase in ("live", "post-plant", "freeze", "ended", "unknown", None):
+            with self.subTest(phase=phase):
+                meta = pd.DataFrame(pairs, columns=["tAlive", "ctAlive"]).assign(phase=phase)
+                expected = [phase in ("live", "post-plant") and t > 0 and ct > 0
+                            and (t + ct <= 7 or min(t, ct) <= 2) for t, ct in pairs]
+                np.testing.assert_array_equal(slice_masks(meta)["broadEndgame"], expected)
+        invalid = pd.DataFrame({"tAlive": [np.nan, 1, -1, 6, 1.5, np.inf, "unknown"],
+                                "ctAlive": [1, np.nan, 1, 1, 1, 1, 1], "phase": "live"})
+        self.assertFalse(slice_masks(invalid)["broadEndgame"].any())
+        self.assertFalse(slice_masks(invalid.drop(columns="tAlive"))["broadEndgame"].any())
+
+    def test_broad_endgame_report_includes_definition_and_paired_uncertainty(self):
+        meta = evaluation_meta()
+        probabilities = np.array([.8, .7, .2, .1])
+        report = evaluation_report(meta, {"reference": probabilities, "candidate": probabilities},
+                                   reference="reference", resamples=20)
+        self.assertIn("tAlive + ctAlive <= 7", report["sliceDefinitions"]["broadEndgame"])
+        selected = report["models"]["candidate"]["slices"]["broadEndgame"]
+        self.assertEqual((selected["rows"], selected["rounds"], selected["matches"]), (3, 3, 2))
+        expected = summarize(meta.iloc[:3], probabilities[:3])
+        self.assertEqual(selected, expected)
+        uncertainty = report["models"]["candidate"]["sliceUncertainty"]["broadEndgame"]
+        self.assertEqual(uncertainty["matches"], 2)
+        paired = report["pairedDifferences"]["candidate"]["slices"]["broadEndgame"]
+        self.assertEqual(paired["intervals"]["logLoss"], {"estimate": 0., "low": 0., "high": 0.})
 
     def test_single_class_and_empty_slices_are_visible(self):
         report = evaluation_report(evaluation_meta(), {"model": [.8, .7, .2, .1]}, reference="model", resamples=20)
