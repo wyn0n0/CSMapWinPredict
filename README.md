@@ -81,11 +81,9 @@ Stop the service with `Ctrl+C` in the terminal when finished.
 
 ## Standalone endgame prediction and GSI recording (experimental)
 
-[`endgame_prediction/`](endgame_prediction/README.md) provides standalone Mirage round-win predictions when both teams have surviving players and no more than seven players remain in total. It leaves the replay interface, API and default model unchanged.
+The complete standalone module has moved to the [`codex/endgame-model` branch](https://github.com/wyn0n0/CSMapWinPredict/tree/codex/endgame-model). It includes prediction and GSI source code, trained weights, examples and installation instructions. Download the entire branch and follow its [quick start](https://github.com/wyn0n0/CSMapWinPredict/tree/codex/endgame-model/endgame_prediction#下载并预测); no retraining is required. The module is absent from the current `main` tree, and the replay interface, API and production model remain unchanged.
 
-[`endgame_prediction/gsi/`](endgame_prediction/gsi/README.md) receives GSI data from a CS2 observer with full spectator information and records raw snapshots, receipt times and individual prediction results locally. The recorder defaults to `127.0.0.1:3002`. Model bundles, source data and recordings are not distributed with the GitHub source. After providing a compatible endgame model bundle, follow the [full-match recording guide](endgame_prediction/gsi/README.md#录制一场完整比赛) to install the configuration, start and stop recording.
-
-Engineering checks pass; real-match field alignment and prediction quality remain unvalidated. A normal player view does not expose complete data for both teams.
+The model remains a development candidate. Real-match GSI alignment and accuracy still require validation.
 
 ## Development status
 

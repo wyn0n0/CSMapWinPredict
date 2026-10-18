@@ -81,11 +81,9 @@ npm run dev
 
 ## 独立残局预测与 GSI 录制（实验）
 
-[`endgame_prediction/`](endgame_prediction/README.md) 提供独立的 Mirage 残局胜率预测：双方各有存活玩家、合计不超过 7 人时，估计当前回合胜方。它不改变回放界面、API 或默认模型。
+完整独立模块已迁至 [`codex/endgame-model` 分支](https://github.com/wyn0n0/CSMapWinPredict/tree/codex/endgame-model)，包含预测与 GSI 源码、已训练权重、示例和安装说明。下载整个分支后按[快速开始](https://github.com/wyn0n0/CSMapWinPredict/tree/codex/endgame-model/endgame_prediction#下载并预测)运行，无需重新训练。`main` 当前目录已移除该模块；原回放界面、API 和生产默认模型保持不变。
 
-[`endgame_prediction/gsi/`](endgame_prediction/gsi/README.md) 可接收 CS2 完整观战模式的 GSI 数据，并在本地保存原始快照、接收时间和逐条预测。录制器默认使用 `127.0.0.1:3002`，原始数据、模型和录制结果不随 GitHub 源码分发。准备匹配的残局模型包后，按[整场录制指南](endgame_prediction/gsi/README.md#录制一场完整比赛)安装配置、启动和停止。
-
-GSI 工程测试已通过，真实比赛字段对齐与预测效果仍待验证；普通玩家视角缺少完整双方数据。
+模型仍为开发候选，真实比赛 GSI 字段对齐与准确性仍待验证。
 
 ## 开发状态
 
