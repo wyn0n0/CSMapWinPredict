@@ -1,0 +1,52 @@
+{
+  "selectedBaseline": {
+    "model": "logistic",
+    "calibration": "sigmoid",
+    "artifact": "baseline.joblib"
+  },
+  "candidate": {
+    "id": "B_c4_logistic",
+    "featureSet": "B_c4",
+    "model": "logistic",
+    "parameters": {},
+    "interaction": "broad_endgame"
+  },
+  "planSha256": "9c11d561b6572b1c829968acb3aa83990836c357d7b6717ccd1800cb8d7d77b4",
+  "trainingOofCalibration": {
+    "identity": {
+      "logLoss": 0.2713570343818364,
+      "brierScore": 0.08569300215709681,
+      "rocAuc": 0.9546654667282211,
+      "accuracy": 0.8793786611932527,
+      "ece10": 0.01487164048238661
+    },
+    "sigmoid": {
+      "logLoss": 0.2722510395867279,
+      "brierScore": 0.08598468698716254,
+      "rocAuc": 0.9540721360550443,
+      "accuracy": 0.8791983514773837,
+      "ece10": 0.010419403674965032
+    },
+    "isotonic": {
+      "logLoss": 0.272874103895501,
+      "brierScore": 0.08612774853303487,
+      "rocAuc": 0.9530413623393519,
+      "accuracy": 0.8782016416625341,
+      "ece10": 0.00624974492851488
+    }
+  },
+  "trainingPreferredCalibration": "identity",
+  "fixedComparisonCalibration": "sigmoid",
+  "fitSeconds": 8.41441070000019,
+  "runtime": {
+    "python": "3.13.5",
+    "numpy": "2.1.3",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.6.1",
+    "lightgbm": "4.6.0",
+    "scipy": "1.15.3",
+    "joblib": "1.4.2",
+    "matplotlib": "3.10.0",
+    "threadpoolctl": "3.5.0"
+  }
+}

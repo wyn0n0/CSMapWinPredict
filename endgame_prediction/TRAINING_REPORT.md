@@ -38,7 +38,7 @@ Log Loss、Brier、ECE-10 越低越好；准确率和 AUC 越高越好。两模�
 
 ## 工件与验证
 
-本轮输出为 `runs/20261017-endgame-only-r1/`，位于本模块内并被 Git 忽略：
+本轮输出为 `runs/20261017-endgame-only-r1/`，位于本模块内。2026-10-18 起，`codex/endgame-model` 分支发布其中完整的 `model/` 六文件包；其余工件仍被 Git 忽略：
 
 | 工件 | 文件 |
 | --- | --- |

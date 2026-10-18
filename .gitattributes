@@ -12,3 +12,6 @@
 /schemas/situation/minimap-scene-v1.schema.json text eol=crlf
 /schemas/situation/situation-facts-v1.schema.json text eol=crlf
 /schemas/situation/situation-narrative-v1.schema.json text eol=crlf
+
+# Preserve every byte of the published, hash-verified endgame bundle.
+/endgame_prediction/runs/20261017-endgame-only-r1/model/* -text

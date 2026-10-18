@@ -1,3 +1,6 @@
 /model/
 /verification/
-/runs/
+/runs/*
+!/runs/20261017-endgame-only-r1/
+/runs/20261017-endgame-only-r1/*
+!/runs/20261017-endgame-only-r1/model/

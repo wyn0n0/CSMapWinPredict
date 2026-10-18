@@ -1,12 +1,41 @@
 # 残局胜率预测
 
-使用**仅以残局样本重训的 C4 模型**，预测 Mirage **当前回合**的 T／CT 获胜概率。本目录提供源码、示例和验证报告；数据、模型和录制结果保留本地，不随 GitHub 源码分发。现有前端、API、生产默认模型和启动配置不接入此模块。运行时只读复用仓库 `tools/` 的模型加载、特征校验及推理协议，因此本目录需与仓库一起使用。
+使用**仅以残局样本重训的 C4 模型**，预测 Mirage **当前回合**的 T／CT 获胜概率。本目录提供源码、示例和验证报告；本分支同时提供默认残局模型包；训练数据和录制结果保留本地，不随 GitHub 分发。现有前端、API、生产默认模型和启动配置不接入此模块。运行时只读复用仓库 `tools/` 的模型加载、特征校验及推理协议，因此本目录需与仓库一起使用。
 
 残局指双方**存活人数合计 ≤7**，遵循[项目定义](../docs/plans/win-broad-endgame-retrain-20261015.md)：双方各有 1–5 人，处于 `live` 或 `post-plant` 阶段。例如 3v4、4v3、2v5、3v3、1v1 均接受；4v4、5v3、0vN、冻结／已结束阶段均不预测。人数未知、布尔值、非整数或超出 0–5 时拒绝输入，不能用缺失人数猜测残局。
 
+## 下载并预测
+
+下载[本分支 ZIP](https://github.com/wyn0n0/CSMapWinPredict/archive/refs/heads/codex/endgame-model.zip)并解压完整仓库，或执行：
+
+```bash
+git clone --branch codex/endgame-model --single-branch https://github.com/wyn0n0/CSMapWinPredict.git
+cd CSMapWinPredict
+```
+
+建议使用 Python 3.13（模型验证环境为 3.13.5），在仓库根创建虚拟环境并安装推理依赖。Windows PowerShell：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-inference.txt
+.\.venv\Scripts\python.exe -B endgame_prediction/predict.py --check
+Get-Content endgame_prediction/example-request.json | .\.venv\Scripts\python.exe -B endgame_prediction/predict.py
+```
+
+Linux／macOS：
+
+```bash
+python3.13 -m venv .venv
+.venv/bin/python -m pip install -r requirements-inference.txt
+.venv/bin/python -B endgame_prediction/predict.py --check
+.venv/bin/python -B endgame_prediction/predict.py < endgame_prediction/example-request.json
+```
+
+无需训练数据、原始 Demo、Node.js 或 .NET 即可运行独立预测。请下载整个分支，单独下载本目录会缺少 `tools/` 共享依赖。`--check` 成功返回 `status: ready`；示例返回 T／CT 当前回合获胜概率。预测自己的局面需准备下文约定的完整特征，或按 GSI 指南接入完整观战信息；仅给双方人数不足以预测。
+
 ## 直接运行
 
-从仓库根执行，使用已安装 `requirements-inference.txt` 所列依赖的 Python。默认模型位置为 `runs/20261017-endgame-only-r1/model/`；**新克隆的仓库不含该模型包**。需先准备完整且通过加载校验的 `win-broad-endgame-v1` C4 包，放到默认位置，或用 `--model-dir` 指定其目录；下面命令以模型已就绪为前提。缺少模型时检查会报错，不会自动下载或退回生产模型。
+从仓库根执行，使用已安装 `requirements-inference.txt` 所列依赖的 Python。默认模型位置为 `runs/20261017-endgame-only-r1/model/`；**检出 `codex/endgame-model` 分支即包含该模型包**，安装依赖后可运行以下命令。也可用 `--model-dir` 指定其他完整且通过加载校验的 `win-broad-endgame-v1` C4 包。缺少模型时检查会报错，不会自动下载或退回生产模型。
 
 ```powershell
 # 加载模型、检查文件完整性并核对原模型自检样例
@@ -42,7 +71,7 @@ python -B endgame_prediction/predict.py --model-dir endgame_prediction/runs/endg
 python -B endgame_prediction/predict.py --model-dir endgame_prediction/model --check
 ```
 
-`runs/`、`model/` 和 `verification/` 均被 Git 忽略。新检出若缺少**旧对照副本**、且本地仍保留原实验工件，可运行一次：
+除已发布的 `runs/20261017-endgame-only-r1/model/` 外，`runs/` 的其他工件、旧 `model/` 和 `verification/` 均被 Git 忽略。发布包包含权重、特征清单、自检样例、模型清单、训练指标和训练折外预测数组；六个文件均保持原始字节与哈希。新检出若缺少**旧对照副本**、且本地仍保留原实验工件，可运行一次：
 
 ```powershell
 python -B endgame_prediction/prepare_model.py

@@ -4,7 +4,7 @@
 
 **工程接通已验证，真实 GOTV 字段一致性和预测准确性尚未验证。** 输出始终带 `compatibility: unvalidated-gsi-projection`。原 Demo 测试成绩不代表 GSI 效果；本次没有重训或改写模型，未接入原前端、API、启动脚本或生产默认模型。
 
-**GitHub 仅提供源码、说明与配置模板，不含模型包。** 启动前按[残局模块说明](../README.md#直接运行)准备匹配的完整模型包，放到默认位置，或给 `record.py`／`server.py` 加 `--model-dir` 参数。没有模型时无法启动当前录制器；`--check` 可先确认依赖与模型是否就绪。
+**`codex/endgame-model` 分支包含默认残局模型包。** 启动前按[残局模块说明](../README.md#直接运行)安装依赖并检查模型，或给 `record.py`／`server.py` 加 `--model-dir` 参数。没有模型时无法启动当前录制器；`--check` 可先确认依赖与模型是否就绪。
 
 ## 录制一场完整比赛
 

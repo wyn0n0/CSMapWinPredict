@@ -62,7 +62,7 @@ For win predictions, install the Python dependencies:
 python -m pip install -r requirements-inference.txt
 ```
 
-**Model bundles, training datasets and real Demos are not included in the repository.** Predictions require a model compatible with the current version. See “Configuration and development” below for model paths and settings.
+**The production model, training datasets and real Demos are not included. The `codex/endgame-model` branch includes the standalone endgame model bundle.** Predictions require a model compatible with the current version. See “Configuration and development” below for model paths and settings.
 
 If the example service is still running, stop it with `Ctrl+C`, then start the full service:
 
@@ -83,7 +83,7 @@ Stop the service with `Ctrl+C` in the terminal when finished.
 
 [`endgame_prediction/`](endgame_prediction/README.md) provides standalone Mirage round-win predictions when both teams have surviving players and no more than seven players remain in total. It leaves the replay interface, API and default model unchanged.
 
-[`endgame_prediction/gsi/`](endgame_prediction/gsi/README.md) receives GSI data from a CS2 observer with full spectator information and records raw snapshots, receipt times and individual prediction results locally. The recorder defaults to `127.0.0.1:3002`. Model bundles, source data and recordings are not distributed with the GitHub source. After providing a compatible endgame model bundle, follow the [full-match recording guide](endgame_prediction/gsi/README.md#录制一场完整比赛) to install the configuration, start and stop recording.
+[`endgame_prediction/gsi/`](endgame_prediction/gsi/README.md) receives GSI data from a CS2 observer with full spectator information and records raw snapshots, receipt times and individual prediction results locally. The recorder defaults to `127.0.0.1:3002`. This branch includes the compatible endgame model bundle; source data and recordings remain local. After installing the Python dependencies, follow the [full-match recording guide](endgame_prediction/gsi/README.md#录制一场完整比赛) to install the configuration, start and stop recording.
 
 Engineering checks pass; real-match field alignment and prediction quality remain unvalidated. A normal player view does not expose complete data for both teams.
 

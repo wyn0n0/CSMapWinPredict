@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "schemaVersion": 4,
+  "semanticVersion": "mirage-semantics-v4.2",
+  "featureContract": "win-broad-endgame-v1",
+  "planSha256": "9c11d561b6572b1c829968acb3aa83990836c357d7b6717ccd1800cb8d7d77b4",
+  "selectedModel": "logistic",
+  "calibration": "sigmoid",
+  "artifacts": {
+    "baseline.joblib": "356a2093fca1de4e6ef8ad2493e5beddfbf84b1971d773dfd5903e7ecd53c962",
+    "feature-manifest.json": "793e490b89d170a684ead8bf6832c9c999140069205be777d5a5cd0b5821cbc2",
+    "inference-fixtures.json": "8d86732c683dacf47b981514ac7c3fd3b99b798d9343bf1da0d4ec984661d954",
+    "report.json": "df25063451f37bb1d016446f6702ed3695f93d617fa6fac46ba4f29c3a051302",
+    "training-oof.npz": "c73394ace3190dbbdec9e0d0b4a9012acf8645ef3a688c9abd21e0247fab1290"
+  }
+}
