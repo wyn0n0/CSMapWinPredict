@@ -6,9 +6,9 @@ CS Demo Map is a Counter-Strike 2 replay and win-probability analysis project. I
 
 The project currently focuses on **Mirage** and supports match review, tactical observation and prediction-model research.
 
-![Mirage replay dashboard](docs/assets/demo-replay-dashboard.png)
+![Light analysis workbench — design concept preview](docs/assets/light-analysis-concept.png)
 
-*Screenshot shows an earlier layout; the current interface uses a light workbench with round review.*
+*Design concept preview for the light analysis workbench. Values are illustrative, not real model output; the implemented interface may differ in details.*
 
 ## Features
 

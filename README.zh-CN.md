@@ -6,9 +6,9 @@ CS Demo Map 是一个面向 Counter-Strike 2 的比赛回放与胜率分析项�
 
 项目目前以 **Mirage** 为主要支持地图，适合用于比赛复盘、战术观察和胜率模型研究。
 
-![Mirage 回放界面](docs/assets/demo-replay-dashboard.png)
+![浅色分析工作台 — 设计概念预览](docs/assets/light-analysis-concept.png)
 
-*截图为较早布局；当前界面已采用浅色工作台并加入整回合复盘。*
+*浅色分析工作台设计概念图。图中数据仅作示意，并非真实模型输出；实际界面细节可能有所不同。*
 
 ## 主要功能
 
