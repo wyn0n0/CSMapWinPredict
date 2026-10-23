@@ -97,6 +97,8 @@ class GsiTests(unittest.TestCase):
                    lambda p: p.update(allplayers=None)]
         for change in changes:
             p = packet()
+            for player in p["allplayers"].values():
+                player["state"].pop("defusekit")
             change(p)
             self.assertEqual(self.adapt(p)["status"], "skipped")
         p = packet()
@@ -105,7 +107,7 @@ class GsiTests(unittest.TestCase):
 
     def test_equipment_and_positions_mask_like_v4_export(self):
         p = packet()
-        del p["allplayers"]["CT0"]["state"]["defusekit"]
+        del p["allplayers"]["CT0"]["state"]["armor"]
         p["allplayers"]["T0"]["position"] = "NaN,0,0"
         f = self.adapt(p)["sample"]["features"]
         self.assertEqual(f["features.quality.quality"], "partial")
@@ -120,6 +122,61 @@ class GsiTests(unittest.TestCase):
         self.assertEqual(f["spatial.ct.nearestC4Distance"], 100)
         self.assertEqual(f["spatial.t.c4DistanceCount"], 2)
         self.assertEqual(f["features.quality.aliveEquipmentKnown"], 6)
+
+    def test_omitted_defusekit_matches_explicit_false_without_losing_equipment(self):
+        self.adapt(packet())  # A previous true value must not survive a later omission.
+        for kits in (0, 1, 4):
+            with self.subTest(kits=kits):
+                p = packet()
+                for pid, player in p["allplayers"].items():
+                    if player["team"] == "T" or int(pid[2:]) >= kits:
+                        player["state"].pop("defusekit")
+                original = json.dumps(p, sort_keys=True)
+                result = self.adapt(p)
+                explicit = json.loads(original)
+                for player in explicit["allplayers"].values():
+                    player["state"].setdefault("defusekit", False)
+                self.assertEqual(result["sample"], self.adapt(explicit)["sample"])
+                self.assertEqual(json.dumps(p, sort_keys=True), original)
+                f = result["sample"]["features"]
+                self.assertEqual(f["features.ct.defuserCount"], kits)
+                self.assertEqual(f["features.t.defuserCount"], 0)
+                self.assertEqual(f["features.ct.equipmentValue"], 12000)
+                self.assertEqual(f["features.t.totalMoney"], 3000)
+                self.assertEqual(f["features.ct.grenadeCount"], 8)
+                self.assertEqual(f["features.baseline.defuserCountDifference"], -kits)
+                self.assertEqual(f["features.quality.aliveEquipmentKnown"], 7)
+                self.assertEqual(f["features.quality.quality"], "usable")
+                self.assertNotIn("equipment_incomplete", result["warnings"])
+
+    def test_explicit_invalid_defusekit_is_unknown_not_omitted(self):
+        for team in ("T", "CT"):
+            for value in (None, 0, 1, "false", "true", [], {}):
+                with self.subTest(team=team, value=value):
+                    p = packet()
+                    p["allplayers"][team + "0"]["state"]["defusekit"] = value
+                    result = self.adapt(p)
+                    self.assertIn("equipment_incomplete", result["warnings"])
+                    f = result["sample"]["features"]
+                    self.assertEqual(f["features.quality.aliveEquipmentKnown"], 6)
+                    for side in ("t", "ct"):
+                        self.assertIsNone(f[f"features.{side}.equipmentValue"])
+                        self.assertIsNone(f[f"features.{side}.defuserCount"])
+
+    def test_kit_omission_does_not_hide_other_missing_equipment(self):
+        for field in ("money", "armor", "helmet", "equip_value", "weapons"):
+            with self.subTest(field=field):
+                p = packet()
+                player = p["allplayers"]["CT0"]
+                player["state"].pop("defusekit")
+                (player if field == "weapons" else player["state"]).pop(field)
+                result = self.adapt(p)
+                self.assertIn("equipment_incomplete", result["warnings"])
+                f = result["sample"]["features"]
+                self.assertEqual(f["features.quality.aliveEquipmentKnown"], 6)
+                for side in ("t", "ct"):
+                    self.assertIsNone(f[f"features.{side}.totalMoney"])
+                    self.assertIsNone(f[f"features.{side}.equipmentKnownPlayers"])
 
     def test_only_confirmed_deaths_survive_omitted_state(self):
         self.adapt(packet())
@@ -255,10 +312,12 @@ class GsiTests(unittest.TestCase):
             self.assertEqual(request("GET", "/health")[1]["gsi"], "waiting")
             headers = {"Content-Type": "application/json"}
             p = packet(timestamp=time.time())
+            p["allplayers"]["CT0"]["state"].pop("defusekit")
             self.assertEqual(request("POST", "/gsi", json.dumps(p), headers)[0], 403)
             p["auth"] = {"token": "test-token"}
             status, value = request("POST", "/gsi", json.dumps(p), headers)
             self.assertEqual((status, value["status"]), (200, "predicted"))
+            self.assertNotIn("equipment_incomplete", value["warnings"])
             self.assertNotIn("test-token", json.dumps(value))
             self.assertNotIn("allplayers", value)
             self.assertEqual(request("GET", "/prediction")[1]["prediction"], value["prediction"])

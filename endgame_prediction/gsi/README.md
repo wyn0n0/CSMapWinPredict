@@ -1,8 +1,8 @@
 # 独立 GOTV GSI 适配层
 
-接收 CS2 观战客户端的 GSI HTTP 快照，转换为既有残局模型的 114 个输入字段，复用 `endgame_prediction/predict.py` 及其默认已训练模型。仅支持 Mirage、双方各存活 1–5 人、合计 ≤7、live／post-plant。0vN、暂停、冻结、回合结束、未知生命状态和名单不完整时不输出概率。
+**工程接通、首场同场比对和拆弹器省略修复已完成，跨比赛准确性仍未验证。** 2026-10-19 [修复复验](../../docs/win-gsi-defusekit-fix-report-20261019.md)通过 39 项测试及 8,675 条原始快照回放；739 对局面的平均胜率差从 12.07 降至 1.72 个百分点。本分支已包含修复，已运行的服务须手动重启后加载新代码。输出继续带 `compatibility: unvalidated-gsi-projection`。没有重训或改写模型，未接入原前端、API、启动脚本或生产默认模型。
 
-**工程接通已验证，真实 GOTV 字段一致性和预测准确性尚未验证。** 输出始终带 `compatibility: unvalidated-gsi-projection`。原 Demo 测试成绩不代表 GSI 效果；本次没有重训或改写模型，未接入原前端、API、启动脚本或生产默认模型。
+接收 CS2 观战客户端的 GSI HTTP 快照，转换为既有残局模型的 114 个输入字段，复用 `endgame_prediction/predict.py` 及其默认已训练模型。仅支持 Mirage、双方各存活 1–5 人、合计 ≤7、live／post-plant。0vN、暂停、冻结、回合结束、未知生命状态和名单不完整时不输出概率。
 
 **`codex/endgame-model` 分支包含默认残局模型包。** 启动前按[残局模块说明](../README.md#直接运行)安装依赖并检查模型，或给 `record.py`／`server.py` 加 `--model-dir` 参数。没有模型时无法启动当前录制器；`--check` 可先确认依赖与模型是否就绪。
 

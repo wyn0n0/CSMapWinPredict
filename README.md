@@ -1,5 +1,7 @@
 # CS Demo Map
 
+> Updated 2026-10-23: the GSI adapter now handles omitted CT defuse-kit fields. Same-match validation is documented in the [fix report](docs/win-gsi-defusekit-fix-report-20261019.md); cross-match accuracy remains unvalidated. Trained weights are unchanged. Replay UI updates are published on `main`.
+
 English | [简体中文](README.zh-CN.md)
 
 CS Demo Map is a Counter-Strike 2 replay and win-probability analysis project. It turns `.dem` recordings into an interactive radar replay, showing match progress alongside round-win estimates based on player status, equipment and the bomb situation.
@@ -85,7 +87,7 @@ Stop the service with `Ctrl+C` in the terminal when finished.
 
 [`endgame_prediction/gsi/`](endgame_prediction/gsi/README.md) receives GSI data from a CS2 observer with full spectator information and records raw snapshots, receipt times and individual prediction results locally. The recorder defaults to `127.0.0.1:3002`. This branch includes the compatible endgame model bundle; source data and recordings remain local. After installing the Python dependencies, follow the [full-match recording guide](endgame_prediction/gsi/README.md#录制一场完整比赛) to install the configuration, start and stop recording.
 
-Engineering checks pass; real-match field alignment and prediction quality remain unvalidated. A normal player view does not expose complete data for both teams.
+Engineering checks pass; cross-match field alignment and prediction quality remain unvalidated. A normal player view does not expose complete data for both teams.
 
 ## Development status
 

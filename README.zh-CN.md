@@ -1,5 +1,7 @@
 # CS Demo Map
 
+> 2026-10-23 更新：GSI 已修复 CT 拆弹器字段省略处理，首场同场复验见[修复报告](docs/win-gsi-defusekit-fix-report-20261019.md)。跨比赛准确性仍待验证，已发布模型权重不变；回放界面更新单独发布在 `main`。
+
 [English](README.md) | 简体中文
 
 CS Demo Map 是一个面向 Counter-Strike 2 的比赛回放与胜率分析项目。导入 `.dem` 录像后，可以在交互式雷达地图上查看比赛进程，并结合玩家状态、装备和炸弹情况，观察当前回合的胜率变化。
@@ -85,7 +87,7 @@ npm run dev
 
 [`endgame_prediction/gsi/`](endgame_prediction/gsi/README.md) 可接收 CS2 完整观战模式的 GSI 数据，并在本地保存原始快照、接收时间和逐条预测。录制器默认使用 `127.0.0.1:3002`，本分支包含匹配的残局模型包，原始数据和录制结果不随 GitHub 分发。安装 Python 依赖后，按[整场录制指南](endgame_prediction/gsi/README.md#录制一场完整比赛)安装配置、启动和停止。
 
-GSI 工程测试已通过，真实比赛字段对齐与预测效果仍待验证；普通玩家视角缺少完整双方数据。
+GSI 工程测试已通过，跨比赛字段对齐与预测效果仍待验证；普通玩家视角缺少完整双方数据。
 
 ## 开发状态
 

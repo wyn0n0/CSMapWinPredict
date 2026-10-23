@@ -40,6 +40,7 @@ class RecorderTests(unittest.TestCase):
         warmup["map"]["phase"] = "warmup"
         full = packet(5, 5, timestamp=now)
         endgame = packet(timestamp=now)
+        endgame["allplayers"]["CT0"]["state"].pop("defusekit")
         endgame.update(auth={"token": "secret"}, previously={"auth": {"token": "secret"}, "round": {}},
                        added={"auth": {"token": True}}, unknown_future_field={"value": "中文"})
         ended = packet(timestamp=now)
@@ -65,6 +66,8 @@ class RecorderTests(unittest.TestCase):
             self.assertEqual(rows[3]["payload"]["round"]["win_team"], "CT")
             self.assertEqual(rows[2]["payload"]["unknown_future_field"], {"value": "中文"})
             self.assertAlmostEqual(sum(predictions[2]["result"]["prediction"].values()), 1)
+            self.assertNotIn("defusekit", rows[2]["payload"]["allplayers"]["CT0"]["state"])
+            self.assertNotIn("equipment_incomplete", predictions[2]["result"]["warnings"])
         self.assertEqual(packets, original)  # Neither redaction nor inference changes the source object.
         self.assertNotIn("secret", "".join(p.read_text(encoding="utf-8") for p in self.output.iterdir()))
         summary = json.loads((self.output / "summary.json").read_text())

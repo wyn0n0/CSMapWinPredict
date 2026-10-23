@@ -80,8 +80,9 @@ def equipment(player):
         ("totalMoney", "money"), ("totalArmor", "armor"), ("equipmentValue", "equip_value"))}
     for key, source in (("helmetCount", "helmet"), ("defuserCount", "defusekit")):
         value = state.get(source)
-        # T players cannot possess a defuse kit; missing CT kit status stays unknown.
-        if source == "defusekit" and player["team"] == "T" and value is None:
+        # Full GSI player states omit defusekit when absent (verified against demo).
+        # Only an omitted key means false; explicit null/malformed values stay unknown.
+        if source == "defusekit" and source not in state:
             value = False
         values[key] = int(value) if isinstance(value, bool) else None
     weapons = player.get("weapons")
