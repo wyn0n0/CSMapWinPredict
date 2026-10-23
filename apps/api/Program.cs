@@ -166,4 +166,15 @@ app.MapGet("/api/demos/{id}/windows/{index:int}", (
     return Results.File(path, "application/json", enableRangeProcessing: false);
 });
 
+app.MapGet("/api/demos/{id}/win-review", (
+    string id, HttpContext context, DemoImportService imports) =>
+{
+    var path = imports.GetWinReviewPath(id);
+    if (path is null)
+        return Results.NotFound(new { error = "复盘曲线尚未生成；旧导入任务请重新导入 Demo。" });
+    context.Response.Headers.ContentEncoding = "br";
+    context.Response.Headers.CacheControl = "private, max-age=31536000, immutable";
+    return Results.File(path, "application/json", enableRangeProcessing: false);
+});
+
 app.Run();

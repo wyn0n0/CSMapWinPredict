@@ -7,6 +7,7 @@ obj/
 *.suo
 *.dem
 apps/api/data/imports/
+/data/imports/
 /datasets/
 /data/geometry/*.mesh
 /models/

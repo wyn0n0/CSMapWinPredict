@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { getMapConfig, worldToMap, worldYawToMapRotation } from '../domain/maps'
 import {
   findTickIndex,
+  playerPoseAt,
   utilityPointAt,
   type DemoFrame,
   type PlayerUtilityState,
@@ -42,16 +43,15 @@ const utilityStatesByPlayer = computed(() => {
   return grouped
 })
 
-const players = computed(() => frame.value.players.map(player => ({
-  ...player,
-  point: worldToMap(player, map.value),
-  utilities: playerUtilitiesAt(player.id),
-})))
+const players = computed(() => frame.value.players.map(player => {
+  const pose = playerPoseAt(player, props.frames[props.frameIndex], props.frames[props.frameIndex + 1], props.currentTime)
+  return { ...pose, point: worldToMap(pose, map.value), utilities: playerUtilitiesAt(player.id) }
+}))
 
-const trails = computed(() => {
+const sampledTrails = computed(() => {
   if (!props.showTrails) return []
   const start = Math.max(0, props.frameIndex - 36)
-  return players.value.map(player => {
+  return frame.value.players.map(player => {
     const points = props.frames.slice(start, props.frameIndex + 1)
       .map(item => item.players.find(candidate => candidate.id === player.id))
       .filter(candidate => candidate?.alive)
@@ -61,6 +61,14 @@ const trails = computed(() => {
     return { id: player.id, team: player.team, points }
   })
 })
+
+const trails = computed(() => sampledTrails.value.map(trail => {
+  const player = players.value.find(player => player.id === trail.id)
+  return {
+    ...trail,
+    points: player?.alive ? `${trail.points} ${player.point.x},${player.point.y}` : trail.points,
+  }
+}))
 
 const activeProjectiles = computed(() => {
   if (!props.showProjectiles) return []
@@ -124,8 +132,8 @@ function inventoryOffset(index: number, length: number): number {
     <svg class="radar" viewBox="0 0 1024 1024" role="img" :aria-label="`${map.label} 小地图`">
       <defs>
         <linearGradient id="radar-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#252a2d" />
-          <stop offset="1" stop-color="#111416" />
+          <stop offset="0" stop-color="#e4edf5" />
+          <stop offset="1" stop-color="#edf3f7" />
         </linearGradient>
         <filter id="player-shadow" x="-100%" y="-100%" width="300%" height="300%">
           <feGaussianBlur in="SourceAlpha" stdDeviation="5" />

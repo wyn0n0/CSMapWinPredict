@@ -11,7 +11,12 @@ public sealed record DemoTimeline(
     IReadOnlyList<RoundResult> RoundResults)
 {
     public SemanticTimeline? Semantics { get; init; }
+    // Opt-in inference observations; never mixed into the legacy export history.
+    public IReadOnlyList<WinEventState> WinEventStates { get; init; } = [];
 }
+
+public sealed record WinEventState(DemoFrame Frame, SemanticFrame Semantic,
+    IReadOnlyList<PlayerEquipmentState> Equipment);
 
 public sealed record DemoMetadata(
     string FileName,
@@ -156,4 +161,5 @@ public sealed record TimelineEvent(
     double TimeSeconds,
     string Type,
     string Title,
-    string? Detail = null);
+    string? Detail = null,
+    string? SubjectId = null);

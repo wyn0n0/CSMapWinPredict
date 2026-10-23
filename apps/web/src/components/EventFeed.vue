@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import UiIcon from './UiIcon.vue'
 import { formatTime, type TimelineEvent } from '../domain/timeline'
 
 const props = defineProps<{ events: TimelineEvent[]; currentTime: number }>()
@@ -11,8 +12,8 @@ const orderedEvents = computed(() => [...props.events].sort((a, b) => b.timeSeco
 <template>
   <section class="event-panel panel">
     <div class="panel-title-row">
-      <div>
-        <span class="eyebrow">MATCH LOG</span>
+      <div class="title-with-icon">
+        <UiIcon name="chart" />
         <h2>关键事件</h2>
       </div>
       <span class="event-count">{{ events.length }}</span>
@@ -30,9 +31,10 @@ const orderedEvents = computed(() => [...props.events].sort((a, b) => b.timeSeco
           <strong>{{ event.title }}</strong>
           <small>{{ event.detail || event.type }}</small>
         </span>
-        <time>{{ formatTime(event.timeSeconds) }}</time>
+        <time>{{ formatTime(event.timeSeconds) }}{{ event.timeSeconds > currentTime ? ' · 后续' : '' }}</time>
       </button>
     </div>
+    <p v-if="!events.length" class="event-empty">当前 Demo 没有事件记录，仍可使用时间轴回放。</p>
   </section>
 </template>
 

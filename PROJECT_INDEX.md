@@ -1,5 +1,7 @@
 # CS Demo Map 项目索引
 
+> 2026-10-23：浅色工作台、人物位置／朝向插值、M5 事件补点与 M6 整回合复盘已实现。C4 状态／距离固定对照已完成开发评估，生产默认模型不变。详情见 [当前进度](docs/context/NOW.md)和 [C4 报告](docs/win-c4-controls-report-20261019.md)。独立残局在 `codex/endgame-model`。
+
 > 最后核验：2026-09-27。源码、测试和本地工件是实现事实的权威来源；本页只提供接续入口。
 
 接触风险修复：修复前 checkpoint `3965b64` / `checkpoint/pre-contact-raycast-20260925`。

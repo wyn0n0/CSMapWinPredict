@@ -17,12 +17,15 @@ public sealed class DemoParserService
         string fileName,
         CancellationToken cancellationToken,
         bool collectSemantics = false,
-        int? stopAfterTick = null)
+        int? stopAfterTick = null,
+        bool collectWinEvents = false)
     {
         var demo = new CsDemoParser();
         var semantics = collectSemantics ? new DemoSemanticCollector() : null;
         var frames = new List<DemoFrame>();
         var events = new List<TimelineEvent>();
+        var eventTicks = new HashSet<int>();
+        var eventStates = new Dictionary<int, WinEventState>();
         var roundResults = new List<RoundResult>();
         var utilityTrackBuilders = new List<UtilityTrackBuilder>();
         var utilityEffectBuilders = new List<UtilityEffectBuilder>();
@@ -47,6 +50,10 @@ public sealed class DemoParserService
         var roundResultRecorded = false;
         var bombTerminalState = "unavailable";
         BombSnapshot? lastBombSnapshot = null;
+        bool? wasDefusing = null;
+        uint? observedBomb = null;
+        string? lastDefuserId = null;
+        string? lastDefuserName = null;
 
         demo.PacketEvents.SvcServerInfo += info => mapName = info.MapName;
         demo.DemoEvents.DemoFileInfo += info =>
@@ -66,6 +73,10 @@ public sealed class DemoParserService
             roundResultRecorded = false;
             bombTerminalState = "unavailable";
             lastBombSnapshot = null;
+            wasDefusing = null;
+            observedBomb = null;
+            lastDefuserId = null;
+            lastDefuserName = null;
             AddEvent("round-start", "回合开始", $"第 {roundCounter} 回合");
         };
         demo.Source1GameEvents.RoundFreezeEnd += _ =>
@@ -102,7 +113,7 @@ public sealed class DemoParserService
             AddEvent(
                 "kill",
                 $"{e.Attacker?.PlayerName ?? "世界"} → {e.Player?.PlayerName ?? "未知玩家"}",
-                $"{e.Weapon}{(e.Headshot ? " · 爆头" : string.Empty)}");
+                $"{e.Weapon}{(e.Headshot ? " · 爆头" : string.Empty)}", e.Player?.SteamID.ToString());
         demo.Source1GameEvents.BombPlanted += e =>
         {
             bombTerminalState = "planted";
@@ -151,12 +162,13 @@ public sealed class DemoParserService
             playerEquipmentStates,
             events.OrderBy(item => item.Tick).ToArray(),
             roundResults.OrderBy(item => item.EndTick).ToArray())
-        { Semantics = semantics?.Finish() };
+        { Semantics = semantics?.Finish(), WinEventStates = eventStates.Values.OrderBy(state => state.Frame.Tick).ToArray() };
 
-        void AddEvent(string type, string title, string? detail = null)
+        void AddEvent(string type, string title, string? detail = null, string? subjectId = null)
         {
             var tick = Math.Max(0, demo.CurrentDemoTick.Value);
-            events.Add(new TimelineEvent(tick, tick / (double)TickRate, type, title, detail));
+            events.Add(new TimelineEvent(tick, tick / (double)TickRate, type, title, detail, subjectId));
+            if (collectWinEvents && WinEventSampleBuilder.IsKeyEvent(type)) eventTicks.Add(tick);
         }
 
         void CaptureState()
@@ -174,26 +186,50 @@ public sealed class DemoParserService
                 lastPlayerPositions.Clear();
             }
 
+            // Some GOTV demos omit begin/abort game events. Observe replicated C4
+            // state on every command, including taps shorter than the 8 Hz grid.
+            if (collectWinEvents && semantics is not null)
+            {
+                var planted = demo.Entities.OfType<CPlantedC4>().FirstOrDefault();
+                var entity = planted?.EntityIndex.Value;
+                if (entity != observedBomb) wasDefusing = null;
+                observedBomb = entity;
+                var defusing = planted is { BeingDefused: true, BombDefused: false, HasExploded: false };
+                var defuser = planted is not null ? FindPlayer(planted.BombDefuser) : null;
+                if (defusing && wasDefusing == false)
+                    AddEvent("bomb-defuse-start", "开始拆包", defuser?.PlayerName, defuser?.SteamID.ToString());
+                else if (wasDefusing == true && !defusing && !roundEnded && planted is { BombDefused: false, HasExploded: false })
+                    AddEvent("bomb-defuse-abort", "取消拆包", lastDefuserName, lastDefuserId);
+                wasDefusing = planted is null ? null : defusing;
+                lastDefuserId = defuser?.SteamID.ToString();
+                lastDefuserName = defuser?.PlayerName;
+            }
+
             if (tick != lastUtilitySampledTick && tick % UtilitySampleStride == 0)
             {
                 lastUtilitySampledTick = tick;
                 CaptureUtilities(tick);
             }
 
-            if ((semantics is null && tick == lastSampledTick) || tick % PlayerSampleStride != 0)
+            var regular = tick % PlayerSampleStride == 0 && (semantics is not null || tick != lastSampledTick);
+            var eventSample = semantics is not null && eventTicks.Contains(tick);
+            if (!regular && !eventSample)
                 return;
 
-            lastSampledTick = tick;
+            if (regular) lastSampledTick = tick;
             var players = demo.Players
                 .Where(player => player.PlayerPawn is not null)
                 .Select(player =>
                 {
                     var pawn = player.PlayerPawn!;
-                    CapturePlayerUtilities(player, pawn, tick);
-                    CapturePlayerEquipment(player, pawn, tick);
+                    if (regular)
+                    {
+                        CapturePlayerUtilities(player, pawn, tick);
+                        CapturePlayerEquipment(player, pawn, tick);
+                    }
                     var stats = player.ActionTrackingServices?.MatchStats;
                     var playerId = player.SteamID.ToString();
-                    var velocity = CaptureVelocity(playerId, pawn, tick);
+                    var velocity = regular ? CaptureVelocity(playerId, pawn, tick) : (X: 0f, Y: 0f, Z: 0f);
                     return new PlayerSnapshot(
                         playerId,
                         player.PlayerName,
@@ -216,7 +252,7 @@ public sealed class DemoParserService
 
             if (players.Length > 0 || semantics is not null)
             {
-                var bomb = CaptureBomb(players);
+                var bomb = CaptureBomb(players, regular);
                 var frame = new DemoFrame(
                     tick,
                     tick / (double)TickRate,
@@ -224,10 +260,19 @@ public sealed class DemoParserService
                     CaptureRound(tick, bomb.State),
                     bomb,
                     CaptureZones(players));
-                if (semantics is not null && frames.Count > 0 && frames[^1].Tick == tick)
-                    frames[^1] = frame;
-                else frames.Add(frame);
-                semantics?.Capture(demo, frame);
+                if (regular)
+                {
+                    if (semantics is not null && frames.Count > 0 && frames[^1].Tick == tick)
+                        frames[^1] = frame;
+                    else frames.Add(frame);
+                }
+                var semantic = semantics?.Capture(demo, frame, regular);
+                // Each later command at this tick replaces the provisional state. No later
+                // tick is ever stamped with the event tick, even if entity updates lag.
+                if (eventSample && semantic is not null)
+                    eventStates[tick] = new(frame, semantic, demo.Players
+                        .Where(player => player.PlayerPawn is not null)
+                        .Select(player => ReadPlayerEquipment(player, player.PlayerPawn!, tick)).ToArray());
             }
         }
 
@@ -276,6 +321,20 @@ public sealed class DemoParserService
 
         void CapturePlayerEquipment(CCSPlayerController player, CCSPlayerPawn pawn, int tick)
         {
+            var state = ReadPlayerEquipment(player, pawn, tick);
+            var signature = string.Join('|', new[]
+            {
+                state.Money.ToString(), state.Armor.ToString(), state.HasHelmet.ToString(), state.HasDefuser.ToString(),
+                state.CurrentEquipmentValue.ToString(), state.RoundStartEquipmentValue.ToString(), state.CashSpentThisRound.ToString(),
+                string.Join(',', state.Items.Select(item => $"{item.Name}:{item.Count}:{item.ClipAmmo}:{item.ReserveAmmo}"))
+            });
+            if (lastPlayerEquipment.TryGetValue(state.PlayerId, out var previous) && previous == signature) return;
+            lastPlayerEquipment[state.PlayerId] = signature;
+            playerEquipmentStates.Add(state);
+        }
+
+        PlayerEquipmentState ReadPlayerEquipment(CCSPlayerController player, CCSPlayerPawn pawn, int tick)
+        {
             var items = pawn.Weapons
                 .Select(weapon => new EquipmentItem(
                     weapon.EconItem.Name,
@@ -294,17 +353,7 @@ public sealed class DemoParserService
             var roundStartEquipmentValue = pawn.RoundStartEquipmentValue;
             var cashSpentThisRound = player.InGameMoneyServices?.CashSpentThisRound ?? 0;
             var playerId = player.SteamID.ToString();
-            var signature = string.Join('|', new[]
-            {
-                money.ToString(), armor.ToString(), hasHelmet.ToString(), hasDefuser.ToString(),
-                currentEquipmentValue.ToString(), roundStartEquipmentValue.ToString(), cashSpentThisRound.ToString(),
-                string.Join(',', items.Select(item => $"{item.Name}:{item.Count}:{item.ClipAmmo}:{item.ReserveAmmo}"))
-            });
-            if (lastPlayerEquipment.TryGetValue(playerId, out var previous) && previous == signature)
-                return;
-
-            lastPlayerEquipment[playerId] = signature;
-            playerEquipmentStates.Add(new PlayerEquipmentState(
+            return new PlayerEquipmentState(
                 tick,
                 tick / (double)TickRate,
                 playerId,
@@ -315,7 +364,7 @@ public sealed class DemoParserService
                 currentEquipmentValue,
                 roundStartEquipmentValue,
                 cashSpentThisRound,
-                items));
+                items);
         }
 
         RoundSnapshot CaptureRound(int tick, string bombState)
@@ -348,7 +397,7 @@ public sealed class DemoParserService
                 rules.NumConsecutiveCTLoses);
         }
 
-        BombSnapshot CaptureBomb(IReadOnlyList<PlayerSnapshot> players)
+        BombSnapshot CaptureBomb(IReadOnlyList<PlayerSnapshot> players, bool persist)
         {
             var planted = demo.Entities.OfType<CPlantedC4>().FirstOrDefault();
             if (planted is not null)
@@ -359,8 +408,7 @@ public sealed class DemoParserService
                     : planted.HasExploded ? "exploded"
                     : planted.BeingDefused ? "defusing"
                     : "planted";
-                bombTerminalState = state;
-                lastBombSnapshot = new BombSnapshot(
+                var snapshot = new BombSnapshot(
                     state,
                     null,
                     defuser?.SteamID.ToString(),
@@ -375,7 +423,8 @@ public sealed class DemoParserService
                     state == "defusing"
                         ? Math.Max(0, planted.DefuseCountDown.Value - demo.CurrentGameTime.Value)
                         : null);
-                return lastBombSnapshot;
+                if (persist) { bombTerminalState = state; lastBombSnapshot = snapshot; }
+                return snapshot;
             }
 
             var c4 = demo.Entities.OfType<CC4>().FirstOrDefault();
@@ -388,7 +437,7 @@ public sealed class DemoParserService
                 var y = pawn?.Origin.Y ?? c4!.Origin.Y;
                 var z = pawn?.Origin.Z ?? c4!.Origin.Z;
                 var state = c4?.StartedArming == true ? "planting" : carrier is not null ? "carried" : "dropped";
-                lastBombSnapshot = new BombSnapshot(
+                var snapshot = new BombSnapshot(
                     state,
                     carrier?.SteamID.ToString(),
                     null,
@@ -399,7 +448,8 @@ public sealed class DemoParserService
                     z,
                     null,
                     null);
-                return lastBombSnapshot;
+                if (persist) lastBombSnapshot = snapshot;
+                return snapshot;
             }
 
             if (bombTerminalState is "defused" or "exploded" && lastBombSnapshot is not null)

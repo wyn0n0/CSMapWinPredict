@@ -15,8 +15,9 @@ public sealed class RoundRosterTracker
         if (phase is "live" or "post-plant") deaths.Add(id);
     }
 
-    public RosterQuality Observe(IEnumerable<RosterObservation> observations)
+    public RosterQuality Observe(IEnumerable<RosterObservation> observations, bool persist = true)
     {
+        var members = persist ? this.members : new Dictionary<string, RosterObservation>(this.members);
         var seen = observations.Where(p => p.Team is "T" or "CT")
             .GroupBy(p => p.Id).Select(g => g.Last()).ToDictionary(p => p.Id);
         foreach (var id in members.Keys.ToArray())

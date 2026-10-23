@@ -45,7 +45,7 @@ function setup(api = {
 }) {
   const scope = effectScope()
   scopes.push(scope)
-  return { replay: scope.run(() => useReplay(api))!, scope, api }
+  return { replay: scope.run(() => useReplay({ ...api, loadWinReview: async () => ({ schemaVersion: 1, rounds: [] }) }))!, scope, api }
 }
 
 beforeEach(() => {
@@ -58,6 +58,65 @@ afterEach(() => {
 })
 
 describe('replay lifetime', () => {
+  it('returns to matching sample data if a subsequent import fails', async () => {
+    const { replay } = setup({
+      importDemo: vi.fn().mockResolvedValueOnce(imported()).mockRejectedValueOnce(new Error('invalid demo')),
+      loadDemoWindow: vi.fn(async (_id, index) => windowAt(index)),
+    })
+    await replay.handleFile(fileEvent())
+    replay.seek(21)
+    await flush()
+    await replay.handleFile(fileEvent())
+    expect(replay.error.value).toBe('invalid demo')
+    expect(replay.manifest.value).toBeNull()
+    expect(replay.timeline.value).toEqual(sampleTimeline)
+    expect(replay.currentTime.value).toBe(0)
+    expect(replay.winReview.value).toBeNull()
+  })
+
+  it('does not let a late review response replace a newer demo', async () => {
+    const old = deferred<{ schemaVersion: number; rounds: [] }>()
+    const current = deferred<{ schemaVersion: number; rounds: [] }>()
+    const scope = effectScope()
+    scopes.push(scope)
+    const replay = scope.run(() => useReplay({
+      importDemo: vi.fn().mockResolvedValueOnce(imported('old')).mockResolvedValueOnce(imported('new')),
+      loadDemoWindow: vi.fn(async (_id, index) => windowAt(index)),
+      loadWinReview: vi.fn().mockReturnValueOnce(old.promise).mockReturnValueOnce(current.promise),
+    }))!
+    await replay.handleFile(fileEvent())
+    await replay.handleFile(fileEvent())
+    old.resolve({ schemaVersion: 1, rounds: [] })
+    await flush()
+    expect(replay.winReview.value).toBeNull()
+    expect(replay.reviewLoading.value).toBe(true)
+    current.resolve({ schemaVersion: 1, rounds: [] })
+    await flush()
+    expect(replay.winReview.value?.schemaVersion).toBe(1)
+    expect(replay.reviewLoading.value).toBe(false)
+    replay.loadSample()
+    expect(replay.winReview.value).toBeNull()
+  })
+
+  it('keeps replay usable when review fails and supports retry', async () => {
+    const scope = effectScope()
+    scopes.push(scope)
+    const loadReview = vi.fn().mockRejectedValueOnce(new Error('curve offline'))
+      .mockResolvedValueOnce({ schemaVersion: 1, rounds: [] })
+    const replay = scope.run(() => useReplay({
+      importDemo: vi.fn(async () => imported()),
+      loadDemoWindow: vi.fn(async (_id, index) => windowAt(index)), loadWinReview: loadReview,
+    }))!
+    await replay.handleFile(fileEvent())
+    await flush()
+    expect(replay.reviewError.value).toBe('curve offline')
+    expect(replay.error.value).toBe('')
+    expect(replay.activeWindow.value?.index).toBe(0)
+    await replay.reloadWinReview()
+    expect(replay.reviewError.value).toBe('')
+    expect(replay.winReview.value).not.toBeNull()
+  })
+
   it.each(['sample', 'dispose'])('ignores late import status and success after %s', async action => {
     const pending = deferred<ImportedDemo>()
     let progress!: (stage: ImportStage) => void

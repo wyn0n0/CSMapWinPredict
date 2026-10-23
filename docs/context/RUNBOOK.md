@@ -1,5 +1,7 @@
 # 运行与验收手册
 
+> 新增复盘按 `npm run typecheck`、`npm test`、`npm run build` 验证，API 测试包含事件补点与复盘构建。C4 固定对照运行 `python -B -m unittest tools.test_win_c4_controls`。新导入生成复盘协议 v2，旧导入需重新导入；曲线包含后续走势，仅用于事后复盘。人物插值仅改变显示，不改变采样、训练特征或胜率值。
+
 > 最后核验：2026-09-18。所有导出命令必须使用不存在的新输出目录。
 
 首次检出后先运行 `dotnet restore` 分别还原 `apps/api`、`apps/cli` 和 `tests/CsDemoMap.Api.Tests`；日常构建和验证使用 `--no-restore -p:NuGetAudit=false`，避免重复访问包源。

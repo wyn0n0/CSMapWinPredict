@@ -95,6 +95,8 @@ internal static partial class SituationSidecarRebuilder
             targetImportDirectory, sourceDemoPath, outputDirectory, cancellationToken);
         try
         {
+            var firstWindow = await ReadWindowAsync(
+                Path.Combine(prepared.TargetImportDirectory, "window-0000.json.br"), cancellationToken);
             await using var source = new FileStream(
                 prepared.SourceDemoPath,
                 FileMode.Open,
@@ -106,7 +108,9 @@ internal static partial class SituationSidecarRebuilder
                 source,
                 Path.GetFileName(prepared.SourceDemoPath),
                 cancellationToken,
-                collectSemantics: true);
+                collectSemantics: true,
+                collectWinEvents: firstWindow.EventStatesIncluded);
+            if (firstWindow.EventStatesIncluded) timeline = DemoWindowSliceBuilder.WithEventStates(timeline);
             await PopulateAsync(prepared, timeline, cancellationToken);
         }
         catch

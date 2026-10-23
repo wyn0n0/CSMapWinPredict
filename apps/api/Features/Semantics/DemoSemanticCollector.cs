@@ -55,9 +55,9 @@ internal sealed class DemoSemanticCollector
         return changed;
     }
 
-    public void Capture(CsDemoParser demo, DemoFrame frame)
+    public SemanticFrame? Capture(CsDemoParser demo, DemoFrame frame, bool persist = true)
     {
-        if (rules is null) return;
+        if (rules is null) return null;
         var observations = demo.Players.Select(p =>
         {
             var pawn = p.PlayerPawn;
@@ -75,9 +75,13 @@ internal sealed class DemoSemanticCollector
             rounds.Current?.RoundNumber, rounds.Current?.SegmentId ?? 0, phase,
             clock.Resolve(rules, rounds.Current?.RoundId, phase,
                 frame.Bomb.SecondsToExplosion, frame.Bomb.SecondsToDefuse),
-            roster.Observe(observations));
-        if (frames.Count > 0 && frames[^1].Tick == frame.Tick) frames[^1] = sample;
-        else frames.Add(sample);
+            roster.Observe(observations, persist));
+        if (persist)
+        {
+            if (frames.Count > 0 && frames[^1].Tick == frame.Tick) frames[^1] = sample;
+            else frames.Add(sample);
+        }
+        return sample;
     }
 
     public SemanticTimeline Finish()

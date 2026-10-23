@@ -1,4 +1,5 @@
 import type { DemoManifest, DemoWindow } from '../domain/timeline'
+import type { WinReview } from '../domain/winReview'
 
 interface DemoImportAccepted {
   id: string
@@ -96,6 +97,14 @@ export async function loadDemoWindow(id: string, index: number): Promise<DemoWin
     playerEquipmentStates: window.playerEquipmentStates ?? [],
     winPredictions: window.winPredictions ?? [],
   }
+}
+
+export async function loadWinReview(id: string): Promise<WinReview> {
+  const response = await fetch(`/api/demos/${encodeURIComponent(id)}/win-review`)
+  const review = await readJson<WinReview>(response, '载入复盘曲线失败')
+  if (![1, 2].includes(review.schemaVersion) || !Array.isArray(review.rounds))
+    throw new Error('复盘数据版本不支持，请更新 API 后重新导入。')
+  return review
 }
 
 async function readJson<T>(response: Response, fallback: string): Promise<T> {

@@ -1,0 +1,17 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["apps/web/src"],
+  "locale": "zh-CN",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Select/Listbox", "Form", "Scrollbar"],
+  "ownership": { "Select/Listbox": "native" },
+  "requiredCommands": ["typecheck", "unit", "build"],
+  "commands": {
+    "typecheck": "npm run typecheck",
+    "unit": "npm run test:web",
+    "build": "npm run build"
+  },
+  "evidence": {
+    "failurePaths": "apps/web/src/composables/useReplay.test.ts"
+  }
+}

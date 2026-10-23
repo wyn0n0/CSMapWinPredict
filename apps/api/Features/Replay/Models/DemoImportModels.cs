@@ -28,7 +28,8 @@ public sealed record DemoWindow(
     IReadOnlyList<UtilityEffectTrack> UtilityEffects,
     IReadOnlyList<PlayerUtilityState> PlayerUtilityStates,
     IReadOnlyList<PlayerEquipmentState> PlayerEquipmentStates,
-    IReadOnlyList<WinPredictionPoint> WinPredictions);
+    IReadOnlyList<WinPredictionPoint> WinPredictions,
+    bool EventStatesIncluded = false);
 
 public sealed record DemoImportAccepted(string Id, string Status);
 

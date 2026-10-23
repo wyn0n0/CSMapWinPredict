@@ -86,6 +86,14 @@ if (args is ["--verify-situation-review-selector"])
 if (args is ["--verify-win-data-pipeline"])
 {
     await WinDataPipelineVerifier.VerifyAsync(CancellationToken.None);
+    WinReviewVerifier.Verify();
+    WinEventVerifier.Verify();
+    return 0;
+}
+
+if (args is ["--verify-win-events-demo", var eventDemo, var eventStop, var eventOutput])
+{
+    await WinEventVerifier.VerifyRealAsync(eventDemo, int.Parse(eventStop, CultureInfo.InvariantCulture), eventOutput, CancellationToken.None);
     return 0;
 }
 

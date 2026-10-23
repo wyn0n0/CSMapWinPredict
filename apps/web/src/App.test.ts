@@ -55,6 +55,40 @@ afterEach(() => {
 })
 
 describe('win prediction display', () => {
+  it('shows the whole-round curve beyond the active window without changing the current probability', async () => {
+    replay.winReview.value = { schemaVersion: 1, rounds: [{
+      roundId: 's0-a1', segmentId: 0, roundNumber: 1, startTick: 0, liveTick: 576,
+      endTick: 3840, disposition: 'completed', winner: 'T',
+      points: [{ ...points[0]!, quality: { equipmentMissing: true, positionMissing: false } },
+        points[1]!, { ...points[1]!, tick: 2240, timeSeconds: 35 }],
+    }] }
+    const html = await render()
+    expect(html).toContain('完整回合走势，含游标之后的内容')
+    expect(html).toContain('部分玩家装备未知')
+    expect(html).toContain('T 方 40%，CT 方 60%')
+    expect(html).not.toContain('回合已结束 · T 获胜')
+    const curve = html.match(/<path[^>]+class="win-curve"[^>]*>/)?.[0]
+    expect(curve).toBeDefined()
+    replay.winReview.value.rounds[0]!.points[2]!.tWin = .1
+    const changed = await render()
+    expect(changed.match(/<path[^>]+class="win-curve"[^>]*>/)?.[0]).not.toEqual(curve)
+    expect(changed).toContain('T 方 40%，CT 方 60%')
+    replay.currentTime.value = 35
+    expect(await render()).toContain('等待回放窗口')
+    expect(await render()).not.toContain('class="probability-body"')
+  })
+
+  it('shows review loading and failure separately from model unavailability', async () => {
+    replay.reviewLoading.value = true
+    expect(await render()).toContain('正在载入整回合曲线')
+    replay.reviewLoading.value = false
+    replay.reviewError.value = '复盘文件缺失'
+    const html = await render()
+    expect(html).toContain('复盘文件缺失')
+    expect(html).toContain('重试')
+    expect(html).toContain('T 方 40%，CT 方 60%')
+  })
+
   it('shows the reached sample time and restores the earlier value when seeking back', async () => {
     let html = await render()
     expect(html).toContain('T 方 40%，CT 方 60%')

@@ -12,7 +12,11 @@ public sealed record WinPredictionPoint(
     int RoundNumber,
     string Phase,
     double TWin,
-    double CTWin);
+    double CTWin,
+    WinPredictionQuality? Quality = null,
+    IReadOnlyList<string>? Triggers = null);
+
+public sealed record WinPredictionQuality(bool EquipmentMissing, bool PositionMissing);
 
 public sealed record WinPredictionManifest(
     string Status,
@@ -23,11 +27,14 @@ public sealed record WinPredictionManifest(
     string? ArtifactSha256,
     int SampleCount,
     double SampleIntervalSeconds,
-    string? Error);
+    string? Error,
+    string SamplingMode = "regular",
+    int? InferenceSampleCount = null);
 
 public sealed record WinTimelinePredictionResult(
     WinPredictionManifest Manifest,
-    IReadOnlyList<WinPredictionPoint> Points);
+    IReadOnlyList<WinPredictionPoint> Points,
+    IReadOnlyList<WinPredictionPoint>? ReviewPoints = null);
 
 public sealed record WinModelStatus(
     string Status,

@@ -1,5 +1,7 @@
 # 路径与版本地图
 
+> 胜率复盘链路：`DemoParserService.WinEventStates` → `WinEventSampleBuilder` → `WinReviewBuilder` → `win-review.json.br` → `/api/demos/{id}/win-review` → `WinReviewChart.vue`。独立残局完整模块仅在 `codex/endgame-model`。
+
 ## 独立残局模块分支边界（2026-10-18）
 
 独立 `endgame_prediction/` 模块已从 `main` 当前目录移除，完整源码、GSI、六文件模型包及运行说明在 [`codex/endgame-model`](https://github.com/wyn0n0/CSMapWinPredict/tree/codex/endgame-model) 分支维护。主项目仍需的 `tools/` 共享训练、特征和推理工具及实验报告保留；不切换生产默认模型，不重写历史。下载独立分支即可安装 Python 依赖并预测，无需原训练数据。

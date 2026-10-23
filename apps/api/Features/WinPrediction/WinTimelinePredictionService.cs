@@ -29,7 +29,8 @@ public sealed class WinTimelinePredictionService
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            var samples = new WinFeatureSampleBuilder().Build(timeline, cancellationToken).Samples;
+            var sampling = WinEventSampleBuilder.Build(timeline, cancellationToken);
+            var samples = sampling.Samples;
             var points = new List<WinPredictionPoint>(samples.Count);
             for (var offset = 0; offset < samples.Count; offset += inference.MaxBatchSize)
             {
@@ -48,7 +49,8 @@ public sealed class WinTimelinePredictionService
                         sample.RoundNumber,
                         sample.Phase,
                         probability.TWin,
-                        probability.CTWin));
+                        probability.CTWin,
+                        Triggers: sampling.Triggers[sample.Tick]));
                 }
             }
 
@@ -57,9 +59,15 @@ public sealed class WinTimelinePredictionService
                 "胜率推理完成：{Samples} 个采样点，{ElapsedSeconds:F2} 秒",
                 points.Count,
                 stopwatch.Elapsed.TotalSeconds);
+            // Before-only queries are review evidence, never an earlier live update.
+            var visible = points.Where(p => p.Triggers!.Any(t => t is "regular" or "event-after")).ToArray();
             return new(
-                ReadyManifest(model, points.Count),
-                points);
+                ReadyManifest(model, visible.Length) with
+                {
+                    SamplingMode = timeline.WinEventStates.Count > 0 ? "regular-plus-events-v1" : "regular",
+                    InferenceSampleCount = points.Count
+                },
+                visible, points);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

@@ -34,25 +34,7 @@ public sealed class WinFeatureSampleBuilder
             var correctedFrames = candidates.Select(sample =>
             {
                 var old = frames[sample.Tick];
-                return old with
-                {
-                    Players = old.Players.Where(player => player.Alive && player.Team is "T" or "CT")
-                        .Select(player => player with
-                        {
-                            // The legacy feature bridge requires finite coordinates. Spatial
-                            // outputs are nulled whenever alive positions are incomplete.
-                            X = float.IsFinite(player.X) ? player.X : 0,
-                            Y = float.IsFinite(player.Y) ? player.Y : 0,
-                            Z = float.IsFinite(player.Z) ? player.Z : 0
-                        }).ToArray(),
-                    Round = old.Round with
-                    {
-                        Number = sample.RoundNumber ?? 0,
-                        Phase = sample.Phase,
-                        ElapsedSeconds = sample.Clock.LiveElapsedSeconds ?? 0,
-                        RemainingSeconds = sample.Clock.RoundRemainingSeconds ?? 0
-                    }
-                };
+                return CorrectFrame(old, sample);
             }).ToArray();
             var corrected = timeline with
             {
@@ -130,7 +112,25 @@ public sealed class WinFeatureSampleBuilder
         return new(samples, targets, report);
     }
 
-    private static JsonObject BuildFeatureNode(
+    internal static DemoFrame CorrectFrame(DemoFrame frame, SemanticFrame sample) => frame with
+    {
+        Players = frame.Players.Where(player => player.Alive && player.Team is "T" or "CT")
+            .Select(player => player with
+            {
+                // Spatial outputs are nulled below when positions are incomplete.
+                X = float.IsFinite(player.X) ? player.X : 0,
+                Y = float.IsFinite(player.Y) ? player.Y : 0,
+                Z = float.IsFinite(player.Z) ? player.Z : 0
+            }).ToArray(),
+        Round = frame.Round with
+        {
+            Number = sample.RoundNumber ?? 0, Phase = sample.Phase,
+            ElapsedSeconds = sample.Clock.LiveElapsedSeconds ?? 0,
+            RemainingSeconds = sample.Clock.RoundRemainingSeconds ?? 0
+        }
+    };
+
+    internal static JsonObject BuildFeatureNode(
         AsOfTickFeatureBuilder builder,
         DemoFrame frame,
         SemanticFrame sample)

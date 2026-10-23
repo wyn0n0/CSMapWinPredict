@@ -135,6 +135,13 @@ public sealed class DemoImportService : BackgroundService
         }
     }
 
+    public string? GetWinReviewPath(string id)
+    {
+        if (!jobs.TryGetValue(id, out var job) || job.Status != "completed") return null;
+        var path = Path.Combine(job.Directory, "win-review.json.br");
+        return File.Exists(path) ? path : null;
+    }
+
     private async Task ProcessAsync(ImportJob job, CancellationToken cancellationToken)
     {
         try
@@ -154,7 +161,8 @@ public sealed class DemoImportService : BackgroundService
                 source,
                 job.FileName,
                 cancellationToken,
-                collectSemantics: true);
+                collectSemantics: true,
+                collectWinEvents: true);
             var parseSeconds = stopwatch.Elapsed.TotalSeconds;
             job.Status = "predicting";
             var winPredictions = await predictor.PredictAsync(timeline, cancellationToken);
@@ -206,14 +214,19 @@ public sealed class DemoImportService : BackgroundService
         CancellationToken cancellationToken)
     {
         var windowCount = DemoWindowSliceBuilder.GetWindowCount(timeline.Metadata);
+        await WriteBrotliJsonAsync(Path.Combine(job.Directory, "win-review.json.br"),
+            WinReviewBuilder.Build(timeline, winPredictions.ReviewPoints ?? winPredictions.Points), cancellationToken);
+        // Radar and prediction switch at the same event tick. Feature/export history
+        // above remains the original regular timeline.
+        var replay = DemoWindowSliceBuilder.WithEventStates(timeline);
         for (var index = 0; index < windowCount; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var slice = DemoWindowSliceBuilder.Build(timeline, index, winPredictions.Points);
+            var slice = DemoWindowSliceBuilder.Build(replay, index, winPredictions.Points);
             await WriteBrotliJsonAsync(
                 WindowPath(job.Directory, index), slice.Window, cancellationToken);
             var situationSidecar = SituationWindowSidecarStore.Build(
-                timeline, index, slice.DataFromTick, slice.DataToTick);
+                replay, index, slice.DataFromTick, slice.DataToTick);
             await SituationWindowSidecarStore.WriteAsync(
                 job.Directory, situationSidecar, cancellationToken);
         }
@@ -222,11 +235,11 @@ public sealed class DemoImportService : BackgroundService
             job.Id,
             timeline.Metadata,
             timeline.Events,
-            timeline.Frames.Count,
+            replay.Frames.Count,
             timeline.UtilityTracks.Count,
             timeline.UtilityEffects.Count,
             timeline.PlayerUtilityStates.Count,
-            timeline.PlayerEquipmentStates.Count,
+            replay.PlayerEquipmentStates.Count,
             WindowSeconds,
             windowCount,
             SchemaVersion,
@@ -234,7 +247,7 @@ public sealed class DemoImportService : BackgroundService
             winPredictions.Manifest);
     }
 
-    private static async Task WriteBrotliJsonAsync(string path, DemoWindow window, CancellationToken cancellationToken)
+    private static async Task WriteBrotliJsonAsync<T>(string path, T window, CancellationToken cancellationToken)
     {
         await using var file = new FileStream(
             path,

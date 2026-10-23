@@ -1,10 +1,11 @@
 import { computed, onScopeDispose, ref } from 'vue'
 import { sampleTimeline } from '../data/sampleTimeline'
 import { findFrameIndex, windowIndexAt, type DemoManifest, type DemoTimeline, type DemoWindow } from '../domain/timeline'
-import { importDemo, loadDemoWindow, type ImportStage } from '../services/api'
+import { importDemo, loadDemoWindow, loadWinReview, type ImportStage } from '../services/api'
+import type { WinReview } from '../domain/winReview'
 
 /** Owns playback, import lifetime and the bounded asynchronous window cache. */
-export function useReplay(api = { importDemo, loadDemoWindow }) {
+export function useReplay(api = { importDemo, loadDemoWindow, loadWinReview }) {
   const timeline = ref<DemoTimeline>(sampleTimeline)
   const manifest = ref<DemoManifest | null>(null)
   const activeWindow = ref<DemoWindow | null>(null)
@@ -17,6 +18,9 @@ export function useReplay(api = { importDemo, loadDemoWindow }) {
   const importFileName = ref('')
   const activatingWindow = ref(false)
   const error = ref('')
+  const winReview = ref<WinReview | null>(null)
+  const reviewLoading = ref(false)
+  const reviewError = ref('')
   const windowCache = new Map<number, DemoWindow>()
   const windowRequests = new Map<number, Promise<DemoWindow>>()
   let animationFrame = 0
@@ -72,6 +76,8 @@ export function useReplay(api = { importDemo, loadDemoWindow }) {
 
     stopPlayback()
     resetImportedState()
+    timeline.value = sampleTimeline
+    currentTime.value = 0
     const generation = windowGeneration
     importing.value = true
     importFileName.value = file.name
@@ -88,6 +94,7 @@ export function useReplay(api = { importDemo, loadDemoWindow }) {
       applyWindow(imported.firstWindow)
       currentTime.value = 0
       prefetchNextWindow()
+      void reloadWinReview()
     } catch (reason) {
       if (generation === windowGeneration)
         error.value = reason instanceof Error ? reason.message : '导入失败。'
@@ -103,6 +110,22 @@ export function useReplay(api = { importDemo, loadDemoWindow }) {
     timeline.value = sampleTimeline
     currentTime.value = 0
     error.value = ''
+  }
+
+  async function reloadWinReview() {
+    if (!demoId.value || reviewLoading.value) return
+    const generation = windowGeneration
+    reviewLoading.value = true
+    reviewError.value = ''
+    try {
+      const review = await api.loadWinReview(demoId.value)
+      if (generation === windowGeneration) winReview.value = review
+    } catch (reason) {
+      if (generation === windowGeneration)
+        reviewError.value = reason instanceof Error ? reason.message : '载入复盘曲线失败。'
+    } finally {
+      if (generation === windowGeneration) reviewLoading.value = false
+    }
   }
 
   async function activateWindowAt(timeSeconds: number) {
@@ -206,6 +229,9 @@ export function useReplay(api = { importDemo, loadDemoWindow }) {
     manifest.value = null
     activeWindow.value = null
     demoId.value = ''
+    winReview.value = null
+    reviewLoading.value = false
+    reviewError.value = ''
     windowCache.clear()
     windowRequests.clear()
   }
@@ -219,5 +245,6 @@ export function useReplay(api = { importDemo, loadDemoWindow }) {
     timeline, manifest, activeWindow, currentTime, playing, speed,
     importing, importStage, importFileName, activatingWindow, error,
     frameIndex, currentFrame, duration, togglePlayback, seek, handleFile, loadSample,
+    winReview, reviewLoading, reviewError, reloadWinReview,
   }
 }

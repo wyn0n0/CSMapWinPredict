@@ -11,6 +11,20 @@ internal static class DemoWindowSliceBuilder
 {
     internal const int WindowOverlapSeconds = 2;
 
+    internal static DemoTimeline WithEventStates(DemoTimeline timeline) => timeline with
+    {
+        Frames = timeline.Frames.Concat(timeline.WinEventStates.Select(state => state.Frame))
+            .GroupBy(frame => frame.Tick).Select(group => group.First()).OrderBy(frame => frame.Tick).ToArray(),
+        PlayerEquipmentStates = timeline.PlayerEquipmentStates.Concat(timeline.WinEventStates.SelectMany(state => state.Equipment))
+            .GroupBy(state => (state.Tick, state.PlayerId)).Select(group => group.Last()).OrderBy(state => state.Tick).ToArray(),
+        // Consumers of replay frames must also receive the matching life/clock state.
+        Semantics = timeline.Semantics is { } semantics ? semantics with
+        {
+            Frames = semantics.Frames.Concat(timeline.WinEventStates.Select(state => state.Semantic))
+                .GroupBy(frame => frame.Tick).Select(group => group.First()).OrderBy(frame => frame.Tick).ToArray()
+        } : null
+    };
+
     public static int GetWindowCount(DemoMetadata metadata)
     {
         ArgumentNullException.ThrowIfNull(metadata);
@@ -91,7 +105,8 @@ internal static class DemoWindowSliceBuilder
                 utilityEffects,
                 utilityStates,
                 equipmentStates,
-                windowPredictionPoints),
+                windowPredictionPoints,
+                EventStatesIncluded: timeline.WinEventStates.Count > 0),
             startTick,
             endTick);
     }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { findFrameIndex, findTickIndex, formatTime, utilityPointAt, windowIndexAt, winPredictionAt, type DemoFrame, type UtilityPoint, type WinPredictionPoint } from './timeline'
+import { findFrameIndex, findTickIndex, formatTime, playerPoseAt, utilityPointAt, windowIndexAt, winPredictionAt, type DemoFrame, type UtilityPoint, type WinPredictionPoint } from './timeline'
+import { sampleTimeline } from '../data/sampleTimeline'
 
 const frames = [0, 0.5, 1, 1.5].map((timeSeconds, index): DemoFrame => ({
   tick: index * 32,
@@ -27,6 +28,67 @@ describe('timeline utilities', () => {
     expect(findTickIndex(states, 9)).toBe(-1)
     expect(findTickIndex(states, 20)).toBe(1)
     expect(findTickIndex(states, 99)).toBe(2)
+  })
+
+  it.each([
+    [0, 90, 45], [359, 1, 360], [1, 359, 0], [179, -179, 180], [-179, 179, -180],
+  ])('interpolates yaw from %s to %s along the shortest turn', (yaw, nextYaw, expected) => {
+    const player = { ...sampleTimeline.frames[0].players[0], alive: true, yaw }
+    const from = { ...frames[0], timeSeconds: 10, players: [player] }
+    const to = { ...from, timeSeconds: 10.125, players: [{ ...player, yaw: nextYaw, x: player.x + 100, health: 1 }] }
+    const before = structuredClone([from, to])
+    expect(playerPoseAt(player, from, to, 10.0625).yaw).toBeCloseTo(expected)
+    expect([from, to]).toEqual(before)
+  })
+
+  it('uses actual sample times and restores the same yaw when seeking backwards', () => {
+    const player = { ...sampleTimeline.frames[0].players[0], alive: true, yaw: 10 }
+    const from = { ...frames[0], timeSeconds: 10, players: [player] }
+    const to = { ...from, timeSeconds: 10.09375, players: [{ ...player, yaw: 130 }] }
+    for (const [time, expected] of [[9, 10], [10, 10], [10.0234375, 40], [10.09375, 130], [11, 130], [10.0234375, 40]])
+      expect(playerPoseAt(player, from, to, time).yaw).toBeCloseTo(expected)
+  })
+
+  it('holds sampled pose at missing frames, round boundaries and life or team changes', () => {
+    const player = { ...sampleTimeline.frames[0].players[0], alive: true, yaw: 10 }
+    const from = { ...frames[0], players: [player] }
+    const next = { ...player, yaw: 130 }
+    const to = { ...from, timeSeconds: 0.125, players: [next] }
+    const boundaries = [
+      undefined, { ...to, timeSeconds: 0 }, { ...to, timeSeconds: -1 }, { ...to, players: [] },
+      { ...to, round: { ...to.round, number: to.round.number + 1 } },
+      { ...to, round: { ...to.round, phase: 'freeze' } },
+      { ...to, players: [{ ...next, id: 'another-player' }] },
+      { ...to, players: [{ ...next, alive: false }] },
+      { ...to, players: [{ ...next, team: 'SPEC' as const }] },
+    ]
+    for (const boundary of boundaries) expect(playerPoseAt(player, from, boundary, 0.0625)).toBe(player)
+    const dead = { ...player, alive: false }
+    expect(playerPoseAt(dead, from, to, 0.0625)).toBe(dead)
+    expect(playerPoseAt(player, from, { ...to, players: [{ ...next, id: 'other', yaw: 270 }, next] }, 0.0625).yaw).toBe(70)
+  })
+
+  it('interpolates position at actual sample times without blending gameplay state or mutating samples', () => {
+    const player = { ...sampleTimeline.frames[0].players[0], alive: true, x: 10, y: -20, z: 30, yaw: 0 }
+    const from = { ...frames[0], timeSeconds: 10, players: [player] }
+    const next = { ...player, x: 34, y: 28, z: 42, yaw: 90, health: 1, weapon: null, kills: 99 }
+    const to = { ...from, timeSeconds: 10.09375, players: [{ ...next, id: 'other', x: 9999 }, next] }
+    const before = structuredClone([from, to])
+    for (const [time, amount] of [[9, 0], [10, 0], [10.0234375, .25], [10.046875, .5], [11, 1], [10.0234375, .25]]) {
+      expect(playerPoseAt(player, from, to, time)).toEqual({
+        ...player, x: 10 + 24 * amount, y: -20 + 48 * amount, z: 30 + 12 * amount, yaw: 90 * amount,
+      })
+    }
+    expect([from, to]).toEqual(before)
+  })
+
+  it('holds the sampled pose instead of gliding through relocations or invalid coordinates', () => {
+    const player = { ...sampleTimeline.frames[0].players[0], alive: true, x: 0, y: 0, z: 0 }
+    const from = { ...frames[0], players: [player] }
+    for (const position of [{ x: 2000 }, { z: 2000 }, { x: NaN }]) {
+      const to = { ...from, timeSeconds: .125, players: [{ ...player, ...position }] }
+      expect(playerPoseAt(player, from, to, .0625)).toBe(player)
+    }
   })
 
   it('interpolates a projectile between utility samples', () => {
@@ -79,6 +141,16 @@ describe('timeline utilities', () => {
     // A kill at 10.75 is first reflected by the sample at 11, never before it.
     expect(winPredictionAt([past, future], 10.75, 'live', 600)).toEqual(past)
     expect(winPredictionAt([past, future], 11, 'live', 600)).toEqual(future)
+  })
+
+  it('updates at an irregular event tick and keeps before-only evidence out of playback', () => {
+    const regular: WinPredictionPoint = { tick: 640, timeSeconds: 10, roundId: 's0-a1', segmentId: 0,
+      roundNumber: 1, phase: 'live', tWin: .4, ctWin: .6, triggers: ['regular'] }
+    const before = { ...regular, tick: 648, timeSeconds: 10.125, tWin: .5, ctWin: .5, triggers: ['event-before'] }
+    const after = { ...regular, tick: 651, timeSeconds: 651 / 64, tWin: .7, ctWin: .3, triggers: ['event-after'] }
+    expect(winPredictionAt([regular, before, after], 650 / 64, 'live', 600)).toEqual(regular)
+    expect(winPredictionAt([regular, before, after], 651 / 64, 'live', 600)).toEqual(after)
+    expect(winPredictionAt([regular, before, after], 648 / 64, 'live', 600)).toEqual(regular)
   })
 
   it('rejects missing, future and expired predictions, retaining the inclusive age limit', () => {

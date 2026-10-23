@@ -182,9 +182,13 @@ export interface WinPredictionPoint {
   phase: 'live' | 'post-plant' | string
   tWin: number
   ctWin: number
+  triggers?: string[] | null
+  quality?: { equipmentMissing: boolean; positionMissing: boolean } | null
 }
 
 export interface WinPredictionManifest {
+  samplingMode?: string
+  inferenceSampleCount?: number | null
   status: 'ready' | 'unavailable' | string
   schemaVersion: number
   semanticVersion: string
@@ -213,6 +217,7 @@ export interface DemoManifest {
 }
 
 export interface DemoWindow {
+  eventStatesIncluded?: boolean
   index: number
   coreFromSeconds: number
   coreToSeconds: number
@@ -259,6 +264,9 @@ export function winPredictionAt(
     else high = middle - 1
   }
 
+  // Review-only before states must not let a later event change earlier playback.
+  while (high >= 0 && points[high]!.triggers?.length &&
+    !points[high]!.triggers!.some(trigger => trigger === 'regular' || trigger === 'event-after')) high--
   if (high < 0) return null
   const from = points[high]
   const age = timeSeconds - from.timeSeconds
@@ -266,6 +274,28 @@ export function winPredictionAt(
 
   // Hold the last observed value, including its timestamp; a later sample may contain future events.
   return from
+}
+
+/** Display-only pose: leave sampled data and gameplay state untouched. */
+export function playerPoseAt(player: PlayerSnapshot, from: DemoFrame, to: DemoFrame | undefined, timeSeconds: number): PlayerSnapshot {
+  if (!to || !player.alive || to.timeSeconds <= from.timeSeconds ||
+    from.round.number !== to.round.number || from.round.phase !== to.round.phase) return player
+  const next = to.players.find(candidate => candidate.id === player.id)
+  if (!next?.alive || next.team !== player.team) return player
+
+  const seconds = to.timeSeconds - from.timeSeconds
+  const distance = Math.hypot(next.x - player.x, next.y - player.y, next.z - player.z)
+  // Match the parser's 1000 units/s discontinuity cutoff instead of animating relocations.
+  if (!Number.isFinite(distance) || distance > 1000 * seconds) return player
+  const amount = Math.min(1, Math.max(0, (timeSeconds - from.timeSeconds) / seconds))
+  const delta = ((next.yaw - player.yaw) % 360 + 540) % 360 - 180
+  return {
+    ...player,
+    x: player.x + (next.x - player.x) * amount,
+    y: player.y + (next.y - player.y) * amount,
+    z: player.z + (next.z - player.z) * amount,
+    yaw: player.yaw + delta * amount,
+  }
 }
 
 export function utilityPointAt(points: UtilityPoint[], tick: number): UtilityPoint | null {

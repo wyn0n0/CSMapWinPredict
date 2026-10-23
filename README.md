@@ -8,9 +8,13 @@ The project currently focuses on **Mirage** and supports match review, tactical 
 
 ![Mirage replay dashboard](docs/assets/demo-replay-dashboard.png)
 
+*Screenshot shows an earlier layout; the current interface uses a light workbench with round review.*
+
 ## Features
 
 - **Demo import and map replay:** Read CS2 recordings and display player positions, facing direction, health, weapons and equipment on a radar map.
+- **Smooth player motion:** Interpolate player positions and facing between replay samples, with guards for deaths, round changes and discontinuous movement. Source samples and prediction values stay unchanged.
+- **Round review:** Inspect a whole-round win-probability chart and grouped event comparisons; select a point or replay the lead-up to an event.
 - **Interactive playback:** Play, pause, seek and adjust playback speed to locate and review key moments.
 - **Movement and utility layers:** View player trails, projectiles, smoke and fire areas, with individual display layers that can be toggled as needed.
 - **Round-win prediction:** With a compatible model configured, follow the estimated probability of T or CT winning the current round as the replay progresses.
@@ -20,9 +24,11 @@ The replay uses a top-down radar view to highlight positioning and changes in th
 
 ## About win predictions
 
-The model uses information available at the current point in the recording, with estimates usually updated about once per second. The prediction target is **the current round winner**, not the final result of the map or match.
+The model uses information available at the current point in the recording, with regular estimates about once per second and additional estimates at kills, bomb plants and defuse starts/cancellations. Probability values are not interpolated. The prediction target is **the current round winner**, not the final result of the map or match.
 
 Win probability provides context for reviewing a round, rather than a definite outcome. Predictions remain uncertain early in a round, with equal player counts, or when information is limited.
+
+The whole-round review chart includes later events and is intended for retrospective analysis. Event comparisons show before/after estimates and percentage-point changes; these changes do not establish causation. Existing imports must be reimported to generate the new review data.
 
 The probability card includes the recording time associated with its estimate. It clears during round preparation, after the round ends, or when a current prediction is unavailable, to avoid displaying outdated results.
 
@@ -83,14 +89,14 @@ Stop the service with `Ctrl+C` in the terminal when finished.
 
 The complete standalone module has moved to the [`codex/endgame-model` branch](https://github.com/wyn0n0/CSMapWinPredict/tree/codex/endgame-model). It includes prediction and GSI source code, trained weights, examples and installation instructions. Download the entire branch and follow its [quick start](https://github.com/wyn0n0/CSMapWinPredict/tree/codex/endgame-model/endgame_prediction#下载并预测); no retraining is required. The module is absent from the current `main` tree, and the replay interface, API and production model remain unchanged.
 
-The model remains a development candidate. Real-match GSI alignment and accuracy still require validation.
+The model remains a development candidate. One same-match GSI/Demo comparison and a CT defuse-kit missing-field fix have been completed; cross-match accuracy still requires validation. See the [GSI guide](https://github.com/wyn0n0/CSMapWinPredict/blob/codex/endgame-model/endgame_prediction/gsi/README.md).
 
 ## Development status
 
-As of **2026-10-18**:
+As of **2026-10-23**:
 
-- **Implemented:** Mirage replay, playback controls, player and utility displays, and round-win prediction with a compatible model.
-- **Ongoing improvements:** The current model has been evaluated on 13 additional matches. Early-round and equal-player-count situations remain key areas for improvement.
+- **Implemented:** A light replay workbench, smooth player motion, whole-round probability review, event comparisons, utility displays and round-win prediction with a compatible model.
+- **Ongoing improvements:** The current model has been evaluated on 13 additional matches. C4 state/distance controls have also completed development evaluation; the production model remains unchanged. Early-round and equal-player-count situations remain key areas for improvement.
 - **Experimental:** Standalone endgame prediction, GSI reception and recording are implemented. Spatial-feature model comparisons have completed development evaluation; adoption still requires new-match validation. Automatic situation commentary remains in development. These experiments are not integrated into the interface.
 
 ## Limitations
